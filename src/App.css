@@ -8,3 +8,33 @@
   scrollbar-width: none;  /* Firefox */
   overflow-y: scroll; /* Ensures scroll functionality is still enabled */
 }
+
+.stickyBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: white;
+  padding: 10px 20px;  /* Provides padding around the content */
+  min-height: 50px;  /* Ensures at least 50px height, but can expand if needed */
+  box-shadow: 0px -2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;  /* Vertically centers content within the bar */
+  justify-content: space-between;  /* Adjust spacing between elements in the bar */
+}
+
+.bottomBar {
+  bottom: 0;
+}
+
+.topBar {
+  top: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .stickyBar {
+    padding: 10px;  /* Reduce padding on smaller screens */
+    justify-content: center;  /* Center content on smaller screens */
+  }
+}

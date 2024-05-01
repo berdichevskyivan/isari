@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
-import { Card, CardContent, Typography, Avatar, Box, Grid, useMediaQuery, useTheme } from '@mui/material';
+import { Modal, Card, CardContent, Typography, Avatar, Box, Grid, Button, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import GitHubIcon from '@mui/icons-material/GitHub'; // Assuming GitHub OAuth
+import EmailIcon from '@mui/icons-material/Email'; // For local sign-in
+import FilterListIcon from '@mui/icons-material/FilterList'; // For showing filters
 
 function CustomCard({ title, content, imageUrl }) {
   return (
@@ -20,7 +23,20 @@ function CustomCard({ title, content, imageUrl }) {
   );
 }
 
+function FilterModal({ open, onClose }) {
+  return (
+      <Modal open={open} onClose={onClose}>
+          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 300, bgcolor: 'background.paper', boxShadow: 24, p: 4 }}>
+              {/* Filter options here */}
+              <Button onClick={onClose}>Apply Filters</Button>
+          </Box>
+      </Modal>
+  );
+}
+
 function App() {
+  const [showFilters, setShowFilters] = useState(false);
+
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
@@ -33,14 +49,16 @@ function App() {
     imageUrl: "path_to_image.jpg" // Replace with actual image paths
   }));
 
+  const toggleFilters = () => setShowFilters(!showFilters);
+
   return (
     <div style={{
         height: '100vh',
         width: '100%',
         overflow: 'auto',  // Allow overflow while hiding scrollbars
-        '::-webkit-scrollbar': { display: 'none' },
-        '-ms-overflow-style': 'none',  // for Internet Explorer and Edge
-        'scrollbar-width': 'none'  // for Firefox
+        '::WebkitScrollbar': { display: 'none' },
+        msOverflowStyle: 'none',  // for Internet Explorer and Edge
+        scrollbarWidth: 'none',  // for Firefox
     }}>
       <Grid container sx={{
         display: 'grid',
@@ -49,7 +67,8 @@ function App() {
         padding: 2,
         gridGap: '8px',
         rowGap: '4px',
-        columnGap: '8px'
+        columnGap: '8px',
+        marginBottom: '80px'  // This extra margin accounts for the height of the dashboard
       }}>
         {cards.map((card) => (
           <Grid item key={card.id} sx={{ justifySelf: 'center' }}>
@@ -61,6 +80,12 @@ function App() {
           </Grid>
         ))}
       </Grid>
+      <div className="stickyBar bottomBar" style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button startIcon={<EmailIcon />} variant="contained">Sign Up / Log In</Button>
+        <IconButton onClick={toggleFilters}><FilterListIcon /></IconButton>
+        <Button startIcon={<GitHubIcon />} variant="contained">GitHub Login</Button>
+      </div>
+      <FilterModal open={showFilters} onClose={toggleFilters} />
     </div>
   );
 }
