@@ -1,10 +1,10 @@
 import React from 'react';
 import './App.css';
-import { Card, CardContent, Typography, Avatar, Box, Grid } from '@mui/material';
+import { Card, CardContent, Typography, Avatar, Box, Grid, useMediaQuery, useTheme } from '@mui/material';
 
 function CustomCard({ title, content, imageUrl }) {
   return (
-    <Card sx={{ width: 250, height: 300, m: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Card sx={{ width: 250, height: 300, m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', pt: 2 }}>
         <Avatar src={imageUrl} alt={title} sx={{ width: 60, height: 60 }} />
       </Box>
@@ -21,38 +21,45 @@ function CustomCard({ title, content, imageUrl }) {
 }
 
 function App() {
-  return (
-    <div style={{ height: '100vh', width: '100%', overflow: 'hidden' }}>
-      <Grid container sx={{ height: '100%' }}>
-        {/* Spotlight Section, dynamic number of cards based on width, centered */}
-        <Grid item xs={4} sx={{ height: '100%', overflowY: 'auto', display: 'flex' }} className="no-scrollbar">
-          <Grid container justifyContent="center" spacing={2} sx={{ flexGrow: 1, flexWrap: 'wrap' }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-              <Grid item key={item} sx={{ maxWidth: 250 }}>
-                <CustomCard
-                  title={`Spotlight Card ${item}`}
-                  content="Spotlight Content"
-                  imageUrl="path_to_image.jpg" // Path to image
-                />
-              </Grid>
-            ))}
-          </Grid>
-        </Grid>
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
-        {/* General Section, dynamic number of cards based on width, aligned left to right */}
-        <Grid item xs={8} sx={{ height: '100%', overflowY: 'auto', display: 'flex' }} className="no-scrollbar">
-          <Grid container spacing={2} sx={{ flexGrow: 1, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((item) => (
-              <Grid item key={item} sx={{ maxWidth: 250 }}>
-                <CustomCard
-                  title={`General Card ${item}`}
-                  content="General Content"
-                  imageUrl="path_to_image.jpg" // Path to image
-                />
-              </Grid>
-            ))}
+  const gridColumns = matches ? 'repeat(auto-fit, minmax(250px, 1fr))' : '1fr';
+
+  const cards = Array.from({ length: 70 }, (_, i) => ({
+    id: i + 1,
+    title: `Card ${i + 1}`,
+    content: "Content here",
+    imageUrl: "path_to_image.jpg" // Replace with actual image paths
+  }));
+
+  return (
+    <div style={{
+        height: '100vh',
+        width: '100%',
+        overflow: 'auto',  // Allow overflow while hiding scrollbars
+        '::-webkit-scrollbar': { display: 'none' },
+        '-ms-overflow-style': 'none',  // for Internet Explorer and Edge
+        'scrollbar-width': 'none'  // for Firefox
+    }}>
+      <Grid container sx={{
+        display: 'grid',
+        gridTemplateColumns: gridColumns,
+        justifyContent: 'center',  // center the items when fewer
+        padding: 2,
+        gridGap: '8px',
+        rowGap: '4px',
+        columnGap: '8px'
+      }}>
+        {cards.map((card) => (
+          <Grid item key={card.id} sx={{ justifySelf: 'center' }}>
+            <CustomCard
+              title={card.title}
+              content={card.content}
+              imageUrl={card.imageUrl}
+            />
           </Grid>
-        </Grid>
+        ))}
       </Grid>
     </div>
   );
