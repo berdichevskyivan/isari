@@ -18,7 +18,13 @@ function ControlsDashboard() {
 
   return (
     <>
-        <div className="stickyBar bottomBar" style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="stickyBar bottomBar" style={{ 
+                padding: '10px 20px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'rgba(0, 0, 0, 0.9)',
+            }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
                     <img src="/isari-logo.png" alt="Isari AI Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
@@ -29,7 +35,7 @@ function ControlsDashboard() {
             </div>
 
             <IconButton onClick={toggleFilters} style={{ margin: '0 auto' }}>  {/* This will auto-center the button */}
-                <FilterAltIcon className="icon-large" />
+                <FilterAltIcon className="icon-large" sx={{color: '#00B2AA'}} />
             </IconButton>
 
             <div style={{ display: 'flex', gap: '10px' }}>
