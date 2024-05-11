@@ -24,7 +24,7 @@ function ControlsDashboard() {
                     <img src="/isari-logo.png" alt="Isari AI Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
                     <span className="dashboard-text">Isari AI</span>
                 </Link>
-                <Button startIcon={<EmailIcon />} variant="contained" href="/create-worker-node">Create Worker Node</Button>
+                <Button startIcon={<EmailIcon />} variant="contained" href="/create-worker">Create Worker</Button>
                 <Button variant="contained" href="/work">Work Page</Button>
             </div>
 
@@ -33,7 +33,7 @@ function ControlsDashboard() {
             </IconButton>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-                <Button variant="contained" href="/worker-node-dashboard">Worker Node Dashboard</Button>
+                <Button variant="contained" href="/worker-dashboard">Worker Dashboard</Button>
                 <Button startIcon={<GitHubIcon />} variant="contained" href="/">GitHub Login</Button>
                 <Button onClick={toggleFeedbackModal}>Feedback</Button>
             </div>
