@@ -27,7 +27,7 @@ function CustomCard({ title, content, imageUrl }) {
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', pt: 2 }}>
         <Avatar src={imageUrl} alt={title} sx={{ width: 40, height: 40 }} />
         <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '18px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
-          Ivan Berdichevsky
+          John Green
           {/* Later retrieve the names for the cards from the DB */}
         </Typography>
       </Box>
