@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Button, TextField, Avatar, Chip, Grid, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
+
+function getInitials(name) {
+  return name.split(' ').map(word => word[0]).join('').toUpperCase();
+}
 
 const colors = {
   background: '#000000',
@@ -22,10 +27,10 @@ const theme = createTheme({
 });
 
 // Styled components for visual cues
-const StyledChip = styled(Chip)(({ selected, shadowColor }) => ({
+const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   margin: '4px',
-  boxShadow: selected ? `0 0 10px ${shadowColor}` : 'none',
-  borderColor: selected ? shadowColor : '#ccc',
+  boxShadow: selected ? `0 0 10px ${shadowcolor}` : 'none',
+  borderColor: selected ? shadowcolor : '#ccc',
   borderRadius: '50%',
   width: 60,
   height: 60,
@@ -39,20 +44,20 @@ const StyledChip = styled(Chip)(({ selected, shadowColor }) => ({
 }));
 
 const StyledTextField = styled(TextField)({
-  width: '250px', // Set to a smaller width (you can adjust this value)
-  margin: '10px auto', // Add margin to center and space out the text field
+  width: '250px', 
+  margin: '10px auto', 
   '& input': {
     color: colors.turquoise,
     fontFamily: 'Orbitron, sans-serif',
     fontSize: '12px',
-    height: '30px', // Set the height (adjust as needed)
-    padding: '0 14px', // Adjust padding to vertically center text
-    boxSizing: 'border-box', // Ensure padding is included in the height calculation
+    height: '30px',
+    padding: '0 14px', 
+    boxSizing: 'border-box',
     display: 'flex',
-    alignItems: 'center', // Vertically center the text
+    alignItems: 'center', 
     '&::placeholder': {
-      color: colors.turquoise, // Set the color of the placeholder text
-      fontSize: '12px', // Set the size of the placeholder text
+      color: colors.turquoise,
+      fontSize: '12px',
     },
   },
   '& .MuiOutlinedInput-root': {
@@ -65,12 +70,12 @@ const StyledTextField = styled(TextField)({
     '&.Mui-focused fieldset': {
       borderColor: colors.turquoise,
     },
-    height: '40px', // Ensure the outer container matches the input height
+    height: '40px', 
     display: 'flex',
-    alignItems: 'center', // Vertically center the text within the input field
+    alignItems: 'center', 
   },
   '.MuiFormLabel-root': {
-    display: 'none', // Remove the label
+    display: 'none',
   },
 });
 
@@ -85,43 +90,9 @@ const StyledButton = styled(Button)({
   },
 });
 
-const icons = {
-  python: '/src/assets/icons/python.svg',
-  javascript: '/src/assets/icons/javascript.svg',
-  r: '/src/assets/icons/r.svg',
-  java: '/src/assets/icons/java.svg',
-  cplusplus: '/src/assets/icons/cplusplus.svg',
-  typescript: '/src/assets/icons/typescript.svg',
-  kotlin: '/src/assets/icons/kotlin.svg',
-  swift: '/src/assets/icons/swift.svg',
-  scala: '/src/assets/icons/scala.svg',
-  julia: '/src/assets/icons/julia.svg',
-  ml: 'ML',
-  dl: 'DL',
-  nlp: 'NLP',
-  cv: 'CV',
-  robotics: 'R',
-  ds: 'DS',
-  healthcare: '/src/assets/icons/healthcare.png',
-  gaming: '/src/assets/icons/gaming.png',
-  finance: '/src/assets/icons/finance.png',
-  av: '/src/assets/icons/autonomous-vehicles.png',
-  quantum: '/src/assets/icons/quantum-ai.png',
-  security: '/src/assets/icons/security.png',
-  edge: '/src/assets/icons/edge-ai.png',
-  gpt: '/src/assets/icons/gpt.svg',
-  llama: '/src/assets/icons/mistral.svg',
-  pytorch: '/src/assets/icons/pytorch.svg',
-  tensorflow: '/src/assets/icons/tensorflow.svg',
-  gemini: '/src/assets/icons/gemini.svg',
-  mistral: '/src/assets/icons/mistral.svg',
-  'github-copilot': '/src/assets/icons/github-copilot.svg',
-  opencv: '/src/assets/icons/opencv.svg',
-  'apache-kafka': '/src/assets/icons/apachekafka.svg'
-};
-
-function CreateWorkerPage() {
+function CreateWorkerPage({ workerOptions }) {
   const [profilePic, setProfilePic] = useState(null);
+  const [profilePicFile, setProfilePicFile] = useState(null);
   const [fullName, setFullName] = useState('');
   const [selectedLangs, setSelectedLangs] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
@@ -129,7 +100,9 @@ function CreateWorkerPage() {
   const [selectedTools, setSelectedTools] = useState([]);
 
   const handleProfilePicChange = (e) => {
-    setProfilePic(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files[0];
+    setProfilePic(URL.createObjectURL(file));
+    setProfilePicFile(file);
   };
 
   const handleSelect = (item, setSelected, selected) => {
@@ -140,10 +113,55 @@ function CreateWorkerPage() {
     }
   };
 
-  const programmingLanguages = ['python', 'javascript', 'r', 'java', 'cplusplus', 'typescript', 'kotlin', 'swift', 'scala', 'julia'];
-  const generalizedAI = ['ml', 'dl', 'nlp', 'cv', 'r', 'ds'];
-  const specializedAI = ['healthcare', 'gaming', 'finance', 'av', 'quantum', 'security', 'edge'];
-  const aiTools = ['gpt', 'llama', 'pytorch', 'tensorflow', 'gemini', 'mistral', 'github-copilot', 'opencv', 'apache-kafka'];
+  const handleSubmit = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('fullName', fullName);
+      formData.append('programmingLanguagesIds', JSON.stringify(selectedLangs));
+      formData.append('generalizedAiBranches', JSON.stringify(selectedBranches));
+      formData.append('specializedAiApplicationsIds', JSON.stringify(selectedApps));
+      formData.append('aiToolsIds', JSON.stringify(selectedTools));
+  
+      if (profilePicFile) {
+        formData.append('profilePic', profilePicFile);
+      }
+  
+      // Log each entry in the FormData
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+  
+      // Send data to Python backend for analysis
+      const analysisResponse = await axios.post('http://localhost:3001/analyzeWorkerData', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      console.log('analysisResponse', analysisResponse);
+  
+      // // Evaluate the response from the Python backend
+      // if (analysisResponse.data.success) {
+      //   // If analysis is successful, submit the form data to createWorker
+      //   const createWorkerResponse = await axios.post('http://localhost:3000/createWorker', formData, {
+      //     headers: {
+      //       'Content-Type': 'multipart/form-data'
+      //     }
+      //   });
+      //   alert('Worker created successfully!');
+      // } else {
+      //   // Handle failure in analysis
+      //   alert('Worker analysis failed. Please check your data.');
+      // }
+    } catch (error) {
+      console.error('Error processing worker data:', error);
+      alert('Failed to process worker data.');
+    }
+  };
+
+  if (!workerOptions) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -172,16 +190,16 @@ function CreateWorkerPage() {
             onChange={(e) => setFullName(e.target.value)}
           />
           <Grid container spacing={1} justifyContent="center">
-            {programmingLanguages.map(lang => (
-              <Grid item key={lang}>
-                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{lang.charAt(0).toUpperCase() + lang.slice(1)}</span>}>
+            {workerOptions.programming_languages.map(lang => (
+              <Grid item key={lang.id}>
+                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{lang.name.charAt(0).toUpperCase() + lang.name.slice(1)}</span>}>
                   <StyledChip
-                    label={<img src={icons[lang]} alt={lang} style={{ width: 24, height: 24 }} />}
+                    label={<img src={lang.icon_url} alt={lang.name} style={{ width: 24, height: 24 }} />}
                     variant="outlined"
                     clickable
-                    selected={selectedLangs.includes(lang)}
-                    onClick={() => handleSelect(lang, setSelectedLangs, selectedLangs)}
-                    shadowColor={colors.green}
+                    selected={selectedLangs.includes(lang.id)}
+                    onClick={() => handleSelect(lang.id, setSelectedLangs, selectedLangs)}
+                    shadowcolor={colors.green}
                     sx={{ borderColor: colors.green, height: 50, width: 50 }}
                   />
                 </Tippy>
@@ -189,16 +207,16 @@ function CreateWorkerPage() {
             ))}
           </Grid>
           <Grid container spacing={1} justifyContent="center" sx={{ marginTop: 2 }}>
-            {generalizedAI.map(branch => (
-              <Grid item key={branch}>
-                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{branch === 'ml' ? 'Machine Learning' : branch === 'dl' ? 'Deep Learning' : branch === 'nlp' ? 'Natural Language Processing' : branch === 'cv' ? 'Computer Vision' : branch === 'r' ? 'Robotics' : 'Data Science'}</span>}>
+            {workerOptions.generalized_ai_branches.map(branch => (
+              <Grid item key={branch.id}>
+                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{branch.name}</span>}>
                   <StyledChip
-                    label={<Avatar sx={{ bgcolor: 'blue', height: 30, width: 30 }}><span style={{ fontFamily: 'Orbitron', fontSize: '12px'}}>{branch.toUpperCase()}</span></Avatar>}
+                    label={<Avatar sx={{ bgcolor: 'blue', height: 30, width: 30 }}><span style={{ fontFamily: 'Orbitron', fontSize: '12px'}}>{getInitials(branch.name)}</span></Avatar>}
                     variant="outlined"
                     clickable
-                    selected={selectedBranches.includes(branch)}
-                    onClick={() => handleSelect(branch, setSelectedBranches, selectedBranches)}
-                    shadowColor={colors.vividBlue}
+                    selected={selectedBranches.includes(branch.id)}
+                    onClick={() => handleSelect(branch.id, setSelectedBranches, selectedBranches)}
+                    shadowcolor={colors.vividBlue}
                     sx={{ borderColor: colors.vividBlue, height: 50, width: 50 }}
                   />
                 </Tippy>
@@ -206,16 +224,16 @@ function CreateWorkerPage() {
             ))}
           </Grid>
           <Grid container spacing={1} justifyContent="center" sx={{ marginTop: 2 }}>
-            {specializedAI.map(app => (
-              <Grid item key={app}>
-                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{app !== 'av' ? app.charAt(0).toUpperCase() + app.slice(1) : "Autonomous Vehicles"}</span>}>
+            {workerOptions.specialized_ai_applications.map(app => (
+              <Grid item key={app.id}>
+                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{app.name}</span>}>
                   <StyledChip
-                    label={<img src={icons[app]} alt={app} style={{ width: 24, height: 24 }} />}
+                    label={<img src={app.icon_url} alt={app.name} style={{ width: 24, height: 24 }} />}
                     variant="outlined"
                     clickable
-                    selected={selectedApps.includes(app)}
-                    onClick={() => handleSelect(app, setSelectedApps, selectedApps)}
-                    shadowColor={colors.purple}
+                    selected={selectedApps.includes(app.id)}
+                    onClick={() => handleSelect(app.id, setSelectedApps, selectedApps)}
+                    shadowcolor={colors.purple}
                     sx={{ borderColor: colors.purple, height: 50, width: 50, pr: 0, pl: 0 }}
                   />
                 </Tippy>
@@ -223,23 +241,23 @@ function CreateWorkerPage() {
             ))}
           </Grid>
           <Grid container spacing={1} justifyContent="center" sx={{ marginTop: 2 }}>
-            {aiTools.map(tool => (
-              <Grid item key={tool}>
-                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{tool.charAt(0).toUpperCase() + tool.slice(1).replace('-', ' ')}</span>}>
+            {workerOptions.ai_tools.map(tool => (
+              <Grid item key={tool.id}>
+                <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{tool.name}</span>}>
                   <StyledChip
-                    label={<img src={icons[tool]} alt={tool} style={{ width: 24, height: 24 }} />}
+                    label={<img src={tool.icon_url} alt={tool.name} style={{ width: 24, height: 24 }} />}
                     variant="outlined"
                     clickable
-                    selected={selectedTools.includes(tool)}
-                    onClick={() => handleSelect(tool, setSelectedTools, selectedTools)}
-                    shadowColor={colors.yellow}
+                    selected={selectedTools.includes(tool.id)}
+                    onClick={() => handleSelect(tool.id, setSelectedTools, selectedTools)}
+                    shadowcolor={colors.yellow}
                     sx={{ borderColor: colors.yellow, height: 50, width: 50 }}
                   />
                 </Tippy>
               </Grid>
             ))}
           </Grid>
-          <StyledButton variant="outlined" sx={{ marginTop: 4 }}>Submit</StyledButton>
+          <StyledButton variant="outlined" sx={{ marginTop: 4 }} onClick={handleSubmit}>Submit</StyledButton>
         </Box>
       </div>
     </ThemeProvider>
