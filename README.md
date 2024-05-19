@@ -76,6 +76,7 @@ isari-ai/
 ├── package.json
 ├── requirements.txt
 ├── README.md
+├── LICENSE
 └── ...
 ```
 
