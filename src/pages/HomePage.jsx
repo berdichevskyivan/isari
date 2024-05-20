@@ -24,10 +24,10 @@ import 'tippy.js/dist/tippy.css'; // This imports default styles
 function CustomCard({ title, content, imageUrl }) {
   return (
     <Card sx={{ width: 250, height: 300, m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'black', overflow: 'hidden' }} className="worker-card">
-      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', pt: 2 }}>
+      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
         <Avatar src={imageUrl} alt={title} sx={{ width: 40, height: 40 }} />
         <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '18px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
-          John Green
+          Ivan Berdichevsky
           {/* Later retrieve the names for the cards from the DB */}
         </Typography>
       </Box>

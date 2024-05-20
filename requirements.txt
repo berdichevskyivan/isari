@@ -1,2 +1,8 @@
-Flask
-flask-cors
+Flask==2.0.2
+Flask-Cors==3.0.10
+opencv-python-headless==4.5.5.64
+tensorflow==2.9.0
+keras==2.9.0
+deepface==0.0.75
+numpy==1.22.4
+keras-cv==0.3.0

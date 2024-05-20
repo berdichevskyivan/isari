@@ -140,19 +140,19 @@ function CreateWorkerPage({ workerOptions }) {
 
       console.log('analysisResponse', analysisResponse);
   
-      // // Evaluate the response from the Python backend
-      // if (analysisResponse.data.success) {
-      //   // If analysis is successful, submit the form data to createWorker
-      //   const createWorkerResponse = await axios.post('http://localhost:3000/createWorker', formData, {
-      //     headers: {
-      //       'Content-Type': 'multipart/form-data'
-      //     }
-      //   });
-      //   alert('Worker created successfully!');
-      // } else {
-      //   // Handle failure in analysis
-      //   alert('Worker analysis failed. Please check your data.');
-      // }
+      // Evaluate the response from the Python backend
+      if (analysisResponse.data.success) {
+        // If analysis is successful, submit the form data to createWorker
+        const createWorkerResponse = await axios.post('http://localhost:3000/createWorker', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        alert('Worker created successfully!');
+      } else {
+        // Handle failure in analysis
+        alert('Worker analysis failed. Please check your data.');
+      }
     } catch (error) {
       console.error('Error processing worker data:', error);
       alert('Failed to process worker data.');
