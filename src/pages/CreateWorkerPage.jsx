@@ -4,6 +4,7 @@ import { Button, TextField, Avatar, Chip, Grid, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 
@@ -160,7 +161,7 @@ function CreateWorkerPage({ workerOptions }) {
   };
 
   if (!workerOptions) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return (
