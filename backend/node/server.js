@@ -5,6 +5,8 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';  // For handling multipart/form-data
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -40,7 +42,14 @@ const io = new Server(server, {
 });
 
 // Configure Multer for handling file uploads and other fields
-const upload = multer();
+const storage = multer.diskStorage({
+  destination: './uploads/', // Directory to store uploaded images
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Existing fetchWorkerOptions function
 async function fetchWorkerOptions(req, res) {
@@ -98,35 +107,67 @@ async function fetchWorkerOptions(req, res) {
 app.get('/fetchWorkerOptions', fetchWorkerOptions);
 
 // New route for creating a worker
-app.post('/createWorker', upload.fields([
-  { name: 'profilePic', maxCount: 1 },
-  { name: 'fullName' },
-  { name: 'programmingLanguagesIds' },
-  { name: 'generalizedAiBranches' },
-  { name: 'specializedAiApplicationsIds' },
-  { name: 'aiToolsIds' }
-]), async (req, res) => {
+app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
     console.log('createWorker called');
-    console.log('req.body', req.body);
-    console.log(req.files['profilePic'] ? req.files['profilePic'][0] : null);
 
-    // const { fullName, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
-    // const profilePic = req.files['profilePic'] ? req.files['profilePic'][0] : null;
+    const { fullName, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
+    const profilePic = req.file;
 
-    // try {
-    //     const createWorkerQuery = sql`
-    //         INSERT INTO workers (full_name, programming_languages_ids, generalized_ai_branches, specialized_ai_applications_ids, ai_tools_ids, profile_pic)
-    //         VALUES (${fullName}, ${sql.json(programmingLanguagesIds)}, ${sql.json(generalizedAiBranches)}, ${sql.json(specializedAiApplicationsIds)}, ${sql.json(aiToolsIds)}, ${profilePic ? profilePic.filename : null})
-    //         RETURNING id
-    //     `;
-    //     const result = await pool.query(createWorkerQuery);
-    //     const workerId = result.rows[0].id;
+    try {
+        // Insert user data into workers table with default values for email and password
+        const createWorkerQuery = sql.fragment`
+            INSERT INTO workers (name, email, password, github_url, profile_picture_url, wallet_address)
+            VALUES (${fullName}, '', '', '', ${null}, '')
+            RETURNING id
+        `;
+        const result = await pool.query(createWorkerQuery);
+        const workerId = result.rows[0].id;
 
-    //     res.json({ success: true, message: 'Worker created successfully', workerId });
-    // } catch (error) {
-    //     console.error('Error creating worker:', error.message);
-    //     res.status(500).json({ success: false, message: 'Internal Server Error' });
-    // }
+        // If profile picture is provided, rename the file and update the worker record
+        if (profilePic) {
+            const sanitizedFullName = fullName.replace(/\s+/g, '-').toLowerCase();
+            const profilePicUrl = `${workerId}-${sanitizedFullName}${path.extname(profilePic.originalname)}`;
+            const oldPath = profilePic.path;
+            const newPath = path.join('./uploads/', profilePicUrl);
+
+            fs.renameSync(oldPath, newPath);
+
+            // Update worker with the profile picture URL
+            const updateWorkerQuery = sql.fragment`
+                UPDATE workers
+                SET profile_picture_url = ${profilePicUrl}
+                WHERE id = ${workerId}
+            `;
+            await pool.query(updateWorkerQuery);
+        }
+
+        // Insert data into relational tables with correct column names
+        const insertRelationalData = async (tableName, workerId, ids, columnName) => {
+            for (const id of ids) {
+                const query = sql.fragment`
+                    INSERT INTO ${sql.identifier([tableName])} (worker_id, ${sql.identifier([columnName])})
+                    VALUES (${workerId}, ${id})
+                `;
+                await pool.query(query);
+            }
+        };
+
+        await insertRelationalData('worker_programming_languages', workerId, JSON.parse(programmingLanguagesIds), 'programming_language_id');
+        await insertRelationalData('worker_generalized_ai_branches', workerId, JSON.parse(generalizedAiBranches), 'ai_branch_id');
+        await insertRelationalData('worker_specialized_ai_applications', workerId, JSON.parse(specializedAiApplicationsIds), 'ai_application_id');
+        await insertRelationalData('worker_ai_tools', workerId, JSON.parse(aiToolsIds), 'ai_tool_id');
+
+        console.log('Worker created successfully');
+        res.json({ success: true, message: 'Worker created successfully', workerId });
+    } catch (error) {
+        console.error('Error creating worker:', error.message);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+
+        // Remove the uploaded file if it exists and there was an error
+        if (profilePic && fs.existsSync(profilePic.path)) {
+            fs.unlinkSync(profilePic.path);
+        }
+    }
 });
 
 io.on('connection', (socket) => {

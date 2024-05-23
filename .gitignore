@@ -25,3 +25,6 @@ dist-ssr
 
 **/*.env
 *.env
+
+# Ignore uploads directory
+/backend/node/uploads/
