@@ -12,6 +12,7 @@ import { socket } from './socket';
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [workers, setWorkers] = useState([]);
   const [workerOptions, setWorkerOptions] = useState(null);
 
   useEffect(() => {
@@ -25,6 +26,11 @@ function App() {
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+
+    socket.on('updateWorkers', (data) => {
+      console.log('updateWorkers called: ', data);
+      setWorkers(data);
+    })
 
     return () => {
       socket.off('connect', onConnect);
@@ -68,7 +74,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
         <Route path="/work" element={<WorkPage />} />
         <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
         <Route path="/worker-dashboard" element={<WorkerDashboardPage />} />

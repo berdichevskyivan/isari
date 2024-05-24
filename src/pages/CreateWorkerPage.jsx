@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button, TextField, Avatar, Chip, Grid, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -92,6 +93,9 @@ const StyledButton = styled(Button)({
 });
 
 function CreateWorkerPage({ workerOptions }) {
+
+  const navigate = useNavigate();
+
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [fullName, setFullName] = useState('');
@@ -150,6 +154,7 @@ function CreateWorkerPage({ workerOptions }) {
           }
         });
         alert('Worker created successfully!');
+        navigate('/');
       } else {
         // Handle failure in analysis
         alert('Worker analysis failed. Please check your data.');

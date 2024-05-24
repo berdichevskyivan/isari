@@ -2,7 +2,7 @@
 CREATE TABLE workers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     github_url VARCHAR(255),
     profile_picture_url VARCHAR(255),

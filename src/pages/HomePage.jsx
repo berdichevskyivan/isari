@@ -18,42 +18,65 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import MessageIcon from '@mui/icons-material/Message';
 import InfoIcon from '@mui/icons-material/Info';
 import ShareIcon from '@mui/icons-material/Share';
+import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css'; // This imports default styles
 
-function CustomCard({ title, content, imageUrl }) {
+function getInitials(input) {
+  return input.split(' ').map(word => word[0]).join('');
+}
+
+function CustomCard({ worker, workerOptions }) {
+  console.log('this is worker! -> ', worker);
   return (
     <Card sx={{ width: 250, height: 300, m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'black', overflow: 'hidden' }} className="worker-card">
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
-        <Avatar src={imageUrl} alt={title} sx={{ width: 40, height: 40 }} />
+        <Avatar src={`http://localhost:3000/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
         <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '18px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
-          Ivan Berdichevsky
-          {/* Later retrieve the names for the cards from the DB */}
+          { worker.name }
         </Typography>
       </Box>
       <CardContent sx={{ flexGrow: 1, width: '100%', pt: 0 }}>
+        {/* Programming Languages */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', mt: 2, ml: '.5rem' }}>
           <DataArrayIcon sx={{ height: 30, width: 30, color: '#00CC00'}} />
-          <img src={pythonIcon} alt="python-logo" width={30} height={30} className="category-icon"/>
+          { worker.programming_languages?.length > 0 && worker.programming_languages.map(pl => (
+            <Tippy key={`programming_language_${pl}`} content={<span style={{ fontFamily: 'Orbitron' }}>{ workerOptions.programming_languages.find(pl2 => pl2.id === pl).name }</span>}>
+              <img key={`programming_language_${pl}`} src={workerOptions.programming_languages.find(pl2 => pl2.id === pl).icon_url} alt="programming-language-logo" width={30} height={30} className="category-icon"/>
+            </Tippy>
+          )) }
         </Box>
+        
+        {/* Generalized AI Branches */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
           <HubIcon sx={{ height: 30, width: 30, color: '#007FFF'}} />
-          <Avatar sx={{ bgcolor: 'blue', height: 30, width: 30 }} className="category-icon"><span style={{ fontFamily: 'Orbitron', fontSize: '12px' }}>ML</span></Avatar>
+          { worker.generalized_ai_branches?.length > 0 && worker.generalized_ai_branches.map(branch => (
+            <Tippy key={`generalized_ai_branch_${branch}`} content={<span style={{ fontFamily: 'Orbitron' }}>{ workerOptions.generalized_ai_branches.find(branch2 => branch2.id === branch).name }</span>}>
+              <Avatar sx={{ bgcolor: 'blue', height: 30, width: 30 }} className="category-icon"><span style={{ fontFamily: 'Orbitron', fontSize: '12px' }}>{ getInitials(workerOptions.generalized_ai_branches.find(branch2 => branch2.id === branch).name) }</span></Avatar>
+            </Tippy>
+          )) }
         </Box>
+
+        {/* Specialized AI Applications */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
           <CenterFocusStrongIcon sx={{ height: 30, width: 30, color: '#7D26CD'}} />
-          <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>Healthcare</span>}>
-            <img src={healthcareIcon} alt="healthcare-logo" width={30} height={30} className="category-icon" />
-          </Tippy>
-          <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>Gaming</span>}>
-            <img src={gamingIcon} alt="gaming-logo" width={30} height={30} className="category-icon" />
-          </Tippy>
+          { worker.specialized_ai_applications?.length > 0 && worker.specialized_ai_applications.map(application => (
+            <Tippy key={`specialized_ai_application_${application}`} content={<span style={{ fontFamily: 'Orbitron' }}>{ workerOptions.specialized_ai_applications.find(application2 => application2.id === application).name }</span>}>
+              <img key={`specialized_ai_application_${application}`} src={workerOptions.specialized_ai_applications.find(application2 => application2.id === application).icon_url} alt="specialized-ai-application-logo" width={30} height={30} className="category-icon"/>
+            </Tippy>
+          )) }
         </Box>
+
+        {/* AI Tools */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
           <ArchitectureIcon sx={{ height: 30, width: 30, color: '#FFD700'}} />
-          <img src={chatGptIcon} alt="gpt-logo" width={30} height={30} className="category-icon"/>
-          <img src={metaLlamaIcon} alt="llama-logo" width={30} height={30} className="category-icon"/>
+          { worker.ai_tools?.length > 0 && worker.ai_tools.map(tool => (
+            <Tippy key={`ai_tool_${tool}`} content={<span style={{ fontFamily: 'Orbitron' }}>{ workerOptions.ai_tools.find(tool2 => tool2.id === tool).name }</span>}>
+              <img key={`ai_tool_${tool}`} src={workerOptions.ai_tools.find(tool2 => tool2.id === tool).icon_url} alt="ai-tool-logo" width={30} height={30} className="category-icon"/>
+            </Tippy>
+          )) }
         </Box>
+        
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', pt: 2, ml: '.5rem' }}>
           <div>
             <AccountBalanceWalletIcon sx={{ height: 30, width: 30, color: '#9a4400'}} />
@@ -72,18 +95,17 @@ function CustomCard({ title, content, imageUrl }) {
   );
 }
 
-function HomePage() {
+function HomePage({ workers, workerOptions }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
-  const gridColumns = matches ? 'repeat(auto-fit, minmax(250px, 1fr))' : '1fr';
+  const gridColumns = matches ? 'repeat(auto-fill, minmax(250px, 1fr))' : '1fr';
 
-  const cards = Array.from({ length: 70 }, (_, i) => ({
-    id: i + 1,
-    title: `Card ${i + 1}`,
-    content: "Content here",
-    imageUrl: profilePicUrl, // Replace with actual image paths
-  }));
+  if (!workerOptions) {
+    return <Loading />;
+  }
+
+  console.log('workerOptions: ', workerOptions);
 
   return (
     <div style={{
@@ -100,17 +122,17 @@ function HomePage() {
         gridTemplateColumns: gridColumns,
         justifyContent: 'center',  // center the items when fewer
         padding: 2,
-        gridGap: '8px',
-        rowGap: '8px',
-        columnGap: '8px',
+        gap: '16px',  // Use gap for both row and column gaps
         marginBottom: '80px'  // This extra margin accounts for the height of the dashboard
       }}>
-        {cards.map((card) => (
-          <Grid item key={card.id} sx={{ justifySelf: 'center' }}>
+        {workers.length === 0 && 
+          <h1>There are no workers</h1>
+        }
+        {workers.length > 0 && workers.map((worker) => (
+          <Grid item key={worker.id} sx={{ justifySelf: 'center' }}>
             <CustomCard
-              title={card.title}
-              content={card.content}
-              imageUrl={card.imageUrl}
+              worker={worker}
+              workerOptions={workerOptions}
             />
           </Grid>
         ))}

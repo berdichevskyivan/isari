@@ -6,7 +6,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';  // For handling multipart/form-data
 import fs from 'fs';
-import path from 'path';
+import { dirname, join, extname } from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -14,6 +15,12 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Serve static files from the backend/uploads folder
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
 const server = createServer(app);
 
@@ -50,6 +57,51 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+async function fetchAndEmitWorkerInfo(socket) {
+    try {
+        const workersQuery = sql.fragment`
+            SELECT w.id, w.name, w.profile_picture_url,
+                array_agg(DISTINCT pl.id) as programming_languages,
+                array_agg(DISTINCT g.id) as generalized_ai_branches,
+                array_agg(DISTINCT sa.id) as specialized_ai_applications,
+                array_agg(DISTINCT at.id) as ai_tools
+            FROM workers w
+            LEFT JOIN worker_programming_languages wpl ON w.id = wpl.worker_id
+            LEFT JOIN programming_languages pl ON wpl.programming_language_id = pl.id
+            LEFT JOIN worker_generalized_ai_branches wgb ON w.id = wgb.worker_id
+            LEFT JOIN generalized_ai_branches g ON wgb.ai_branch_id = g.id
+            LEFT JOIN worker_specialized_ai_applications wsa ON w.id = wsa.worker_id
+            LEFT JOIN specialized_ai_applications sa ON wsa.ai_application_id = sa.id
+            LEFT JOIN worker_ai_tools wat ON w.id = wat.worker_id
+            LEFT JOIN ai_tools at ON wat.ai_tool_id = at.id
+            GROUP BY w.id
+            ORDER BY w.id ASC
+        `;
+        
+        const result = await pool.query(workersQuery);
+        
+        const workers = result.rows.map(row => ({
+            id: row.id,
+            name: row.name.trim(),
+            profile_picture_url: row.profile_picture_url.trim(),
+            programming_languages: row.programming_languages.filter(Boolean),
+            generalized_ai_branches: row.generalized_ai_branches.filter(Boolean),
+            specialized_ai_applications: row.specialized_ai_applications.filter(Boolean),
+            ai_tools: row.ai_tools.filter(Boolean)
+        }));
+        
+        console.log('emitting updateWorkers', workers);
+        if(socket){
+          socket.emit('updateWorkers', workers);
+        }else{
+          io.emit('updateWorkers', workers);
+        }
+        console.log('Emitted worker information to all clients');
+    } catch (error) {
+        console.error('Error fetching worker information:', error.message);
+    }
+}
 
 // Existing fetchWorkerOptions function
 async function fetchWorkerOptions(req, res) {
@@ -92,12 +144,15 @@ async function fetchWorkerOptions(req, res) {
             icon_url: row.icon_url?.trim() || ''
         }));
 
-        res.json({
+        const workerOptions = {
             programming_languages: sanitizedProgrammingLanguages,
             generalized_ai_branches: sanitizedGeneralizedAiBranches,
             specialized_ai_applications: sanitizedSpecializedAiApplications,
             ai_tools: sanitizedAiTools
-        });
+        }
+        // console.log('emitting workerOptions: ', workerOptions);
+        console.log('emitting workerOptions')
+        res.json(workerOptions);
     } catch (error) {
         console.error('Error fetching worker options:', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -113,22 +168,34 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
     const { fullName, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
     const profilePic = req.file;
 
+    console.log('fullName:', fullName);
+    console.log('profilePic:', profilePic);
+
     try {
+        // Ensure fullName is defined and a string
+        if (!fullName || typeof fullName !== 'string') {
+            throw new Error('Invalid fullName');
+        }
+
         // Insert user data into workers table with default values for email and password
         const createWorkerQuery = sql.fragment`
             INSERT INTO workers (name, email, password, github_url, profile_picture_url, wallet_address)
-            VALUES (${fullName}, '', '', '', ${null}, '')
+            VALUES (${fullName}, '', '', '', ${''}, '')
             RETURNING id
         `;
-        const result = await pool.query(createWorkerQuery);
-        const workerId = result.rows[0].id;
+        
+        const result = await pool.one(createWorkerQuery);
+        const workerId = result.id;
 
         // If profile picture is provided, rename the file and update the worker record
         if (profilePic) {
             const sanitizedFullName = fullName.replace(/\s+/g, '-').toLowerCase();
-            const profilePicUrl = `${workerId}-${sanitizedFullName}${path.extname(profilePic.originalname)}`;
+            const profilePicUrl = `${workerId}-${sanitizedFullName}${extname(profilePic.originalname)}`;
             const oldPath = profilePic.path;
-            const newPath = path.join('./uploads/', profilePicUrl);
+            const newPath = join(__dirname, 'uploads', profilePicUrl);
+
+            console.log('oldPath:', oldPath);
+            console.log('newPath:', newPath);
 
             fs.renameSync(oldPath, newPath);
 
@@ -143,6 +210,8 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
 
         // Insert data into relational tables with correct column names
         const insertRelationalData = async (tableName, workerId, ids, columnName) => {
+            console.log(`Inserting into ${tableName} for worker ${workerId}:`, ids);
+
             for (const id of ids) {
                 const query = sql.fragment`
                     INSERT INTO ${sql.identifier([tableName])} (worker_id, ${sql.identifier([columnName])})
@@ -158,9 +227,23 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
         await insertRelationalData('worker_ai_tools', workerId, JSON.parse(aiToolsIds), 'ai_tool_id');
 
         console.log('Worker created successfully');
+        // Emitting the information to the whole network
+        fetchAndEmitWorkerInfo();
         res.json({ success: true, message: 'Worker created successfully', workerId });
     } catch (error) {
         console.error('Error creating worker:', error.message);
+
+        // Log detailed error information
+        if (error.constraint) {
+            console.error(`Constraint violation: ${error.constraint}`);
+        }
+        if (error.detail) {
+            console.error(`Error details: ${error.detail}`);
+        }
+        if (error.table) {
+            console.error(`Table: ${error.table}`);
+        }
+
         res.status(500).json({ success: false, message: 'Internal Server Error' });
 
         // Remove the uploaded file if it exists and there was an error
@@ -172,7 +255,18 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
 
 io.on('connection', (socket) => {
     console.log('a user connected');
+
+    // When user connects, I send the workers info, but to the socket.
+    fetchAndEmitWorkerInfo(socket);
+
+    socket.on('disconnect', () => {
+        console.log('a user disconnected');
+    });
 });
+
+// Start emitting worker information periodically
+const EMIT_INTERVAL = 30000; // 30 seconds
+setInterval(fetchAndEmitWorkerInfo, EMIT_INTERVAL);
 
 server.listen(3000, () => {
     console.log('server running at http://localhost:3000');
