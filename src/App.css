@@ -1,3 +1,53 @@
+/* Define initial colors for the gradient */
+:root {
+  --magic-rainbow-color-0: hsl(0deg, 100%, 50%);
+  --magic-rainbow-color-1: hsl(120deg, 100%, 50%);
+  --magic-rainbow-color-2: hsl(240deg, 100%, 50%);
+}
+
+/* Define keyframes to animate the custom properties */
+@keyframes shift {
+  0% {
+    --magic-rainbow-color-0: hsl(0deg, 100%, 50%);
+    --magic-rainbow-color-1: hsl(120deg, 100%, 50%);
+    --magic-rainbow-color-2: hsl(240deg, 100%, 50%);
+  }
+  33% {
+    --magic-rainbow-color-0: hsl(120deg, 100%, 50%);
+    --magic-rainbow-color-1: hsl(240deg, 100%, 50%);
+    --magic-rainbow-color-2: hsl(360deg, 100%, 50%);
+  }
+  66% {
+    --magic-rainbow-color-0: hsl(240deg, 100%, 50%);
+    --magic-rainbow-color-1: hsl(360deg, 100%, 50%);
+    --magic-rainbow-color-2: hsl(120deg, 100%, 50%);
+  }
+  100% {
+    --magic-rainbow-color-0: hsl(0deg, 100%, 50%);
+    --magic-rainbow-color-1: hsl(120deg, 100%, 50%);
+    --magic-rainbow-color-2: hsl(240deg, 100%, 50%);
+  }
+}
+
+.starry-sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: black;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+}
+
 /* Enhanced CSS for hiding scrollbars */
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
@@ -17,10 +67,25 @@
   background-color: white;
   padding: 10px 20px;  /* Provides padding around the content */
   min-height: 50px;  /* Ensures at least 50px height, but can expand if needed */
-  border-top: 1px solid purple;
   display: flex;
   align-items: center;  /* Vertically centers content within the bar */
   justify-content: space-between;  /* Adjust spacing between elements in the bar */
+}
+
+.stickyBar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;  /* Adjust height of the border as needed */
+  background: linear-gradient(
+    90deg,
+    var(--magic-rainbow-color-0),
+    var(--magic-rainbow-color-1),
+    var(--magic-rainbow-color-2)
+  ) !important;
+  animation: shift 20s infinite linear;
 }
 
 .bottomBar {

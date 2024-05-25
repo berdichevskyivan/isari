@@ -7,12 +7,7 @@ import DataArrayIcon from '@mui/icons-material/DataArray';
 import HubIcon from '@mui/icons-material/Hub';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
-import profilePicUrl from '../assets/profile-pic.png';
-import pythonIcon from '../assets/icons/python.svg';
-import healthcareIcon from '../assets/icons/healthcare.png';
-import gamingIcon from '../assets/icons/gaming.png';
-import chatGptIcon from '../assets/icons/gpt.svg';
-import metaLlamaIcon from '../assets/icons/meta.svg';
+import StarrySky from '../components/StarrySky';  // Ensure the correct path
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import MessageIcon from '@mui/icons-material/Message';
@@ -29,10 +24,10 @@ function getInitials(input) {
 function CustomCard({ worker, workerOptions }) {
   console.log('this is worker! -> ', worker);
   return (
-    <Card sx={{ width: 250, height: 300, m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'black', overflow: 'hidden' }} className="worker-card">
+    <Card sx={{ width: 250, height: 300, m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
         <Avatar src={`http://localhost:3000/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
-        <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '18px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
+        <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
           { worker.name }
         </Typography>
       </Box>
@@ -85,9 +80,9 @@ function CustomCard({ worker, workerOptions }) {
             <QrCode2Icon sx={{ height: 50, width: 50, position: 'relative', top: '-10px', left: '-30px', color: '#00B2AA'}} />
           </div>
           <div style={{ marginRight: '1rem' }}>
-            <MessageIcon sx={{ height: 30, width: 30, color: '#00B2AA'}} />
-            <InfoIcon sx={{ height: 30, width: 30, color: '#00B2AA'}} />
-            <ShareIcon sx={{ height: 30, width: 30, color: '#00B2AA'}} />
+            <MessageIcon sx={{ height: 30, width: 30, color: '#00B2AA', cursor: 'pointer'}} />
+            <InfoIcon sx={{ height: 30, width: 30, color: '#00B2AA', cursor: 'pointer'}} />
+            <ShareIcon sx={{ height: 30, width: 30, color: '#00B2AA', cursor: 'pointer'}} />
           </div>
         </Box>
       </CardContent>
@@ -117,7 +112,10 @@ function HomePage({ workers, workerOptions }) {
         scrollbarWidth: 'none',  // for Firefox
         background: 'black'
     }}>
+      <StarrySky />
       <Grid container sx={{
+        position: 'relative',
+        zIndex: 1,  // Ensure the grid is above the StarrySky
         display: 'grid',
         gridTemplateColumns: gridColumns,
         justifyContent: 'center',  // center the items when fewer
