@@ -85,7 +85,7 @@
     var(--magic-rainbow-color-1),
     var(--magic-rainbow-color-2)
   ) !important;
-  animation: shift 20s infinite linear;
+  animation: shift 12s infinite linear; /* We can vary this depending on some factors */
 }
 
 .bottomBar {
