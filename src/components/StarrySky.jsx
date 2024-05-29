@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSpring, animated } from '@react-spring/web';
 import '../App.css';
 
@@ -31,17 +31,15 @@ const BlinkingStar = ({ style }) => {
 };
 
 const StarrySky = () => {
-  const starsRef = useRef([]);
+  const [stars, setStars] = useState([]);
 
   useEffect(() => {
-    if (starsRef.current.length === 0) {
-      starsRef.current = generateStars(100);
-    }
+    setStars(generateStars(100));
   }, []);
 
   return (
     <div className="starry-sky">
-      {starsRef.current}
+      {stars}
     </div>
   );
 };

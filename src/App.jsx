@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import HomePage from './pages/HomePage';
 import WorkPage from './pages/WorkPage';
+import LorenzPage from './pages/LorenzPage';
 import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboardPage';
 import { socket } from './socket';
@@ -75,6 +76,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
+        <Route path="/lorenz" element={<LorenzPage />} />
         <Route path="/work" element={<WorkPage />} />
         <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
         <Route path="/worker-dashboard" element={<WorkerDashboardPage />} />

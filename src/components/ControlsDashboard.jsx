@@ -83,8 +83,8 @@ function ControlsDashboard() {
                     <span className="dashboard-text">Isari AI</span>
                 </Link>
 
-                <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
-                    <img src="/lorenz-logo.png" alt="Isari AI Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
+                <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
+                    <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
                     <span className="dashboard-text" >Lorenz</span>
                 </Link>
 
