@@ -1,25 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './LorenzPage.css';
 import { Modal, Card, CardContent, Typography, Avatar, Box, Grid, Button, IconButton, TextField, useTheme, useMediaQuery } from '@mui/material';
 import ControlsDashboard from '../components/ControlsDashboard';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 import StarrySky from '../components/StarrySky';  // Ensure the correct path
-
-const colors = {
-  background: '#000000',
-  turquoise: '#00B2AA',
-  purple: '#7D26CD',
-  vividBlue: '#007FFF',
-  yellow: '#FFD700',
-  green: '#00CC00'
-};
-
-const theme = createTheme({
-  typography: {
-    fontFamily: 'Orbitron, sans-serif',
-  },
-});
+import axios from 'axios';
+import { useGlitch } from 'react-powerglitch';
 
 const StyledTextField = styled(TextField)({
   margin: '10px auto', 
@@ -60,8 +47,68 @@ const StyledTextField = styled(TextField)({
 
 function LorenzPage() {
 
-    const [inferenceInput, setInferenceInput] = useState('')
-    const [inferenceOutput, setInferenceOutput] = useState('');
+  const [inferenceStatus, setInferenceStatus] = useState(false);
+  const [inferenceInput, setInferenceInput] = useState('')
+  const [inferenceOutput, setInferenceOutput] = useState('');
+
+  const buttonGlitch = useGlitch({
+    glitchTimeSpan: {
+      start: 0.1,
+      end: 0.3
+    },
+    slice: {
+      count: 6,
+      velocity: 15,
+      hueRotate: false,
+    },
+    shake: {
+      velocity: 15,
+      amplitudeX: 0.2,
+      amplitudeY: 0
+    },
+    timing: {
+      duration: 500
+    },
+    glitchMode: 'none'
+  });
+
+  useEffect(() => {
+    if (inferenceStatus) {
+      buttonGlitch.startGlitch();
+    } else {
+      buttonGlitch.stopGlitch();
+    }
+  }, [inferenceStatus]);
+
+  const handleInference = async () => {
+    try {
+      setInferenceStatus(true);
+      const input_text = inferenceInput;
+  
+      // Send input data to the backend for inference
+      const response = await axios.post('http://localhost:3001/runInference', { input_text }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      // Log the response
+      console.log('Inference Response:', response);
+  
+      if (response.data.success) {
+        // Update inference output
+        setInferenceOutput(response.data.output);
+      } else {
+        // Handle failure in inference
+        alert('Inference failed. Please check your input data.');
+      }
+    } catch (error) {
+      console.error('Error during inference:', error);
+      alert('Failed to process inference.');
+    } finally {
+      setInferenceStatus(false);
+    }
+  };
 
   return (
     <div style={{
@@ -102,7 +149,25 @@ function LorenzPage() {
                     onChange={e => setInferenceInput(e.target.value)}
                     sx={{ marginBottom: 2 }}
                 />
-                <Button variant="contained" color="primary" sx={{ marginRight: '1rem', marginLeft: '1rem', width: '200px', fontFamily: 'Roboto', background: 'black', border: '1px solid blue' }} onClick={() => { }}>
+                <Button
+                 variant="contained"
+                 color="primary"
+                 sx={{
+                  marginRight: '1rem',
+                  marginLeft: '1rem',
+                  width: '200px',
+                  fontFamily: 'Roboto',
+                  background: 'blue',
+                  '&.Mui-disabled': {
+                    color: 'white', // Customize the text color when disabled
+                    background: 'linear-gradient(90deg, var(--magic-rainbow-color-0), var(--magic-rainbow-color-1), var(--magic-rainbow-color-2)) !important', // Linear gradient background
+                    animation: 'shift 1s infinite linear' // Optional animation property
+                  }
+                 }}
+                 onClick={() => { handleInference() }}
+                 disabled={inferenceStatus}
+                 ref={inferenceStatus ? buttonGlitch.ref : null}
+                 >
                     Inference
                 </Button>
                 <StyledTextField

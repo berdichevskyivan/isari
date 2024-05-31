@@ -3,102 +3,28 @@ import torch.nn as nn
 from torch.nn.functional import softmax
 import json
 import os
-import nltk
-from nltk.corpus import words
-from nltk.tokenize import word_tokenize
-
-nltk.download('words')
-
-def build_vocab():
-    """
-    Build vocabulary from the NLTK words corpus including special tokens, symbols, and numbers.
-
-    :return: Dictionary mapping from word to index
-    """
-    # Define special tokens, symbols, and numbers
-    special_tokens = ["<unk>", "<sos>", "<eos>", "<pad>", "<sep>", "<cls>", "<mask>"]
-    symbols = list("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")
-    numbers = [str(i) for i in range(10)]
-
-    # Initialize vocabulary with special tokens, symbols, and numbers
-    vocab = {token: idx for idx, token in enumerate(special_tokens + symbols + numbers)}
-    print(f"Initial vocab (special tokens, symbols, numbers): {len(vocab)}")
-
-    # Add words from the NLTK words corpus
-    word_list = words.words()
-    word_offset = len(vocab)
-
-    print(f"Starting to add words from NLTK corpus, word offset: {word_offset}")
-
-    # Use a set to ensure no duplicates
-    added_words = set()
-    last_idx = -1
-    for idx, word in enumerate(word_list):
-        if word not in added_words:
-            expected_index = len(vocab)  # Expected index should be the current length of the vocab
-            vocab[word] = expected_index
-            added_words.add(word)
-            # Check for any gaps in indices
-            if last_idx != -1 and vocab[word] != last_idx + 1:
-                print(f"Gap detected: last index = {last_idx}, current index = {vocab[word]}, word = '{word}'")
-            last_idx = vocab[word]
-            # Add detailed logging for the first few words
-            if idx < 10:
-                print(f"Added word '{word}' with index {vocab[word]}")
-            elif idx == 10:
-                print("...")
-    
-    # Print the total vocabulary size
-    print(f"Total words added: {len(added_words)}")
-    print(f"Final vocab size: {len(vocab)}")
-
-    # Check for gaps or overlaps in indices
-    indices = set(vocab.values())
-    if len(indices) != len(vocab):
-        print(f"Duplicate indices found. Indices count: {len(indices)}, Vocab count: {len(vocab)}")
-        raise AssertionError("Duplicate indices found in the vocabulary")
-
-    # Check for vocabulary size
-    expected_vocab_size = max(vocab.values()) + 1
-    actual_vocab_size = len(vocab)
-    if actual_vocab_size != expected_vocab_size:
-        print(f"Vocabulary size mismatch: len(vocab) = {actual_vocab_size}, max index = {max(vocab.values())}")
-        raise AssertionError("Vocabulary size mismatch")
-
-    return vocab
-
-def preprocess_sequence(sequence, vocab):
-    """
-    Preprocess the sequence by adding special tokens and converting to IDs.
-
-    :param sequence: List of words in the sequence.
-    :param vocab: Vocabulary dictionary mapping words to IDs.
-    :return: List of token IDs with special tokens added.
-    """
-    tokens = ["<sos>"] + sequence + ["<eos>"]
-    token_ids = [vocab.get(token.lower(), vocab["<unk>"]) for token in tokens]
-    # print(f"Tokens: {tokens}")
-    # print(f"Token IDs: {token_ids}")
-    return token_ids
-
+from transformers import GPT2Tokenizer
 
 def pad_sequence(batch, pad_token_id):
-    """
-    Pad sequences in the batch to the same length.
+    inputs = []
+    targets = []
 
-    :param batch: List of tuples (input_sequence, target_sequence)
-    :param pad_token_id: ID of the padding token
-    :return: Tuple of padded input and target sequences
-    """
-    max_len = max(len(seq[0]) for seq in batch)
-    padded_inputs = []
-    padded_targets = []
+    for item in batch:
+        input_seq, target_seq = item
+        if input_seq is None or target_seq is None:
+            raise ValueError(f"Found None in batch item: {item}")
+        inputs.append(input_seq.tolist())
+        targets.append(target_seq.tolist())
 
-    for input_seq, target_seq in batch:
-        padded_inputs.append(list(input_seq) + [pad_token_id] * (max_len - len(input_seq)))
-        padded_targets.append(list(target_seq) + [pad_token_id] * (max_len - len(target_seq)))
+    max_length = max(len(seq) for seq in inputs)
 
-    return torch.tensor(padded_inputs), torch.tensor(padded_targets)
+    padded_inputs = [seq + [pad_token_id] * (max_length - len(seq)) for seq in inputs]
+    padded_targets = [seq + [pad_token_id] * (max_length - len(seq)) for seq in targets]
+
+    padded_inputs_tensor = torch.tensor(padded_inputs, dtype=torch.long)
+    padded_targets_tensor = torch.tensor(padded_targets, dtype=torch.long)
+
+    return padded_inputs_tensor, padded_targets_tensor
 
 def top_p_sampling(logits, top_p=0.9, special_token_ids=None):
     if special_token_ids is None:
@@ -119,22 +45,6 @@ def top_p_sampling(logits, top_p=0.9, special_token_ids=None):
     probabilities = softmax(logits, dim=-1)
     next_token = torch.multinomial(probabilities, 1)
     return next_token.item()
-
-def decode_output(output, vocab, top_p=0.9):
-    id_to_word = {idx: word for word, idx in vocab.items()}
-    word_to_id = {word: idx for idx, word in id_to_word.items()}
-    special_tokens = {"<sos>", "<unk>", "<eos>", "<pad>", "<sep>", "<cls>", "<mask>"}
-    special_token_ids = [word_to_id[token] for token in special_tokens if token in word_to_id]
-    output_ids = []
-
-    for i in range(output.size(1)):  # Assuming output is [batch_size, seq_len, vocab_size]
-        logits = output[0, i, :]  # Select the logits for the ith position in the sequence
-        next_token = top_p_sampling(logits, top_p, special_token_ids)
-        output_ids.append(next_token)
-
-    print(f"Output IDs: {output_ids}")
-    tokens = [id_to_word.get(id, "<unk>") for id in output_ids if id_to_word.get(id) not in special_tokens]
-    return " ".join(tokens)
 
 class GPT(nn.Module):
     """
@@ -162,12 +72,6 @@ class GPT(nn.Module):
         self.head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, x):
-        """
-        Forward pass through the GPT model.
-
-        :param x: Input tensor
-        :return: Output tensor
-        """
         x = self.embedding(x)
         for layer in self.transformer_layers:
             x = layer(x)
@@ -206,33 +110,18 @@ def load_vocab(file_path):
     print(f"Loaded vocabulary of size: {len(vocab)}")
     return vocab
 
-if __name__ == "__main__":
-    vocab = load_vocab("vocab.json")
-    vocab_size = len(vocab)
-    n_embd = 256  # Change this to match the embedding size used during training
-    n_layer = 6   # Change this to match the number of layers used during training
-    n_head = 8    # Change this to match the number of attention heads used during training
+def run_inference(model, input_text):
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    tokenized_input = tokenizer.encode(input_text, return_tensors='pt')
 
-    model_path = "./models/lorenz_model.pth"
+    # Perform inference
+    model.eval()
+    with torch.no_grad():
+        output = model(tokenized_input)
 
-    if os.path.exists(model_path):
-        model = load_model(model_path, vocab_size, n_embd, n_layer, n_head)
+    # Get the most likely tokens
+    predicted_token_ids = torch.argmax(output, dim=-1)
 
-        # Example input (modify this to a meaningful sentence for testing)
-        test_sentence = "This is a test sentence for inference."
-        tokenized_input = preprocess_sequence(test_sentence.split(), vocab)
-        input_ids = torch.tensor(tokenized_input).unsqueeze(0)  # Add batch dimension
-
-        # Print input IDs for debugging
-        print(f"Token IDs: {tokenized_input}")
-        print(f"Vocabulary size: {vocab_size}")
-
-        # Perform inference
-        model.eval()
-        with torch.no_grad():
-            output = model(input_ids)
-            # print(f"Model output logits: {output}")
-            decoded_output = decode_output(output, vocab)  # Decode the output
-            print(decoded_output)  # Print the decoded output
-    else:
-        print(f"Model file {model_path} does not exist. Please train the model first.")
+    # Decode the predicted tokens to a string
+    decoded_output = tokenizer.decode(predicted_token_ids[0], skip_special_tokens=True)
+    return decoded_output

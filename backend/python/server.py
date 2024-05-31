@@ -5,6 +5,8 @@ import tensorflow as tf
 import numpy as np
 import json
 import os
+from transformers import GPT2Tokenizer
+from lorenz.lorenz import run_inference, load_model, load_vocab
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -104,6 +106,31 @@ def analyze_worker_data():
     except Exception as e:
         print(f"Error during analyze_worker_data: {e}")
         return jsonify({'success': False, 'message': 'Internal server error.'}), 500
+    
+@app.route('/runInference', methods=['POST'])
+def run_inference_endpoint():
+    try:
+        data = request.json
+        input_text = data.get('input_text', '')
+        
+        # Initialize the GPT-2 tokenizer
+        tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        vocab_size = tokenizer.vocab_size
+        n_embd = 512
+        n_layer = 8
+        n_head = 16
+
+        model_path = "./models/lorenz_model.pth"
+        model = load_model(model_path, vocab_size, n_embd, n_layer, n_head)
+
+        if model:
+            decoded_output = run_inference(model, input_text)
+            return jsonify({'success': True, 'output': decoded_output})
+        else:
+            return jsonify({'success': False, 'message': 'Model file not found.'}), 500
+    except Exception as e:
+        print(f"Error during inference: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error.'}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3001)
+    app.run(host='0.0.0.0', port=3001, debug=True)
