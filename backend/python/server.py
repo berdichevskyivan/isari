@@ -5,7 +5,8 @@ import tensorflow as tf
 import numpy as np
 import json
 import os
-from transformers import GPT2Tokenizer
+import re
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
 from lorenz.lorenz import run_inference, load_model, load_vocab
 
 app = Flask(__name__)
@@ -128,6 +129,105 @@ def run_inference_endpoint():
             return jsonify({'success': True, 'output': decoded_output})
         else:
             return jsonify({'success': False, 'message': 'Model file not found.'}), 500
+    except Exception as e:
+        print(f"Error during inference: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error.'}), 500
+    
+@app.route('/runInferenceWithGPT2', methods=['POST'])
+def run_inference_with_gpt2_endpoint():
+    try:
+        data = request.json
+        input_text = data.get('input_text', '')
+
+        # Load the GPT-2 tokenizer and model from Hugging Face
+        tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        
+        # Set the padding token to be the same as the EOS token
+        tokenizer.pad_token = tokenizer.eos_token
+
+        model = GPT2LMHeadModel.from_pretrained('gpt2')
+
+        # Tokenize input text
+        inputs = tokenizer(input_text, return_tensors='pt', padding=True, truncation=True)
+        
+        # Ensure attention mask is set
+        attention_mask = inputs['attention_mask']
+
+        # Generate output using the model with adjusted parameters
+        outputs = model.generate(
+            inputs['input_ids'],
+            attention_mask=attention_mask,
+            max_length=50,
+            num_return_sequences=1,
+            no_repeat_ngram_size=2,  # Prevent repeating phrases
+            top_k=50,  # Top-k sampling
+            top_p=0.95,  # Nucleus sampling
+            temperature=0.7,  # Control randomness
+            length_penalty=1.0,  # Encourage longer sentences
+            repetition_penalty=1.2,  # Penalize repetition
+            pad_token_id=tokenizer.eos_token_id
+        )
+        decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        return jsonify({'success': True, 'output': decoded_output})
+    except Exception as e:
+        print(f"Error during inference: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error.'}), 500
+
+@app.route('/runInferenceWithFineTunedGPT2', methods=['POST'])
+def run_inference_with_finetuned_gpt2_endpoint():
+    try:
+        data = request.json
+        input_text = data.get('input_text', '')
+
+        # Clean and prepare the input text
+        prompt = input_text.strip()
+
+        # Load the fine-tuned GPT-2 tokenizer and model from the saved directory
+        tokenizer = GPT2Tokenizer.from_pretrained('./lorenz/models/fine-tuned-gpt2')
+        
+        # Set the padding token to be the same as the EOS token
+        tokenizer.pad_token = tokenizer.eos_token
+
+        model = GPT2LMHeadModel.from_pretrained('./lorenz/models/fine-tuned-gpt2')
+
+        # Tokenize input text with a clear separator
+        inputs = tokenizer(prompt, return_tensors='pt', padding=True, truncation=True)
+        
+        # Ensure attention mask is set
+        attention_mask = inputs['attention_mask']
+
+        # Generate output using the model with adjusted parameters
+        outputs = model.generate(
+            inputs['input_ids'],
+            attention_mask=attention_mask,
+            max_length=250,  # Increase max_length to allow longer generation
+            num_return_sequences=1,
+            no_repeat_ngram_size=3,  # Prevent repeating phrases
+            num_beams=5,  # Number of beams for beam search
+            length_penalty=1.0,  # Encourage longer sentences
+            repetition_penalty=1.2,  # Penalize repetition
+            pad_token_id=tokenizer.eos_token_id,
+            eos_token_id=tokenizer.eos_token_id,  # Explicitly set EOS token ID
+            early_stopping=True  # Stop early if the EOS token is encountered
+        )
+        
+        # Decode output
+        decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        # Debugging: Print the raw decoded output
+        print(f"Raw Decoded Output: {decoded_output}")
+
+        # Remove the input prompt from the output
+        stripped_output = decoded_output[len(prompt):].strip()
+
+        # Clean the stripped output using regular expressions
+        cleaned_output = re.sub(r'^[=\s\'"“”]+', '', stripped_output).strip()
+
+        # Debugging: Print the cleaned output
+        print(f"Cleaned Output: {cleaned_output}")
+
+        return jsonify({'success': True, 'output': cleaned_output})
     except Exception as e:
         print(f"Error during inference: {e}")
         return jsonify({'success': False, 'message': 'Internal server error.'}), 500

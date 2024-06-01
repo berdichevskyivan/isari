@@ -86,7 +86,7 @@ function LorenzPage() {
       const input_text = inferenceInput;
   
       // Send input data to the backend for inference
-      const response = await axios.post('http://localhost:3001/runInference', { input_text }, {
+      const response = await axios.post('http://localhost:3001/runInferenceWithFineTunedGPT2', { input_text }, {
         headers: {
           'Content-Type': 'application/json'
         }
