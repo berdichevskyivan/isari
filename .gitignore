@@ -30,6 +30,9 @@ dist-ssr
 /backend/node/uploads/
 
 # Ignore lorenz directory and its contents, but keep source code
+/backend/python/models
+/backend/python/offload_folder
+/backend/python/__pycache__
 /backend/python/lorenz/
 /backend/python/lorenz/models/
 /backend/python/lorenz/gpu_usage_log.json

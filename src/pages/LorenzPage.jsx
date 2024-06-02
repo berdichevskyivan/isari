@@ -18,11 +18,19 @@ const StyledTextField = styled(TextField)({
     padding: '0 14px', 
     boxSizing: 'border-box',
     display: 'flex',
-    alignItems: 'center', 
+    alignItems: 'center',
     '&::placeholder': {
       color: 'rgba(3, 77, 161, 0.8)',
       fontSize: '12px',
     },
+  },
+  '& .MuiInputBase-inputMultiline': {
+    overflow: 'scroll',  // Enable scrolling
+    '&::-webkit-scrollbar': {
+      display: 'none',  // Hide the scrollbar
+    },
+    '-ms-overflow-style': 'none',  // Internet Explorer 10+
+    'scrollbar-width': 'none',  // Firefox
   },
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
@@ -34,7 +42,7 @@ const StyledTextField = styled(TextField)({
     '&.Mui-focused fieldset': {
       borderColor: 'rgba(3, 77, 161, 0.8)',
     },
-    height: '100px', 
+    height: '130px', 
     display: 'flex',
     alignItems: 'baseline',
     justifyContent: 'flex-start', 
@@ -86,7 +94,7 @@ function LorenzPage() {
       const input_text = inferenceInput;
   
       // Send input data to the backend for inference
-      const response = await axios.post('http://localhost:3001/runInferenceWithFineTunedGPT2', { input_text }, {
+      const response = await axios.post('http://localhost:3001/runInferenceWithPhi3Mini', { input_text }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -128,9 +136,16 @@ function LorenzPage() {
                     <h1>Lorenz</h1>
                 </div>
                 <div className="lorenz-description-container">
-                    <p>Lorenz is an LLM model built specifically to solve the most pressing issues of humanity using science and a special approach to learning that involves Chaos
-                    Control and quantum physics principles. Below, you will be able to watch a 3D animation based on the dynamics that are present during the inference and training of the model.
-                    On this specific demonstration, we will visualize the inference process.</p>
+                    <p>
+                        Lorenz is envisioned as an advanced LLM (Large Language Model) designed to tackle humanity's most pressing issues 
+                        using the latest on AI research and tools, as well as being built, in part, by our platform's workers. While Lorenz is still under development, 
+                        we are utilizing the small but powerful <b>Phi 3 Mini 4K Instruct</b> model, which offers impressive capabilities and serves as a stepping 
+                        stone toward our ultimate goal.
+                    <br />
+                        Below, you can experience a 3D animation showcasing the dynamics present during the inference and training processes. 
+                        This demonstration uses tSNE and react-three-fiber to visualize the intricacies of the model's behavior in real-time. 
+                        As we continue to develop Lorenz, this visualization will provide valuable insights into its learning and inference mechanisms.
+                    </p>
                 </div>
             </div>
 
@@ -160,8 +175,7 @@ function LorenzPage() {
                   background: 'blue',
                   '&.Mui-disabled': {
                     color: 'white', // Customize the text color when disabled
-                    background: 'linear-gradient(90deg, var(--magic-rainbow-color-0), var(--magic-rainbow-color-1), var(--magic-rainbow-color-2)) !important', // Linear gradient background
-                    animation: 'shift 1s infinite linear' // Optional animation property
+                    background: 'blue', // Linear gradient background
                   }
                  }}
                  onClick={() => { handleInference() }}
