@@ -142,7 +142,7 @@ function LorenzPage() {
                         we are utilizing the small but powerful <b>Phi 3 Mini 4K Instruct</b> model, which offers impressive capabilities and serves as a stepping 
                         stone toward our ultimate goal.
                     <br />
-                        Below, you can experience a 3D animation showcasing the dynamics present during the inference and training processes. 
+                        Below, you can experience a 3D animation showcasing the dynamics present during the inference process. 
                         This demonstration uses tSNE and react-three-fiber to visualize the intricacies of the model's behavior in real-time. 
                         As we continue to develop Lorenz, this visualization will provide valuable insights into its learning and inference mechanisms.
                     </p>
