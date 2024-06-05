@@ -6,6 +6,11 @@ export const socket = io('http://localhost:3000', {
     transports: ['websocket'] // Ensure using the correct transport
 });
 
+export const python_socket = io('http://localhost:3001', {
+    withCredentials: false,
+    transports: ['websocket'] // Ensure using the correct transport
+});
+
 // export const socket = io(URL, {
 //     autoConnect: false
 // });

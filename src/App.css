@@ -138,6 +138,10 @@
     0 0 3px #7D26CD !important; /* Outermost glow */
 }
 
+.customStats {
+  position: absolute !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .stickyBar {

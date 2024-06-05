@@ -1,14 +1,17 @@
-import os
 import json
 import torch
 import numpy as np
 import onnxruntime_genai as og
-import onnxruntime as ort
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from flask import request, jsonify
 from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
 import traceback
+from flask_socketio import emit
+
+# Global variables to store the model and tokenizer
+model = None
+tokenizer = None
+hook_handles = []
 
 def load_model_og(model_path):
     print(f"Loading model from: {model_path}")
@@ -70,58 +73,64 @@ def run_inference_with_phi3_mini_endpoint():
         traceback.print_exc()
         return jsonify({'success': False, 'message': 'Internal server error.'}), 500
     
-# Global variable to store activations
-activations = []
-max_length = 0
+# Global variables to store activations
+batched_activations = []
+activations_count = 0
 
-# Hook function to capture the activation and save to a tsne_result.json file
+# Hook function to capture the activation and prepare t-SNE data
 def get_activation(name):
     def hook(model, input, output):
-        global activations, max_length
+        global batched_activations, activations_count
         print("Retrieving activation from Layer: ", name)
         output = output[0]  # Ensure we are getting the correct part of the output
-        activation = output.detach().to(torch.float32)  # Ensure compatibility with t-SNE
+        activation = output.detach().to(torch.float32)
         activation_np = activation.cpu().numpy()
         print("Activation retrieved: ", activation_np)
 
         # Print the shape of the activation
         print("Activation shape:", activation_np.shape)
 
-        activations.append(activation_np)
-        if activation.shape[1] > max_length:
-            max_length = activation.shape[1]
+        # For now we want to capture singular activations from generated tokens as these
+        # represent the entire context of the input sequence as well
+        if activation_np.shape[1] == 1:
+            print("Singular activation being triggered!")
+            # We reshape the activation
+            reshaped_activation = activation_np.reshape(1, 3072)
+            # Now we can add this reshaped activation inside of the batched_activations list
 
-        if activation_np.shape[0] > 1:
-            # Apply t-SNE
-            tsne = TSNE(n_components=3, perplexity=max(1, activation_np.shape[0] // 2), random_state=42)
-            result = tsne.fit_transform(activation_np)
-            print("t-SNE result:", result)
-        else:
-            # Apply PCA if there is only one sample
-            pca = PCA(n_components=1)
-            result = pca.fit_transform(activation_np)
-            print("PCA result:", result)
+            batched_activations.append(reshaped_activation[0].tolist())
+            activations_count = activations_count + 1
 
-        # Print the result
-        print("Result:", result)
+            print("Activation stored in batched_activations. Batched Activations: ", np.array(batched_activations).shape)
 
-        # Save the result to a JSON file
-        result_file_path = os.path.join(os.path.dirname(__file__), "result.json")
-        with open(result_file_path, 'w') as f:
-            json.dump(result.tolist(), f, indent=4)
+        if len(batched_activations) >= 10:
+            print("There are currently 10 or more batched activations.")
+            tsne = TSNE(n_components=3, perplexity=5, random_state=42)
+            tsne_result = tsne.fit_transform(np.array(batched_activations))
+            print("tSNE Result: ", tsne_result)
 
+            # Ensure all values are floats
+            tsne_result = tsne_result.astype(float).tolist()
+
+            # Convert tSNE results to the desired JSON format
+            json_results = [
+                {"x": sample[0], "y": sample[1], "z": sample[2], "layer_name": name}
+                for sample in tsne_result
+            ]
+
+            # Convert to JSON string
+            json_string = json.dumps(json_results, indent=2)
+
+            # Print or send the JSON string
+            print(json_string)
+
+            # Emit the t-SNE results to the frontend
+            emit('updateTSNEData', json_results, namespace="/", broadcast=True)
+
+            # Once we have the results, we flush the batched_activations array
+            batched_activations = []
+            print("batched_activations variable has been flushed.")
     return hook
-
-def pad_activations(activations, max_length):
-    padded_activations = []
-    for activation in activations:
-        if activation.shape[1] < max_length:
-            padding = np.zeros((activation.shape[0], max_length - activation.shape[1]))
-            padded_activation = np.hstack([activation, padding])
-        else:
-            padded_activation = activation
-        padded_activations.append(padded_activation)
-    return np.vstack(padded_activations)
 
 def load_model_and_tokenizer(model_path):
     print(f"Loading model from: {model_path}")
@@ -136,8 +145,15 @@ def load_model_and_tokenizer(model_path):
     return model, tokenizer
 
 def run_inference(model, tokenizer, input_text):
-    global activations
-    activations = []  # Reset activations for each run
+    global batched_activations, hook_handles, activations_count
+
+    # Unregister existing hooks
+    for handle in hook_handles:
+        handle.remove()
+
+    hook_handles = []
+    batched_activations = []  # Reset activations for each run
+    activations_count = 0
 
     print(f"Running inference for input text: {input_text}")
 
@@ -146,9 +162,18 @@ def run_inference(model, tokenizer, input_text):
     ]
 
     # Register hooks for a layer
-    layer_name = 'model.layers.0.mlp.down_proj'  # You can change this to any layer you are interested in
+    layer_name = 'model.layers.31'  # You can change this to any layer you are interested in
     layer = dict([*model.named_modules()])[layer_name]
-    layer.register_forward_hook(get_activation(layer_name))
+    hook_handle = layer.register_forward_hook(get_activation(layer_name))
+    hook_handles.append(hook_handle)
+
+    # for module in model.named_modules():
+    #     module_name = module[0]
+    #     print(module)
+        # if "model.layers." in module_name and module_name.count('.') == 2:
+        #     layer = dict([*model.named_modules()])[module_name]
+        #     layer.register_forward_hook(get_activation(module_name))
+        #     print("Hook attached to layer: ", module_name)
 
     # Create a text generation pipeline
     pipe = pipeline(
@@ -170,32 +195,35 @@ def run_inference(model, tokenizer, input_text):
     # Run the pipeline with the input text and generation arguments
     output = pipe(messages, **generation_args)
 
+    print("output: ", output)
+
     # Print the generated output
     generated_text = output[0]['generated_text']
-
-    # After collecting all activations
-    # if activations:
-    #     combined_activations = pad_activations(activations, max_length)
-    #     print(f"Combined activations shape: {combined_activations.shape}")
-
-    #     # Apply t-SNE on combined activations
-    #     tsne = TSNE(n_components=3, perplexity=5)
-    #     tsne_result = tsne.fit_transform(combined_activations)
-    #     print(f"t-SNE result: {tsne_result}")
 
     return generated_text
 
 def run_inference_endpoint():
     try:
+        global model, tokenizer
         data = request.json
         input_text = data.get('input_text', '')
         print(f"Received input text: {input_text}")
 
-        model_path = "microsoft/Phi-3-mini-4k-instruct"
-        model, tokenizer = load_model_and_tokenizer(model_path)
+        if model is None or tokenizer is None:
+            print("Im here!!!")
+            model_path = "microsoft/Phi-3-mini-4k-instruct"
+            model, tokenizer = load_model_and_tokenizer(model_path)
         
         generated_text = run_inference(model, tokenizer, input_text)
         print("Generated text:", generated_text)
+
+        print("Tokenizer", dir(tokenizer))
+
+        # Tokenize the generated text
+        tokens = tokenizer.tokenize(generated_text)
+        print("Tokenized text:", tokens)
+        print("Tokenized text length: ", len(tokens))
+        print("Activations count is: ", activations_count)
         return jsonify({'success': True, 'output': generated_text})
     except Exception as e:
         print(f"Error during inference: {e}")

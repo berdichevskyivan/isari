@@ -6,15 +6,18 @@ import WorkPage from './pages/WorkPage';
 import LorenzPage from './pages/LorenzPage';
 import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboardPage';
-import { socket } from './socket';
+import { socket, python_socket } from './socket';
 
 // The events listeners are then registered in the App component,
 // which stores the state and pass it down to its child components via props.
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [isPythonSocketConnected, setIsPythonSocketConnected] = useState(python_socket.connected)
   const [workers, setWorkers] = useState([]);
   const [workerOptions, setWorkerOptions] = useState(null);
+
+  const [TSNEData, setTSNEData] = useState([]);
 
   useEffect(() => {
     function onConnect() {
@@ -25,17 +28,35 @@ function App() {
       setIsConnected(false);
     }
 
+    function onPythonSocketConnect() {
+      setIsPythonSocketConnected(true);
+    }
+
+    function onPythonSocketDisconnect() {
+      setIsPythonSocketConnected(false);
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
 
     socket.on('updateWorkers', (data) => {
-      console.log('updateWorkers called: ', data);
+      // console.log('updateWorkers called: ', data);
       setWorkers(data);
     })
+
+    python_socket.on('updateTSNEData', (data) => {
+      console.log('updateTSNEData called: ', data);
+      setTSNEData(data);
+    })
+
+    python_socket.on('connect', onPythonSocketConnect);
+    python_socket.on('disconnect', onPythonSocketDisconnect);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
+      python_socket.off('connect', onPythonSocketConnect);
+      python_socket.off('disconnect', onPythonSocketDisconnect);
     };
   }, []);
 
@@ -76,7 +97,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
-        <Route path="/lorenz" element={<LorenzPage />} />
+        <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} />} />
         <Route path="/work" element={<WorkPage />} />
         <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
         <Route path="/worker-dashboard" element={<WorkerDashboardPage />} />

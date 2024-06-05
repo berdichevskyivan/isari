@@ -15,7 +15,10 @@
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
     "@react-spring/web": "^9.7.3",
+    "@react-three/drei": "^9.106.0",
+    "@react-three/fiber": "^8.16.8",
     "@tippyjs/react": "^4.2.6",
+    "@types/three": "^0.165.0",
     "axios": "^1.6.8",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -28,6 +31,7 @@
     "slonik": "^44.0.0",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
+    "three": "^0.165.0",
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {

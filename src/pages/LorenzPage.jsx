@@ -4,9 +4,10 @@ import { Modal, Card, CardContent, Typography, Avatar, Box, Grid, Button, IconBu
 import ControlsDashboard from '../components/ControlsDashboard';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
-import StarrySky from '../components/StarrySky';  // Ensure the correct path
+import StarrySky from '../components/StarrySky';
 import axios from 'axios';
 import { useGlitch } from 'react-powerglitch';
+import TSNEVisualization from '../components/TSNEVisualization';
 
 const StyledTextField = styled(TextField)({
   margin: '10px auto', 
@@ -53,7 +54,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function LorenzPage() {
+function LorenzPage({ TSNEData, setTSNEData }) {
 
   const [inferenceStatus, setInferenceStatus] = useState(false);
   const [inferenceInput, setInferenceInput] = useState('')
@@ -89,6 +90,7 @@ function LorenzPage() {
   }, [inferenceStatus]);
 
   const handleInference = async () => {
+    setTSNEData([]);
     try {
       setInferenceStatus(true);
       const input_text = inferenceInput;
@@ -149,9 +151,7 @@ function LorenzPage() {
                 </div>
             </div>
 
-            <div className="lorenz-visualization">
-
-            </div>
+            <TSNEVisualization TSNEData={TSNEData} />
 
             <div className="lorenz-footer">
                 <StyledTextField
