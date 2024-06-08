@@ -18,6 +18,7 @@ function App() {
   const [workerOptions, setWorkerOptions] = useState(null);
 
   const [TSNEData, setTSNEData] = useState([]);
+  const [predictedTokens, setPredictedTokens] = useState([])
 
   useEffect(() => {
     function onConnect() {
@@ -47,6 +48,11 @@ function App() {
     python_socket.on('updateTSNEData', (data) => {
       console.log('updateTSNEData called: ', data);
       setTSNEData(data);
+    })
+
+    python_socket.on('updatePredictedTokensData', (data) => {
+      console.log('updatePredictedTokensData called: ', data);
+      setPredictedTokens(data);
     })
 
     python_socket.on('connect', onPythonSocketConnect);
@@ -97,7 +103,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
-        <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} />} />
+        <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} />
         <Route path="/work" element={<WorkPage />} />
         <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
         <Route path="/worker-dashboard" element={<WorkerDashboardPage />} />

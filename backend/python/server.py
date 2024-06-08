@@ -6,7 +6,7 @@ from inference_endpoints import run_inference_endpoint
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:5174")  # Initialize SocketIO with CORS allowed origins
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")  # Initialize SocketIO with CORS allowed origins
 
 @socketio.on('connect')
 def handle_connection():

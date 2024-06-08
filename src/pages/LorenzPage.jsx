@@ -54,7 +54,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function LorenzPage({ TSNEData, setTSNEData }) {
+function LorenzPage({ TSNEData, setTSNEData, predictedTokens, setPredictedTokens }) {
 
   const [inferenceStatus, setInferenceStatus] = useState(false);
   const [inferenceInput, setInferenceInput] = useState('')
@@ -91,6 +91,8 @@ function LorenzPage({ TSNEData, setTSNEData }) {
 
   const handleInference = async () => {
     setTSNEData([]);
+    setPredictedTokens([]);
+    setInferenceOutput('');
     try {
       setInferenceStatus(true);
       const input_text = inferenceInput;
@@ -151,7 +153,7 @@ function LorenzPage({ TSNEData, setTSNEData }) {
                 </div>
             </div>
 
-            <TSNEVisualization TSNEData={TSNEData} />
+            <TSNEVisualization TSNEData={TSNEData} predictedTokens={predictedTokens} />
 
             <div className="lorenz-footer">
                 <StyledTextField
