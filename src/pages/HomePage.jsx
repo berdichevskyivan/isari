@@ -7,7 +7,7 @@ import DataArrayIcon from '@mui/icons-material/DataArray';
 import HubIcon from '@mui/icons-material/Hub';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
-import StarrySky from '../components/StarrySky';  // Ensure the correct path
+import StarrySky from '../components/StarrySky';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import MessageIcon from '@mui/icons-material/Message';
@@ -15,7 +15,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import ShareIcon from '@mui/icons-material/Share';
 import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
-import 'tippy.js/dist/tippy.css'; // This imports default styles
+import 'tippy.js/dist/tippy.css';
 
 function getInitials(input) {
   return input.split(' ').map(word => word[0]).join('');

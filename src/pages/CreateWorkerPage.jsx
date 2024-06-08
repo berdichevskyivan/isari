@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Button, TextField, Avatar, Chip, Grid, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
+import StarrySky from '../components/StarrySky';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
@@ -171,6 +172,7 @@ function CreateWorkerPage({ workerOptions }) {
 
   return (
     <ThemeProvider theme={theme}>
+      <StarrySky />
       <div style={{ backgroundColor: colors.background, color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <ControlsDashboard />
         <Box sx={{ width: '90%', maxWidth: '90%', textAlign: 'center', marginTop: 2 }}>

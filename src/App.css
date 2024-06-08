@@ -142,6 +142,73 @@
   position: absolute !important;
 }
 
+.work-page-in-progress-container, .dashboard-page-in-progress-container {
+  height: fit-content;
+  width: 400px;
+  background: black;
+  opacity: 0.8;
+  z-index: 1;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Orbitron';
+  padding: 1rem;
+  border-radius: 15px;
+  border: 1px solid #00e6da;
+}
+
+.dashboard-page-in-progress-container {
+  width: fit-content;
+  padding: 2rem;
+  background-color: #161918a1;
+}
+
+.worker-feed {
+  height: 400px;
+  width: 400px;
+  border: 1px solid turquoise;
+  border-radius: 15px;
+  padding: 1rem;
+}
+
+.worker-dashboard-header {
+  display: flex;
+  flex-flow: row;
+}
+
+.worker-dashboard-footer {
+  border: 1px solid turquoise;
+  width: 100%;
+  border-radius: 15px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: .5rem;
+}
+
+.in-progress-text {
+  line-height: 1.5;
+  color: #00e6da;
+  text-align: center;
+}
+
+.timeline-list {
+  list-style: katakana;
+  text-align: left;
+  color: #00e6da;
+}
+
+.community-icons {
+  list-style: none;
+}
+
+.community-icons-controls {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .stickyBar {

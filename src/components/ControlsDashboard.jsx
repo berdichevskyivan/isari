@@ -97,9 +97,15 @@ function ControlsDashboard() {
                 </IconButton>
             </div>
 
-            <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
-                <span className="dashboard-text-jp" ref={glitch.ref}>イサリ</span>
-            </Link>
+            <div className="community-icons-controls">
+              <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', marginRight: '.5rem' }}>
+                  <span className="dashboard-text-jp" ref={glitch.ref}>イサリ</span>
+              </Link>
+
+              <a href="https://discord.gg/TyMNmCGb" target="_blank" rel="noopener noreferrer">
+                <img src="/discord-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
+              </a>
+            </div>
         </div>
         <FilterModal open={showFilters} onClose={toggleFilters} />
         <FeedbackModal open={showFeedback} onClose={toggleFeedbackModal} />

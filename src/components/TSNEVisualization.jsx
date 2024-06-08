@@ -134,7 +134,7 @@ function TSNEPoints({ positions, predictedTokens }) {
           <meshBasicMaterial color='#e100ff'/>
           <Html distanceFactor={10}>
             <div style={{ color: 'white', fontSize: '12px', whiteSpace: 'nowrap', fontFamily: 'Orbitron' }}>
-              {predictedTokens[i]}
+              {predictedTokens[i]}({i})
             </div>
           </Html>
         </mesh>

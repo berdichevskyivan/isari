@@ -139,16 +139,16 @@ function LorenzPage({ TSNEData, setTSNEData, predictedTokens, setPredictedTokens
                     <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
                     <h1>Lorenz</h1>
                 </div>
-                <div className="lorenz-description-container">
+                <div className="lorenz-description-container" style={{ lineHeight: 1, padding: "10px"}}>
                     <p>
-                        Lorenz is envisioned as an advanced LLM (Large Language Model) designed to tackle humanity's most pressing issues 
-                        using the latest on AI research and tools, as well as being built, in part, by our platform's workers. While Lorenz is still under development, 
-                        we are utilizing the small but powerful <b>Phi 3 Mini 4K Instruct</b> model, which offers impressive capabilities and serves as a stepping 
-                        stone toward our ultimate goal.
-                    <br />
-                        Below, you can experience a 3D animation showcasing the dynamics present during the inference process. 
-                        This demonstration uses tSNE and react-three-fiber to visualize the intricacies of the model's behavior in real-time. 
-                        As we continue to develop Lorenz, this visualization will provide valuable insights into its learning and inference mechanisms.
+                        Lorenz is an architecture that combines Small and Large Language Models (SLMs and LLMs) to solve complex problems using advanced AI research and tools, developed by our plaform's workers. 
+                        We are currently utilizing the robust <b>Phi 3 Mini 4K Instruct</b> model, which offers impressive capabilities and serves as a stepping stone toward our ultimate goal.
+                    <br /><br />
+                        Explore a 3D animation illustrating dynamic behavior during the inference process. This visualization uses tSNE and react-three-fiber for real-time insights. 
+                        Each sphere represents an output token, with sequence order indicating context depth—the final token encapsulates the most context from the input sequence and all previous tokens. 
+                        Spheres' positions are derived by reducing the 3072-dimensional activations from the last Transformer layer to 3 dimensions using tSNE. They are interpolated using Parametric Spline Interpolation.
+                        Token values are predicted using sampling techniques after applying softmax to the logits from the Language Model Head, causing slight value variations. 
+                        The output is truncated up to the last significant character. This visualization will provide valuable insights into Lorenz's learning and inference mechanisms as we continue its development.
                     </p>
                 </div>
             </div>
