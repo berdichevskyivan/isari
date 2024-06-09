@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Button, TextField, Avatar, Chip, Grid, Box } from '@mui/material';
+import { Button, TextField, Avatar, Chip, Grid, Box, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
@@ -32,9 +33,10 @@ const theme = createTheme({
 // Styled components for visual cues
 const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   margin: '4px',
-  boxShadow: selected ? `0 0 10px ${shadowcolor}` : 'none',
+  boxShadow: selected ? `0 0 15px ${shadowcolor}` : 'none',
   borderColor: selected ? shadowcolor : '#ccc',
   borderRadius: '50%',
+  borderWidth: '2px',
   width: 60,
   height: 60,
   display: 'flex',
@@ -47,7 +49,8 @@ const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
 }));
 
 const StyledTextField = styled(TextField)({
-  width: '250px', 
+  width: '100%',
+  maxWidth: '100% !important',
   margin: '10px auto', 
   '& input': {
     color: colors.turquoise,
@@ -99,11 +102,23 @@ function CreateWorkerPage({ workerOptions }) {
 
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
+
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [checkPassword, setCheckPassword] = useState('');
+  const [showCheckPassword, setShowCheckPassword] = useState(false);
+  
   const [selectedLangs, setSelectedLangs] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
   const [selectedTools, setSelectedTools] = useState([]);
+
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (event) => event.preventDefault();
+  const handleClickShowCheckPassword = () => setShowCheckPassword(!showCheckPassword);
+  const handleMouseDownCheckPassword = (event) => event.preventDefault();
 
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
@@ -186,16 +201,82 @@ function CreateWorkerPage({ workerOptions }) {
           <label htmlFor="profile-pic-upload">
             <Avatar 
               src={profilePic || '/path/to/default/avatar.svg'} 
-              sx={{ width: 100, height: 100, margin: '10px auto', cursor: 'pointer', boxShadow: `0 0 10px ${colors.turquoise}`, borderRadius: '50%' }}
+              sx={{ width: 125, height: 125, margin: '10px auto', cursor: 'pointer', boxShadow: `0 0 10px ${colors.turquoise}`, borderRadius: '50%' }}
             />
           </label>
           <StyledTextField
             placeholder="Full Name"
             variant="outlined"
             fullWidth
-            sx={{ marginBottom: 2, backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '1rem !important' }}
+            sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '.1rem !important' }}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
+          />
+          <StyledTextField
+            placeholder="Email Address"
+            variant="outlined"
+            fullWidth
+            sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '.1rem !important' }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <StyledTextField
+            placeholder="Password"
+            variant="outlined"
+            fullWidth
+            type={showPassword ? "text" : "password"}
+            sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '.1rem !important' }}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                    sx={{ color: '#00e6da' }}
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+              inputProps: {
+                style: {
+                  fontFamily: showPassword || password === '' ? 'Orbitron' : 'monospace',
+                  WebkitTextSecurity: showPassword ? 'none' : 'disc !important', // Use 'disc' for asterisk
+                },
+              },
+            }}
+          />
+          <StyledTextField
+            placeholder="Confirm Password"
+            variant="outlined"
+            fullWidth
+            type={showCheckPassword ? "text" : "password"}
+            sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '1rem !important' }}
+            value={checkPassword}
+            onChange={(e) => setCheckPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleClickShowCheckPassword}
+                    onMouseDown={handleMouseDownCheckPassword}
+                    edge="end"
+                    sx={{ color: '#00e6da' }}
+                  >
+                    {showCheckPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+              inputProps: {
+                style: {
+                  fontFamily: showCheckPassword || checkPassword === '' ? 'Orbitron' : 'monospace',
+                  WebkitTextSecurity: showCheckPassword ? 'none' : 'disc !important', // Use 'disc' for asterisk
+                },
+              },
+            }}
           />
           <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px' }}>
             {workerOptions.programming_languages.map(lang => (

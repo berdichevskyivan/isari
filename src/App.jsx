@@ -7,9 +7,7 @@ import LorenzPage from './pages/LorenzPage';
 import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboardPage';
 import { socket, python_socket } from './socket';
-
-// The events listeners are then registered in the App component,
-// which stores the state and pass it down to its child components via props.
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -100,15 +98,17 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
-        <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} />
-        <Route path="/work" element={<WorkPage />} />
-        <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
-        <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
+          <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} />
+          <Route path="/work" element={<WorkPage />} />
+          <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
+          <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

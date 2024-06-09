@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import AuthContext from '../context/AuthContext';
 import '../App.css';
 import { Modal, Typography, Box, Button, IconButton, TextField } from '@mui/material';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -9,6 +10,8 @@ import { useGlitch } from 'react-powerglitch';
 import { useLocation } from 'react-router-dom';
 
 function ControlsDashboard() {
+
+  const { isLoggedIn, login, logout } = useContext(AuthContext);
 
   const location = useLocation();
   const isHomepage = location.pathname === '/';
@@ -89,8 +92,9 @@ function ControlsDashboard() {
                     <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
                     <span className="dashboard-text" >Lorenz</span>
                 </Link>
-
-                <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Dashboard</Button>
+                {isLoggedIn && (
+                  <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Dashboard</Button>
+                )}
                 <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Create Account</Button>
                 <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Work</Button>
                 <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}} onClick={toggleFeedbackModal}>Feedback</Button>
