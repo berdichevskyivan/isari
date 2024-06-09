@@ -173,9 +173,9 @@ function CreateWorkerPage({ workerOptions }) {
   return (
     <ThemeProvider theme={theme}>
       <StarrySky />
-      <div style={{ backgroundColor: colors.background, color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <ControlsDashboard />
-        <Box sx={{ width: '90%', maxWidth: '90%', textAlign: 'center', marginTop: 2 }}>
+      <ControlsDashboard />
+      <div style={{ backgroundColor: colors.background, color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <Box className="create-worker-container">
           <input
             accept="image/*"
             style={{ display: 'none' }}
@@ -193,11 +193,11 @@ function CreateWorkerPage({ workerOptions }) {
             placeholder="Full Name"
             variant="outlined"
             fullWidth
-            sx={{ marginBottom: 2, backgroundColor: 'black', maxWidth: '50%', margin: '10px auto' }}
+            sx={{ marginBottom: 2, backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '1rem !important' }}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
-          <Grid container spacing={1} justifyContent="center">
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px' }}>
             {workerOptions.programming_languages.map(lang => (
               <Grid item key={lang.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{lang.name.charAt(0).toUpperCase() + lang.name.slice(1)}</span>}>
@@ -214,7 +214,7 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <Grid container spacing={1} justifyContent="center" sx={{ marginTop: 2 }}>
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 2 }}>
             {workerOptions.generalized_ai_branches.map(branch => (
               <Grid item key={branch.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{branch.name}</span>}>
@@ -231,7 +231,7 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <Grid container spacing={1} justifyContent="center" sx={{ marginTop: 2 }}>
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 2 }}>
             {workerOptions.specialized_ai_applications.map(app => (
               <Grid item key={app.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{app.name}</span>}>
@@ -248,7 +248,7 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <Grid container spacing={1} justifyContent="center" sx={{ marginTop: 2 }}>
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 2 }}>
             {workerOptions.ai_tools.map(tool => (
               <Grid item key={tool.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{tool.name}</span>}>

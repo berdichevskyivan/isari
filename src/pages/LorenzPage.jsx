@@ -148,7 +148,7 @@ function LorenzPage({ TSNEData, setTSNEData, predictedTokens, setPredictedTokens
                         Each sphere represents an output token, with sequence order indicating context depth—the final token encapsulates the most context from the input sequence and all previous tokens. 
                         Spheres' positions are derived by reducing the 3072-dimensional activations from the last Transformer layer to 3 dimensions using tSNE. They are interpolated using Parametric Spline Interpolation.
                         Token values are predicted using sampling techniques after applying softmax to the logits from the Language Model Head, causing slight value variations. 
-                        The output is truncated up to the last significant character. This visualization will provide valuable insights into Lorenz's learning and inference mechanisms as we continue its development.
+                        The output is truncated up to the last significant character. This visualization will provide valuable insights into the <b>Phi 3 Mini 4K Instruct</b> inference mechanisms as we continue the development of Lorenz.
                     </p>
                 </div>
             </div>

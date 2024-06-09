@@ -6,10 +6,12 @@ import { Link } from 'react-router-dom';
 import FeedbackModal from './modals/FeedbackModal';
 import FilterModal from './modals/FilterModal';
 import { useGlitch } from 'react-powerglitch';
-
-
+import { useLocation } from 'react-router-dom';
 
 function ControlsDashboard() {
+
+  const location = useLocation();
+  const isHomepage = location.pathname === '/';
 
     const glitch = useGlitch({
         glitchTimeSpan: {
@@ -88,13 +90,15 @@ function ControlsDashboard() {
                     <span className="dashboard-text" >Lorenz</span>
                 </Link>
 
-                <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Create Worker</Button>
-                <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Work</Button>
                 <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Dashboard</Button>
+                <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Create Account</Button>
+                <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Work</Button>
                 <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}} onClick={toggleFeedbackModal}>Feedback</Button>
-                <IconButton onClick={toggleFilters} style={{ margin: '0 auto' }}>  {/* This will auto-center the button */}
-                    <FilterAltIcon className="icon-large" sx={{color: '#00B2AA'}} />
-                </IconButton>
+                {isHomepage && (
+                  <IconButton onClick={toggleFilters} style={{ margin: '0 auto' }}>  {/* This will auto-center the button */}
+                      <FilterAltIcon className="icon-large" sx={{ color: '#00B2AA' }} />
+                  </IconButton>
+                )}
             </div>
 
             <div className="community-icons-controls">
@@ -104,6 +108,12 @@ function ControlsDashboard() {
 
               <a href="https://discord.gg/TyMNmCGb" target="_blank" rel="noopener noreferrer">
                 <img src="/discord-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
+              </a>
+              <a href="mailto:isari.project@gmail.com" target="_blank" rel="noopener noreferrer">
+                <img src="/gmail-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
+              </a>
+              <a href="https://github.com/isari-ai" target="_blank" rel="noopener noreferrer">
+                <img src="/github-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
               </a>
             </div>
         </div>
