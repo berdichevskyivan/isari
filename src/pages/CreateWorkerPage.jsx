@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Button, TextField, Avatar, Chip, Grid, Box, InputAdornment, IconButton } from '@mui/material';
+import { Button, TextField, Avatar, Chip, Grid, Box, InputAdornment, IconButton, Typography } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import InfoIcon from '@mui/icons-material/Info';
 import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
@@ -189,8 +190,22 @@ function CreateWorkerPage({ workerOptions }) {
     <ThemeProvider theme={theme}>
       <StarrySky />
       <ControlsDashboard />
-      <div style={{ backgroundColor: colors.background, color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div className='create-worker-page-container'>
         <Box className="create-worker-container">
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}>
+            <Typography variant="h6" component="h2" sx={{ fontFamily: 'Orbitron', color: '#00e6da', marginRight: '.3rem' }}>
+                Upload Profile Photo
+            </Typography>
+            <Tippy content={
+              <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                <p style={{ marginBottom: '4px', marginTop: '0px' }}>We require a picture of your face to maintain authenticity and trust within the platform.</p>
+                <p style={{ marginBottom: '4px', marginTop: '0px' }}>Your picture will be analyzed to confirm there's an actual face in the image and will also go through a DeepFake test.</p>
+                <p style={{ marginBottom: '2px', marginTop: '0px' }}>Other tests may be applied to determine and link your picture to your identity.</p>
+              </span>}
+            >
+              <InfoIcon />
+            </Tippy>
+          </div>
           <input
             accept="image/*"
             style={{ display: 'none' }}
@@ -278,6 +293,19 @@ function CreateWorkerPage({ workerOptions }) {
               },
             }}
           />
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'flex-start', alignContent: 'center', alignItems: 'center', marginBottom: '.7rem' }}>
+            <Typography variant="h6" component="h2" sx={{ fontFamily: 'Orbitron', color: '#00ff00', marginRight: '.3rem' }}>
+                Programming Languages
+            </Typography>
+            <Tippy content={
+              <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                <p style={{ marginBottom: '4px', marginTop: '0px' }}>Programming languages you use.</p>
+                <p style={{ marginBottom: '0px', marginTop: '0px' }}>You can choose up to four.</p>
+              </span>}
+            >
+              <InfoIcon />
+            </Tippy>
+          </div>
           <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px' }}>
             {workerOptions.programming_languages.map(lang => (
               <Grid item key={lang.id}>
@@ -295,7 +323,21 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 2 }}>
+
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'flex-start', alignContent: 'center', alignItems: 'center', marginTop: '1rem' }}>
+            <Typography variant="h6" component="h2" sx={{ fontFamily: 'Orbitron', color: '#007bff', marginRight: '.3rem' }}>
+                General AI Branches
+            </Typography>
+            <Tippy content={
+              <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                <p style={{ marginBottom: '4px', marginTop: '0px' }}>General AI branches where you have most proficiency</p>
+                <p style={{ marginBottom: '0px', marginTop: '0px' }}>You can choose up to four.</p>
+              </span>}
+            >
+              <InfoIcon />
+            </Tippy>
+          </div>
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 1 }}>
             {workerOptions.generalized_ai_branches.map(branch => (
               <Grid item key={branch.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{branch.name}</span>}>
@@ -312,12 +354,26 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 2 }}>
+
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'flex-start', alignContent: 'center', alignItems: 'center', marginTop: '1rem' }}>
+            <Typography variant="h6" component="h2" sx={{ fontFamily: 'Orbitron', color: '#8e44ad', marginRight: '.5rem' }}>
+                Specialties
+            </Typography>
+            <Tippy content={
+              <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                <p style={{ marginBottom: '4px', marginTop: '0px' }}>Your specialization or domain where you use AI</p>
+                <p style={{ marginBottom: '0px', marginTop: '0px' }}>You can choose up to four.</p>
+              </span>}
+            >
+              <InfoIcon />
+            </Tippy>
+          </div>
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 1 }}>
             {workerOptions.specialized_ai_applications.map(app => (
               <Grid item key={app.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{app.name}</span>}>
                   <StyledChip
-                    label={<img src={app.icon_url} alt={app.name} style={{ width: 24, height: 24 }} />}
+                    label={<img src={app.icon_url} alt={app.name} style={{ width: 30, height: 30 }} />}
                     variant="outlined"
                     clickable
                     selected={selectedApps.includes(app.id)}
@@ -329,7 +385,21 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 2 }}>
+
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'flex-start', alignContent: 'center', alignItems: 'center', marginTop: '1rem' }}>
+            <Typography variant="h6" component="h2" sx={{ fontFamily: 'Orbitron', color: '#f39c12', marginRight: '.5rem' }}>
+                AI Toolset
+            </Typography>
+            <Tippy content={
+              <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                <p style={{ marginBottom: '4px', marginTop: '0px' }}>The AI tools that you use to enhance your workflow</p>
+                <p style={{ marginBottom: '0px', marginTop: '0px' }}>You can choose up to four.</p>
+              </span>}
+            >
+              <InfoIcon />
+            </Tippy>
+          </div>
+          <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 1 }}>
             {workerOptions.ai_tools.map(tool => (
               <Grid item key={tool.id}>
                 <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{tool.name}</span>}>

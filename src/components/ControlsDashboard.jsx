@@ -6,8 +6,13 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Link } from 'react-router-dom';
 import FeedbackModal from './modals/FeedbackModal';
 import FilterModal from './modals/FilterModal';
+import BankInfoModal from './modals/BankInfoModal';
 import { useGlitch } from 'react-powerglitch';
 import { useLocation } from 'react-router-dom';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import FeedbackIcon from '@mui/icons-material/Feedback';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
 function ControlsDashboard() {
 
@@ -39,9 +44,11 @@ function ControlsDashboard() {
   
   const [showFilters, setShowFilters] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showBankInfo, setShowBankInfo] = useState(false);
 
   const toggleFilters = () => setShowFilters(!showFilters);
   const toggleFeedbackModal = () => setShowFeedback(!showFeedback);
+  const toggleBankInfoModal = () => setShowBankInfo(!showBankInfo);
 
   let propertiesRegistered = false; // Global flag to check if properties are registered
 
@@ -75,29 +82,38 @@ function ControlsDashboard() {
 
   return (
     <>
-        <div className="stickyBar bottomBar" style={{ 
+        <div className="stickyBar bottomBar column-on-small" style={{ 
                 padding: '10px 20px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 background: 'rgba(0, 0, 0, 0.9)',
             }}>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }} className="wrap-on-small">
                 <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
                     <img src="/isari-logo.png" alt="Isari AI Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
-                    <span className="dashboard-text">Isari AI</span>
+                    <span className="dashboard-text hide-on-small">Isari AI</span>
                 </Link>
 
                 <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
                     <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
-                    <span className="dashboard-text" >Lorenz</span>
+                    <span className="dashboard-text hide-on-small" >Lorenz</span>
                 </Link>
                 {isLoggedIn && (
                   <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Dashboard</Button>
                 )}
-                <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Create Account</Button>
-                <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Work</Button>
-                <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}} onClick={toggleFeedbackModal}>Feedback</Button>
+                <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                  <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Create Account</span>
+                </Button>
+                <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                  <ConstructionIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Work</span>
+                </Button>
+                <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleFeedbackModal}>
+                  <FeedbackIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Feedback</span>
+                </Button>
+                <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleBankInfoModal}>
+                  <FavoriteIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Donate</span>
+                </Button>
                 {isHomepage && (
                   <IconButton onClick={toggleFilters} style={{ margin: '0 auto' }}>  {/* This will auto-center the button */}
                       <FilterAltIcon className="icon-large" sx={{ color: '#00B2AA' }} />
@@ -123,6 +139,7 @@ function ControlsDashboard() {
         </div>
         <FilterModal open={showFilters} onClose={toggleFilters} />
         <FeedbackModal open={showFeedback} onClose={toggleFeedbackModal} />
+        <BankInfoModal open={showBankInfo} onClose={toggleBankInfoModal} />
     </>
   );
 }
