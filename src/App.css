@@ -218,7 +218,7 @@
   z-index: 2;
 }
 
-.feedback-modal-container {
+.feedback-modal-container, .login-modal-container {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -233,6 +233,10 @@
   color: #00e6da;
   border: 1px solid #00e6da;
   border-radius: 5px;
+}
+
+.login-modal-container {
+  width: fit-content !important;
 }
 
 .create-worker-page-container {

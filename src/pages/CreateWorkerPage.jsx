@@ -385,7 +385,7 @@ function CreateWorkerPage({ workerOptions }) {
               inputProps: {
                 style: {
                   fontFamily: showPassword || password === '' ? 'Orbitron' : 'monospace',
-                  WebkitTextSecurity: showPassword ? 'none' : 'disc !important', // Use 'disc' for asterisk
+                  WebkitTextSecurity: showPassword ? 'none' : 'disc !important',
                 },
               },
             }}

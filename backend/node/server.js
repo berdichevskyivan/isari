@@ -9,13 +9,22 @@ import fs from 'fs';
 import { dirname, join, extname } from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
+app.use(cookieParser()); // Adding cookie-parser middleware
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,6 +68,21 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// function authenticateToken(req, res, next) {
+//     const token = req.cookies.token;
+//     if (!token) {
+//         return res.status(401).json({ message: 'Access denied' });
+//     }
+
+//     try {
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//         req.user = decoded;
+//         next();
+//     } catch (error) {
+//         res.status(403).json({ message: 'Invalid token' });
+//     }
+// }
+
 async function fetchAndEmitWorkerInfo(socket) {
     try {
         const workersQuery = sql.fragment`
@@ -92,7 +116,6 @@ async function fetchAndEmitWorkerInfo(socket) {
             ai_tools: row.ai_tools.filter(Boolean)
         }));
         
-        console.log('emitting updateWorkers', workers);
         if(socket){
           socket.emit('updateWorkers', workers);
         }else{
@@ -259,6 +282,55 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
         if (profilePic && fs.existsSync(profilePic.path)) {
             fs.unlinkSync(profilePic.path);
         }
+    }
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  console.log('/login endpoint called');
+
+  try {
+    const result = await pool.query(sql.fragment`SELECT id, password, salt FROM workers WHERE email = ${email}`);
+    if (result.rowCount === 0) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const user = result.rows[0];
+    const isValidPassword = bcrypt.compareSync(password + user.salt, user.password);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+    res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'lax' });
+
+    console.log('Setting cookie:', token);
+    res.json({ message: 'Login successful' });
+  } catch (error) {
+    console.error('Error during login:', error.message);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/logout', (req, res) => {
+    res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: false, sameSite: 'lax'});
+    res.json({ message: 'Logout successful' });
+});
+
+app.get('/verify-auth', (req, res) => {
+    const token = req.cookies.token;
+    console.log('token is -> ', token)
+    if (!token) {
+        return res.json({ isAuthenticated: false });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        res.json({ isAuthenticated: true, user: decoded });
+    } catch (error) {
+        res.json({ isAuthenticated: false });
     }
 });
 

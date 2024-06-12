@@ -7,12 +7,15 @@ import { Link } from 'react-router-dom';
 import FeedbackModal from './modals/FeedbackModal';
 import FilterModal from './modals/FilterModal';
 import BankInfoModal from './modals/BankInfoModal';
+import LoginModal from './modals/LoginModal';
 import { useGlitch } from 'react-powerglitch';
 import { useLocation } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function ControlsDashboard() {
 
@@ -45,10 +48,12 @@ function ControlsDashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showBankInfo, setShowBankInfo] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);  // Add state for the login modal
 
   const toggleFilters = () => setShowFilters(!showFilters);
   const toggleFeedbackModal = () => setShowFeedback(!showFeedback);
   const toggleBankInfoModal = () => setShowBankInfo(!showBankInfo);
+  const toggleLoginModal = () => setShowLogin(!showLogin);  // Handler to toggle the modal
 
   let propertiesRegistered = false; // Global flag to check if properties are registered
 
@@ -100,20 +105,34 @@ function ControlsDashboard() {
                     <span className="dashboard-text hide-on-small" >Lorenz</span>
                 </Link>
                 {isLoggedIn && (
-                  <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>Dashboard</Button>
+                  <>
+                    <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>
+                      Dashboard
+                    </Button>
+                    <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <ConstructionIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Work</span>
+                    </Button>
+                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleFeedbackModal}>
+                      <FeedbackIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Feedback</span>
+                    </Button>
+                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleBankInfoModal}>
+                      <FavoriteIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Donate</span>
+                    </Button>
+                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={logout}>
+                      <LogoutIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Logout</span>
+                    </Button>
+                  </>
                 )}
-                <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
-                  <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Create Account</span>
-                </Button>
-                <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
-                  <ConstructionIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Work</span>
-                </Button>
-                <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleFeedbackModal}>
-                  <FeedbackIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Feedback</span>
-                </Button>
-                <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleBankInfoModal}>
-                  <FavoriteIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Donate</span>
-                </Button>
+                {!isLoggedIn && (
+                  <>
+                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleLoginModal}>
+                      <LoginIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Login</span>
+                    </Button>
+                    <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Create Account</span>
+                    </Button>
+                  </>
+                )}
                 {isHomepage && (
                   <IconButton onClick={toggleFilters} style={{ margin: '0 auto' }}>  {/* This will auto-center the button */}
                       <FilterAltIcon className="icon-large" sx={{ color: '#00B2AA' }} />
@@ -140,6 +159,7 @@ function ControlsDashboard() {
         <FilterModal open={showFilters} onClose={toggleFilters} />
         <FeedbackModal open={showFeedback} onClose={toggleFeedbackModal} />
         <BankInfoModal open={showBankInfo} onClose={toggleBankInfoModal} />
+        <LoginModal open={showLogin} onClose={toggleLoginModal} login={login}/>
     </>
   );
 }
