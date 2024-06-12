@@ -20,6 +20,7 @@
     "@tippyjs/react": "^4.2.6",
     "@types/three": "^0.165.0",
     "axios": "^1.6.8",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

@@ -8,6 +8,7 @@ import multer from 'multer';  // For handling multipart/form-data
 import fs from 'fs';
 import { dirname, join, extname } from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -165,25 +166,33 @@ app.get('/fetchWorkerOptions', fetchWorkerOptions);
 app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
     console.log('createWorker called');
 
-    const { fullName, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
+    const { fullName, email, password, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
     const profilePic = req.file;
 
     console.log('fullName:', fullName);
+    console.log('email:', email);
     console.log('profilePic:', profilePic);
 
     try {
-        // Ensure fullName is defined and a string
+        // Ensure fullName and email are defined and strings
         if (!fullName || typeof fullName !== 'string') {
             throw new Error('Invalid fullName');
         }
+        if (!email || typeof email !== 'string') {
+            throw new Error('Invalid email');
+        }
 
-        // Insert user data into workers table with default values for email and password
+        // Generate salt and hash the password
+        const salt = bcrypt.genSaltSync(10);
+        const hashedPassword = bcrypt.hashSync(password + salt, 10);
+
+        // Insert user data into workers table
         const createWorkerQuery = sql.fragment`
-            INSERT INTO workers (name, email, password, github_url, profile_picture_url, wallet_address)
-            VALUES (${fullName}, '', '', '', ${''}, '')
+            INSERT INTO workers (name, email, password, salt, github_url, profile_picture_url, wallet_address)
+            VALUES (${fullName}, ${email}, ${hashedPassword}, ${salt}, '', ${''}, '')
             RETURNING id
         `;
-        
+
         const result = await pool.one(createWorkerQuery);
         const workerId = result.id;
 

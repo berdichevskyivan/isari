@@ -97,6 +97,19 @@ const StyledButton = styled(Button)({
   },
 });
 
+// Email validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Password validation regex
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+
+// Full name validation function
+const isValidFullName = (name) => {
+  const parts = name.trim().split(' ');
+  if (parts.length < 2) return false;
+  return parts.every(part => /^[A-Z][a-z]*$/.test(part));
+};
+
 function CreateWorkerPage({ workerOptions }) {
 
   const navigate = useNavigate();
@@ -110,6 +123,12 @@ function CreateWorkerPage({ workerOptions }) {
   const [showPassword, setShowPassword] = useState(false);
   const [checkPassword, setCheckPassword] = useState('');
   const [showCheckPassword, setShowCheckPassword] = useState(false);
+
+  // Errors state
+  const [fullNameError, setFullNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [checkPasswordError, setCheckPasswordError] = useState('');
   
   const [selectedLangs, setSelectedLangs] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
@@ -120,6 +139,47 @@ function CreateWorkerPage({ workerOptions }) {
   const handleMouseDownPassword = (event) => event.preventDefault();
   const handleClickShowCheckPassword = () => setShowCheckPassword(!showCheckPassword);
   const handleMouseDownCheckPassword = (event) => event.preventDefault();
+
+  // Handlers
+  const handleFullNameChange = (e) => {
+    const name = e.target.value;
+    setFullName(name);
+    if (!isValidFullName(name)) {
+      setFullNameError('Please enter a valid full name with each word starting with a capital letter.');
+    } else {
+      setFullNameError('');
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const email = e.target.value;
+    setEmail(email);
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address.');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const password = e.target.value;
+    setPassword(password);
+    if (!passwordRegex.test(password)) {
+      setPasswordError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.');
+    } else {
+      setPasswordError('');
+    }
+  };
+  
+  const handleCheckPasswordChange = (e) => {
+    const checkPassword = e.target.value;
+    setCheckPassword(checkPassword);
+    if (checkPassword !== password) {
+      setCheckPasswordError('Passwords do not match.');
+    } else {
+      setCheckPasswordError('');
+    }
+  };  
 
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
@@ -135,10 +195,69 @@ function CreateWorkerPage({ workerOptions }) {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async () => {  
+    // Reset errors
+    setFullNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setCheckPasswordError('');
+
+    // Check if an image has been uploaded
+    if (!profilePicFile) {
+      alert('Please upload a profile picture.');
+      return;
+    }
+  
+    // Check full name validity
+    if (!isValidFullName(fullName)) {
+      setFullNameError('Please enter a valid full name with each word starting with a capital letter.');
+      return;
+    }
+  
+    // Check email validity
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+  
+    // Check password validity
+    if (!passwordRegex.test(password)) {
+      setPasswordError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.');
+      return;
+    }
+  
+    // Check if passwords match
+    if (password !== checkPassword) {
+      setCheckPasswordError('Passwords do not match.');
+      return;
+    }
+
+    // Check if at least one item is selected in each category
+    if (selectedLangs.length === 0) {
+      alert('Please select at least one programming language.');
+      return;
+    }
+
+    if (selectedBranches.length === 0) {
+      alert('Please select at least one AI branch.');
+      return;
+    }
+
+    if (selectedApps.length === 0) {
+      alert('Please select at least one AI specialty.');
+      return;
+    }
+
+    if (selectedTools.length === 0) {
+      alert('Please select at least one AI tool.');
+      return;
+    }
+  
     try {
       const formData = new FormData();
       formData.append('fullName', fullName);
+      formData.append('email', email);
+      formData.append('password', password);
       formData.append('programmingLanguagesIds', JSON.stringify(selectedLangs));
       formData.append('generalizedAiBranches', JSON.stringify(selectedBranches));
       formData.append('specializedAiApplicationsIds', JSON.stringify(selectedApps));
@@ -159,7 +278,7 @@ function CreateWorkerPage({ workerOptions }) {
           'Content-Type': 'multipart/form-data'
         }
       });
-
+  
       console.log('analysisResponse', analysisResponse);
   
       // Evaluate the response from the Python backend
@@ -180,7 +299,7 @@ function CreateWorkerPage({ workerOptions }) {
       console.error('Error processing worker data:', error);
       alert('Failed to process worker data.');
     }
-  };
+  };  
 
   if (!workerOptions) {
     return <Loading />;
@@ -225,7 +344,9 @@ function CreateWorkerPage({ workerOptions }) {
             fullWidth
             sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '.1rem !important' }}
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={handleFullNameChange}
+            error={!!fullNameError}
+            helperText={fullNameError}
           />
           <StyledTextField
             placeholder="Email Address"
@@ -233,7 +354,9 @@ function CreateWorkerPage({ workerOptions }) {
             fullWidth
             sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '.1rem !important' }}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
+            error={!!emailError}
+            helperText={emailError}
           />
           <StyledTextField
             placeholder="Password"
@@ -242,7 +365,9 @@ function CreateWorkerPage({ workerOptions }) {
             type={showPassword ? "text" : "password"}
             sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '.1rem !important' }}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handlePasswordChange}
+            error={!!passwordError}
+            helperText={passwordError}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -251,6 +376,7 @@ function CreateWorkerPage({ workerOptions }) {
                     onMouseDown={handleMouseDownPassword}
                     edge="end"
                     sx={{ color: '#00e6da' }}
+                    tabIndex={-1}
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
@@ -271,7 +397,9 @@ function CreateWorkerPage({ workerOptions }) {
             type={showCheckPassword ? "text" : "password"}
             sx={{ backgroundColor: 'black', maxWidth: '50%', margin: '10px auto', marginBottom: '1rem !important' }}
             value={checkPassword}
-            onChange={(e) => setCheckPassword(e.target.value)}
+            onChange={handleCheckPasswordChange}
+            error={!!checkPasswordError}
+            helperText={checkPasswordError}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -280,6 +408,7 @@ function CreateWorkerPage({ workerOptions }) {
                     onMouseDown={handleMouseDownCheckPassword}
                     edge="end"
                     sx={{ color: '#00e6da' }}
+                    tabIndex={-1}
                   >
                     {showCheckPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>

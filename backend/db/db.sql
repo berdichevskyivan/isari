@@ -6,7 +6,11 @@ CREATE TABLE workers (
     password VARCHAR(255) NOT NULL,
     github_url VARCHAR(255),
     profile_picture_url VARCHAR(255),
-    wallet_address VARCHAR(255)
+    wallet_address VARCHAR(255),
+    salt VARCHAR(255),
+    CONSTRAINT unique_name UNIQUE (name),
+    CONSTRAINT unique_email UNIQUE (email),
+    CONSTRAINT unique_github_url UNIQUE (github_url)
 );
 
 -- Create the programming_languages table
