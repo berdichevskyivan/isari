@@ -9,38 +9,8 @@ import DataArrayIcon from '@mui/icons-material/DataArray';
 import HubIcon from '@mui/icons-material/Hub';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
-import MessageIcon from '@mui/icons-material/Message';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
-
-const testNotifications = [
-  { id: 1, message: 'Someone sent you a message!', icon: <MessageIcon sx={{ height: 30, width: 30, color: '#00B2AA', cursor: 'pointer'}} /> },
-  { id: 2, message: 'You\'ve received a donation of 200 Shinrai!', icon: <AccountBalanceWalletIcon sx={{ height: 30, width: 30, color: '#00B2AA', cursor: 'pointer'}} /> },
-];
-
-const testMessages = [
-  {
-    id: 1,
-    sender: 'John Doe',
-    sender_icon: 'http://localhost:3000/uploads/26-yuei-huang.jpg',
-    last_message: 'Hey, how are you?',
-    conversation: [
-      { sender: 'John Doe', message: 'Hey, how are you?' },
-      { sender: 'Ivan Berdichevsky', message: 'I\'m good, thanks!' },
-    ],
-  },
-  {
-    id: 2,
-    sender: 'Jane Smith',
-    sender_icon: 'http://localhost:3000/uploads/27-veronika-seltzmann.jpg',
-    last_message: 'Are you available for a meeting?',
-    conversation: [
-      { sender: 'Jane Smith', message: 'Are you available for a meeting?' },
-      { sender: 'Ivan Berdichevsky', message: 'Sure, what time?' },
-    ],
-  },
-];
 
 function getInitials(input) {
   return input.split(' ').map(word => word[0]).join('');
@@ -59,7 +29,7 @@ function CustomCard({ worker, workerOptions }) {
 
   return (
     <>
-      <Card sx={{ width: 250, height: 'fill-available', m: 0, mr: '1rem', ml: '-0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
+      <Card sx={{ width: 250, height: 'fit-available', m: 0, mr: '1rem', ml: '-0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
           <Avatar src={`http://localhost:3000/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
           <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
@@ -106,73 +76,21 @@ function CustomCard({ worker, workerOptions }) {
               </Tippy>
             ))}
           </Box>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
-            <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={handleEditClick}>Edit</Button>
-          </Box>
         </CardContent>
       </Card>
-
-      {/* Edit Modal */}
-      <Modal
-        open={editModalOpen}
-        onClose={handleModalClose}
-        aria-labelledby="edit-modal-title"
-        aria-describedby="edit-modal-description"
-      >
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 400,
-          bgcolor: 'background.paper',
-          border: '2px solid #000',
-          boxShadow: 24,
-          p: 4,
-        }}>
-          {/* Modal Content */}
-          <Typography id="edit-modal-title" variant="h6" component="h2" sx={{ fontFamily: 'Orbitron' }}>
-            Edit Worker Details
-          </Typography>
-          {/* Content similar to CreateWorkerPage */}
-          {/* Here you can add similar components and logic as in the CreateWorkerPage for editing */}
-          {/* ... */}
-        </Box>
-      </Modal>
     </>
   );
 }
 
 function WorkerDashboardPage({ workerOptions }) {
   const { loggedInUser } = useContext(AuthContext);
-  const [selectedMessage, setSelectedMessage] = useState(null);
-
-  const handleSelectMessage = (message) => {
-    setSelectedMessage(message);
-  };
-
-  const handleCloseMessageModal = () => {
-    setSelectedMessage(null);
-  };
 
   if (!workerOptions) {
     return <Loading />;
   }
 
   return (
-    <div style={{
-      height: '100vh',
-      width: '100%',
-      overflow: 'auto',  // Allow overflow while hiding scrollbars
-      '::WebkitScrollbar': { display: 'none' },
-      msOverflowStyle: 'none',  // for Internet Explorer and Edge
-      scrollbarWidth: 'none',  // for Firefox
-      display: 'flex',
-      flexFlow: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1,  // Ensure the grid is above the StarrySky
-    }}>
+    <div className="worker-dashboard-container">
       <StarrySky />
 
       <div className="dashboard-page-in-progress-container">
@@ -185,72 +103,21 @@ function WorkerDashboardPage({ workerOptions }) {
           ) }
 
           <div className="worker-feed">
-            {testNotifications.map(notification => (
-              <Box key={notification.id} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                { notification.icon }
-                <Typography sx={{ fontFamily: 'Orbitron', color: '#00e6da', marginLeft: '.5rem' }}>{notification.message}</Typography>
-              </Box>
-            ))}
+
           </div>
         </div>
 
-        <div className="worker-dashboard-footer">
-          {testMessages.map(message => (
-            <Box key={message.id} sx={{ display: 'flex', alignItems: 'center', mb: 2, cursor: 'pointer' }} onClick={() => handleSelectMessage(message)}>
-              <img src={message.sender_icon} alt="sender-icon" style={{ width: 30, height: 30, marginRight: '0.5rem', borderRadius: '100%' }} />
-              <Typography sx={{ fontFamily: 'Orbitron', color: '#00e6da' }}>{message.last_message}</Typography>
-            </Box>
-          ))}
+        <div style={{ display: 'flex', flexFlow: 'row', marginTop: '1.5rem', justifyContent: 'space-between', width: '100%' }}>
+          <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', color: 'white', border: '1px solid blue', marginRight: '1.5rem' }} onClick={() => console.log('Update account clicked')}>
+            Update
+          </Button>
+          <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'red', color: 'white' }} onClick={() => console.log('Delete account clicked')}>
+            Delete Account
+          </Button>
         </div>
-
-        <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'red', color: 'white' }} onClick={() => console.log('Delete account clicked')}>
-          Delete Account
-        </Button>
       </div>
 
       <ControlsDashboard />
-
-      {/* Message Modal */}
-      {selectedMessage && (
-        <Modal
-          open={true}
-          onClose={handleCloseMessageModal}
-          aria-labelledby="message-modal-title"
-          aria-describedby="message-modal-description"
-        >
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            bgcolor: 'background.paper',
-            border: '2px solid #000',
-            boxShadow: 24,
-            p: 4,
-          }}>
-            <Typography id="message-modal-title" variant="h6" component="h2" sx={{ fontFamily: 'Orbitron' }}>
-              Conversation with {selectedMessage.sender}
-            </Typography>
-            <Box id="message-modal-description" sx={{ mt: 2 }}>
-              {selectedMessage.conversation.map((msg, index) => (
-                <Typography key={index} sx={{ fontFamily: 'Orbitron' }}>
-                  <strong>{msg.sender}:</strong> {msg.message}
-                </Typography>
-              ))}
-            </Box>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Type your message..."
-              sx={{ mt: 2, mb: 2 }}
-            />
-            <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'blue', color: 'white' }} onClick={() => console.log('Send message clicked')}>
-              Send
-            </Button>
-          </Box>
-        </Modal>
-      )}
     </div>
   );
 }
