@@ -184,7 +184,7 @@
 }
 
 .worker-feed {
-  height: 400px;
+  height: fit-content;
   width: 400px;
   border: 1px solid turquoise;
   border-radius: 15px;

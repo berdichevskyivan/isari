@@ -285,6 +285,85 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
     }
 });
 
+app.post('/updateWorker', upload.none(), async (req, res) => {
+    console.log('updateWorker called');
+
+    const { workerId, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
+
+    console.log('programmingLanguagesIds is -> ', programmingLanguagesIds);
+    console.log('workerId is -> ', workerId);
+
+    try {
+        // Ensure workerId is defined and a number
+        if (!workerId || isNaN(workerId)) {
+            throw new Error('Invalid workerId');
+        }
+
+        // Utility function to update relational data
+        const updateRelationalData = async (tableName, workerId, ids, columnName) => {
+            console.log(`Updating ${tableName} for worker ${workerId}:`, ids);
+
+            // Delete existing entries for the worker
+            const deleteQuery = sql.fragment`
+                DELETE FROM ${sql.identifier([tableName])}
+                WHERE worker_id = ${workerId}
+            `;
+            await pool.query(deleteQuery);
+
+            // Insert new entries
+            for (const id of ids) {
+                const insertQuery = sql.fragment`
+                    INSERT INTO ${sql.identifier([tableName])} (worker_id, ${sql.identifier([columnName])})
+                    VALUES (${workerId}, ${id})
+                `;
+                await pool.query(insertQuery);
+            }
+        };
+
+        await updateRelationalData('worker_programming_languages', workerId, JSON.parse(programmingLanguagesIds), 'programming_language_id');
+        await updateRelationalData('worker_generalized_ai_branches', workerId, JSON.parse(generalizedAiBranches), 'ai_branch_id');
+        await updateRelationalData('worker_specialized_ai_applications', workerId, JSON.parse(specializedAiApplicationsIds), 'ai_application_id');
+        await updateRelationalData('worker_ai_tools', workerId, JSON.parse(aiToolsIds), 'ai_tool_id');
+
+        // Fetch the updated worker data
+        const updatedWorkerQuery = sql.fragment`
+            SELECT * FROM workers WHERE id = ${workerId}
+        `;
+        const updatedWorker = await pool.one(updatedWorkerQuery);
+
+        console.log('Worker badges updated successfully');
+        // Emit the updated information to the network if needed
+        fetchAndEmitWorkerInfo();
+
+        res.json({
+            success: true,
+            message: 'Worker badges updated successfully',
+            updatedUser: {
+                ...updatedWorker,
+                programming_languages: JSON.parse(programmingLanguagesIds),
+                generalized_ai_branches: JSON.parse(generalizedAiBranches),
+                specialized_ai_applications: JSON.parse(specializedAiApplicationsIds),
+                ai_tools: JSON.parse(aiToolsIds)
+            }
+        });
+    } catch (error) {
+        console.error('Error updating worker:', error.message);
+
+        // Log detailed error information
+        if (error.constraint) {
+            console.error(`Constraint violation: ${error.constraint}`);
+        }
+        if (error.detail) {
+            console.error(`Error details: ${error.detail}`);
+        }
+        if (error.table) {
+            console.error(`Table: ${error.table}`);
+        }
+
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   console.log('/login endpoint called');

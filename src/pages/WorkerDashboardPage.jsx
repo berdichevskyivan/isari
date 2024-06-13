@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import '../App.css';
-import { Modal, Card, CardContent, Typography, Avatar, Box, Button, TextField, Grid } from '@mui/material';
+import { Card, CardContent, Typography, Avatar, Box, Button, Grid } from '@mui/material';
 import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
 import Loading from '../components/Loading';
@@ -11,22 +11,32 @@ import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
+import { styled } from '@mui/system';
+import Chip from '@mui/material/Chip';
+import axios from 'axios';
+
+const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
+  margin: '4px',
+  boxShadow: selected ? `0 0 15px ${shadowcolor}` : 'none',
+  borderColor: selected ? shadowcolor : '#ccc',
+  borderRadius: '50%',
+  borderWidth: '2px',
+  width: 60,
+  height: 60,
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  '.MuiChip-label': {
+    paddingLeft: 0,
+    paddingRight: 0,
+  },
+}));
 
 function getInitials(input) {
   return input.split(' ').map(word => word[0]).join('');
 }
 
 function CustomCard({ worker, workerOptions }) {
-  const [editModalOpen, setEditModalOpen] = useState(false);
-
-  const handleEditClick = () => {
-    setEditModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setEditModalOpen(false);
-  };
-
   return (
     <>
       <Card sx={{ width: 250, height: 'fit-available', m: 0, mr: '1rem', ml: '-0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
@@ -83,11 +93,87 @@ function CustomCard({ worker, workerOptions }) {
 }
 
 function WorkerDashboardPage({ workerOptions }) {
-  const { loggedInUser } = useContext(AuthContext);
+  const { loggedInUser, setLoggedInUser } = useContext(AuthContext);
+  const [selectedLangs, setSelectedLangs] = useState([]);
+  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [selectedApps, setSelectedApps] = useState([]);
+  const [selectedTools, setSelectedTools] = useState([]);
+
+  useEffect(() => {
+    if (loggedInUser) {
+      setSelectedLangs(loggedInUser.programming_languages || []);
+      setSelectedBranches(loggedInUser.generalized_ai_branches || []);
+      setSelectedApps(loggedInUser.specialized_ai_applications || []);
+      setSelectedTools(loggedInUser.ai_tools || []);
+    }
+  }, [loggedInUser]);
 
   if (!workerOptions) {
     return <Loading />;
   }
+
+  const handleSelect = (item, setSelected, selected) => {
+    if (selected.includes(item)) {
+      setSelected(selected.filter(i => i !== item));
+    } else if (selected.length < 4) {
+      setSelected([...selected, item]);
+    }
+  };
+
+  const handleUpdate = async () => {
+    // Check if at least one item is selected in each category
+    if (selectedLangs.length === 0) {
+      alert('Please select at least one programming language.');
+      return;
+    }
+
+    if (selectedBranches.length === 0) {
+      alert('Please select at least one AI branch.');
+      return;
+    }
+
+    if (selectedApps.length === 0) {
+      alert('Please select at least one AI specialty.');
+      return;
+    }
+
+    if (selectedTools.length === 0) {
+      alert('Please select at least one AI tool.');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('workerId', loggedInUser.id);
+      formData.append('programmingLanguagesIds', JSON.stringify(selectedLangs));
+      formData.append('generalizedAiBranches', JSON.stringify(selectedBranches));
+      formData.append('specializedAiApplicationsIds', JSON.stringify(selectedApps));
+      formData.append('aiToolsIds', JSON.stringify(selectedTools));
+
+      // Log each entry in the FormData
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      // Send data to the backend for updating the worker profile
+      const updateResponse = await axios.post('http://localhost:3000/updateWorker', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+      });
+
+      if (updateResponse.data.success) {
+          alert('Worker profile updated successfully!');
+          setLoggedInUser(updateResponse.data.updatedUser);
+      } else {
+          alert('Worker profile update failed. Please check your data.');
+      }
+    } catch (error) {
+      console.error('Error updating worker profile:', error);
+      alert('Failed to update worker profile.');
+    }
+  };
 
   return (
     <div className="worker-dashboard-container">
@@ -95,20 +181,87 @@ function WorkerDashboardPage({ workerOptions }) {
 
       <div className="dashboard-page-in-progress-container">
         <div className="worker-dashboard-header">
-          { loggedInUser && (
-          <CustomCard
-            worker={loggedInUser}
-            workerOptions={workerOptions}
-          />
-          ) }
+          {loggedInUser && (
+            <CustomCard
+              worker={loggedInUser}
+              workerOptions={workerOptions}
+            />
+          )}
 
           <div className="worker-feed">
-
+            <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px' }}>
+              {workerOptions.programming_languages.map(lang => (
+                <Grid item key={lang.id}>
+                  <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{lang.name.charAt(0).toUpperCase() + lang.name.slice(1)}</span>}>
+                    <StyledChip
+                      label={<img src={lang.icon_url} alt={lang.name} style={{ width: 24, height: 24 }} />}
+                      variant="outlined"
+                      clickable
+                      selected={selectedLangs.includes(lang.id)}
+                      onClick={() => handleSelect(lang.id, setSelectedLangs, selectedLangs)}
+                      shadowcolor="#00ff00"
+                      sx={{ borderColor: '#00ff00', height: 50, width: 50 }}
+                    />
+                  </Tippy>
+                </Grid>
+              ))}
+            </Grid>
+            <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 1 }}>
+              {workerOptions.generalized_ai_branches.map(branch => (
+                <Grid item key={branch.id}>
+                  <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{branch.name}</span>}>
+                    <StyledChip
+                      label={<Avatar sx={{ bgcolor: 'blue', height: 30, width: 30 }}><span style={{ fontFamily: 'Orbitron', fontSize: '12px'}}>{getInitials(branch.name)}</span></Avatar>}
+                      variant="outlined"
+                      clickable
+                      selected={selectedBranches.includes(branch.id)}
+                      onClick={() => handleSelect(branch.id, setSelectedBranches, selectedBranches)}
+                      shadowcolor="#007bff"
+                      sx={{ borderColor: '#007bff', height: 50, width: 50 }}
+                    />
+                  </Tippy>
+                </Grid>
+              ))}
+            </Grid>
+            <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 1 }}>
+              {workerOptions.specialized_ai_applications.map(app => (
+                <Grid item key={app.id}>
+                  <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{app.name}</span>}>
+                    <StyledChip
+                      label={<img src={app.icon_url} alt={app.name} style={{ width: 30, height: 30 }} />}
+                      variant="outlined"
+                      clickable
+                      selected={selectedApps.includes(app.id)}
+                      onClick={() => handleSelect(app.id, setSelectedApps, selectedApps)}
+                      shadowcolor="#8e44ad"
+                      sx={{ borderColor: '#8e44ad', height: 50, width: 50, pr: 0, pl: 0 }}
+                    />
+                  </Tippy>
+                </Grid>
+              ))}
+            </Grid>
+            <Grid container spacing={0} justifyContent="center" sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', columnGap: '5px', rowGap: '5px', marginTop: 1 }}>
+              {workerOptions.ai_tools.map(tool => (
+                <Grid item key={tool.id}>
+                  <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>{tool.name}</span>}>
+                    <StyledChip
+                      label={<img src={tool.icon_url} alt={tool.name} style={{ width: 24, height: 24 }} />}
+                      variant="outlined"
+                      clickable
+                      selected={selectedTools.includes(tool.id)}
+                      onClick={() => handleSelect(tool.id, setSelectedTools, selectedTools)}
+                      shadowcolor="#f39c12"
+                      sx={{ borderColor: '#f39c12', height: 50, width: 50 }}
+                    />
+                  </Tippy>
+                </Grid>
+              ))}
+            </Grid>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexFlow: 'row', marginTop: '1.5rem', justifyContent: 'space-between', width: '100%' }}>
-          <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', color: 'white', border: '1px solid blue', marginRight: '1.5rem' }} onClick={() => console.log('Update account clicked')}>
+          <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', color: 'white', border: '1px solid blue', marginRight: '1.5rem' }} onClick={handleUpdate}>
             Update
           </Button>
           <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'red', color: 'white' }} onClick={() => console.log('Delete account clicked')}>
