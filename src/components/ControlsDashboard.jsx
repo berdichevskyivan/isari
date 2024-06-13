@@ -16,10 +16,13 @@ import FeedbackIcon from '@mui/icons-material/Feedback';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 function ControlsDashboard() {
 
-  const { isLoggedIn, login, logout } = useContext(AuthContext);
+  const { isLoggedIn, loggedInUser, login, logout } = useContext(AuthContext);
+
+  console.log('this is loggedInUser -> ', loggedInUser)
 
   const location = useLocation();
   const isHomepage = location.pathname === '/';
@@ -107,7 +110,7 @@ function ControlsDashboard() {
                 {isLoggedIn && (
                   <>
                     <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>
-                      Dashboard
+                      <DashboardIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Dashboard</span>
                     </Button>
                     <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
                       <ConstructionIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Work</span>

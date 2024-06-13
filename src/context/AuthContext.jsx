@@ -5,18 +5,21 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState(null);
 
   const checkAuthStatus = async () => {
     try {
       const response = await axios.get('http://localhost:3000/verify-auth', { withCredentials: true });
       console.log('Auth status:', response.data.isAuthenticated);
       setIsLoggedIn(response.data.isAuthenticated);
+      setLoggedInUser(response.data.user);
       return response.data.isAuthenticated;
     } catch (error) {
       console.error('Error checking auth status:', error);
       if (error.response && error.response.status === 401) {
         // Token expired or invalid, logout the user
         setIsLoggedIn(false);
+        setLoggedInUser(null);
         await logout();
       }
       return false;
@@ -34,6 +37,7 @@ export const AuthProvider = ({ children }) => {
         console.log('Login successful');
         const checkAuthStatusResponse = await checkAuthStatus();
         if(checkAuthStatusResponse === true){
+          setLoggedInUser(response.data.user);
           window.location.href = '/';
         }
       }
@@ -58,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, loggedInUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -290,24 +290,48 @@ app.post('/login', async (req, res) => {
   console.log('/login endpoint called');
 
   try {
-    const result = await pool.query(sql.fragment`SELECT id, password, salt FROM workers WHERE email = ${email}`);
-    if (result.rowCount === 0) {
+    // Query to get user details including password and salt
+    const userResult = await pool.query(sql.fragment`SELECT id, email, name, password, salt FROM workers WHERE email = ${email}`);
+    if (userResult.rowCount === 0) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const user = result.rows[0];
+    const user = userResult.rows[0];
     const isValidPassword = bcrypt.compareSync(password + user.salt, user.password);
 
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    // Queries to get additional user information
+    const programmingLanguagesResult = await pool.query(sql.fragment`SELECT programming_language_id FROM worker_programming_languages WHERE worker_id = ${user.id}`);
+    const generalizedAiBranchesResult = await pool.query(sql.fragment`SELECT ai_branch_id FROM worker_generalized_ai_branches WHERE worker_id = ${user.id}`);
+    const aiToolsResult = await pool.query(sql.fragment`SELECT ai_tool_id FROM worker_ai_tools WHERE worker_id = ${user.id}`);
+    const specializedAiApplicationsResult = await pool.query(sql.fragment`SELECT ai_application_id FROM worker_specialized_ai_applications WHERE worker_id = ${user.id}`);
+
+    // Extract IDs from query results
+    const programmingLanguages = programmingLanguagesResult.rows.map(row => row.programming_language_id);
+    const generalizedAiBranches = generalizedAiBranchesResult.rows.map(row => row.ai_branch_id);
+    const aiTools = aiToolsResult.rows.map(row => row.ai_tool_id);
+    const specializedAiApplications = specializedAiApplicationsResult.rows.map(row => row.ai_application_id);
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
     res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'lax' });
 
     console.log('Setting cookie:', token);
-    res.json({ message: 'Login successful' });
+    res.json({
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        name: user.name,
+        profile_picture_url: `${user.id}-${user.name.toLowerCase().replace(/ /g, '-')}.png`,
+        programming_languages: programmingLanguages,
+        generalized_ai_branches: generalizedAiBranches,
+        ai_tools: aiTools,
+        specialized_ai_applications: specializedAiApplications
+      }
+    });
   } catch (error) {
     console.error('Error during login:', error.message);
     res.status(500).json({ message: 'Internal server error' });
@@ -319,19 +343,53 @@ app.post('/logout', (req, res) => {
     res.json({ message: 'Logout successful' });
 });
 
-app.get('/verify-auth', (req, res) => {
-    const token = req.cookies.token;
-    console.log('token is -> ', token)
-    if (!token) {
-        return res.json({ isAuthenticated: false });
+app.get('/verify-auth', async (req, res) => {
+  const token = req.cookies.token;
+  console.log('token is -> ', token);
+  if (!token) {
+    return res.json({ isAuthenticated: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // Query to get user details
+    const userResult = await pool.query(sql.fragment`SELECT id, email, name FROM workers WHERE id = ${userId}`);
+    if (userResult.rowCount === 0) {
+      return res.json({ isAuthenticated: false });
     }
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        res.json({ isAuthenticated: true, user: decoded });
-    } catch (error) {
-        res.json({ isAuthenticated: false });
-    }
+    const user = userResult.rows[0];
+
+    // Queries to get additional user information
+    const programmingLanguagesResult = await pool.query(sql.fragment`SELECT programming_language_id FROM worker_programming_languages WHERE worker_id = ${user.id}`);
+    const generalizedAiBranchesResult = await pool.query(sql.fragment`SELECT ai_branch_id FROM worker_generalized_ai_branches WHERE worker_id = ${user.id}`);
+    const aiToolsResult = await pool.query(sql.fragment`SELECT ai_tool_id FROM worker_ai_tools WHERE worker_id = ${user.id}`);
+    const specializedAiApplicationsResult = await pool.query(sql.fragment`SELECT ai_application_id FROM worker_specialized_ai_applications WHERE worker_id = ${user.id}`);
+
+    // Extract IDs from query results
+    const programmingLanguages = programmingLanguagesResult.rows.map(row => row.programming_language_id);
+    const generalizedAiBranches = generalizedAiBranchesResult.rows.map(row => row.ai_branch_id);
+    const aiTools = aiToolsResult.rows.map(row => row.ai_tool_id);
+    const specializedAiApplications = specializedAiApplicationsResult.rows.map(row => row.ai_application_id);
+
+    res.json({
+      isAuthenticated: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        profile_picture_url: `${user.id}-${user.name.toLowerCase().replace(/ /g, '-')}.png`,
+        programming_languages: programmingLanguages,
+        generalized_ai_branches: generalizedAiBranches,
+        ai_tools: aiTools,
+        specialized_ai_applications: specializedAiApplications
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying token:', error.message);
+    res.json({ isAuthenticated: false });
+  }
 });
 
 io.on('connection', (socket) => {
