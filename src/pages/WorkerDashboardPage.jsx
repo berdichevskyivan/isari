@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
 import { Card, CardContent, Typography, Avatar, Box, Button, Grid } from '@mui/material';
 import ControlsDashboard from '../components/ControlsDashboard';
@@ -14,6 +15,7 @@ import 'tippy.js/dist/tippy.css';
 import { styled } from '@mui/system';
 import Chip from '@mui/material/Chip';
 import axios from 'axios';
+import DeleteConfirmModal from '../components/modals/DeleteConfirmModal'; // Import the modal component
 
 const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   margin: '4px',
@@ -93,11 +95,13 @@ function CustomCard({ worker, workerOptions }) {
 }
 
 function WorkerDashboardPage({ workerOptions }) {
-  const { loggedInUser, setLoggedInUser } = useContext(AuthContext);
+  const { loggedInUser, setLoggedInUser, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [selectedLangs, setSelectedLangs] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
   const [selectedTools, setSelectedTools] = useState([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (loggedInUser) {
@@ -172,6 +176,26 @@ function WorkerDashboardPage({ workerOptions }) {
     } catch (error) {
       console.error('Error updating worker profile:', error);
       alert('Failed to update worker profile.');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await axios.delete(`http://localhost:3000/deleteWorker/${loggedInUser.id}`, {
+        data: { name: loggedInUser.name },
+        withCredentials: true
+      });
+      if (response.data.success) {
+        alert('Account deleted successfully!');
+        // Handle user logout or redirection after deletion
+        logout();
+        navigate('/');
+      } else {
+        alert('Failed to delete account.');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account.');
     }
   };
 
@@ -264,13 +288,18 @@ function WorkerDashboardPage({ workerOptions }) {
           <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', color: 'white', border: '1px solid blue', marginRight: '1.5rem' }} onClick={handleUpdate}>
             Update
           </Button>
-          <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'red', color: 'white' }} onClick={() => console.log('Delete account clicked')}>
+          <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'red', color: 'white' }} onClick={() => setIsDeleteModalOpen(true)}>
             Delete Account
           </Button>
         </div>
       </div>
 
       <ControlsDashboard />
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

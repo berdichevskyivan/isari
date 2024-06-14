@@ -18,7 +18,7 @@ const app = express();
 
 app.use(cors({
   origin: "http://localhost:5173",
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "DELETE"],
   credentials: true
 }));
 
@@ -54,7 +54,7 @@ testQuery();
 const io = new Server(server, {
     cors: {
         origin: "http://localhost:5173",
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST", "DELETE"]
     }
 });
 
@@ -68,20 +68,20 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// function authenticateToken(req, res, next) {
-//     const token = req.cookies.token;
-//     if (!token) {
-//         return res.status(401).json({ message: 'Access denied' });
-//     }
+function authenticateToken(req, res, next) {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: 'Access denied' });
+    }
 
-//     try {
-//         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//         req.user = decoded;
-//         next();
-//     } catch (error) {
-//         res.status(403).json({ message: 'Invalid token' });
-//     }
-// }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.status(403).json({ message: 'Invalid token' });
+    }
+}
 
 async function fetchAndEmitWorkerInfo(socket) {
     try {
@@ -196,6 +196,8 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
     console.log('email:', email);
     console.log('profilePic:', profilePic);
 
+    let profilePicUrl = '';
+
     try {
         // Ensure fullName and email are defined and strings
         if (!fullName || typeof fullName !== 'string') {
@@ -222,7 +224,7 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
         // If profile picture is provided, rename the file and update the worker record
         if (profilePic) {
             const sanitizedFullName = fullName.replace(/\s+/g, '-').toLowerCase();
-            const profilePicUrl = `${workerId}-${sanitizedFullName}${extname(profilePic.originalname)}`;
+            profilePicUrl = `${workerId}-${sanitizedFullName}${extname(profilePic.originalname)}`;
             const oldPath = profilePic.path;
             const newPath = join(__dirname, 'uploads', profilePicUrl);
 
@@ -261,7 +263,25 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
         console.log('Worker created successfully');
         // Emitting the information to the whole network
         fetchAndEmitWorkerInfo();
-        res.json({ success: true, message: 'Worker created successfully', workerId });
+
+        // Generate a token for the newly created worker
+        const token = jwt.sign({ id: workerId, email: email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'lax' });
+
+        res.json({
+            success: true,
+            message: 'Worker created successfully',
+            workerId,
+            user: {
+                id: workerId,
+                name: fullName,
+                profile_picture_url: profilePicUrl,
+                programming_languages: JSON.parse(programmingLanguagesIds),
+                generalized_ai_branches: JSON.parse(generalizedAiBranches),
+                specialized_ai_applications: JSON.parse(specializedAiApplicationsIds),
+                ai_tools: JSON.parse(aiToolsIds)
+            }
+        });
     } catch (error) {
         console.error('Error creating worker:', error.message);
 
@@ -469,6 +489,50 @@ app.get('/verify-auth', async (req, res) => {
     console.error('Error verifying token:', error.message);
     res.json({ isAuthenticated: false });
   }
+});
+
+app.delete('/deleteWorker/:id', authenticateToken, async (req, res) => {
+    const workerId = req.params.id;
+    const { name } = req.body;
+
+    try {
+        // Delete related data from relational tables
+        const deleteRelatedData = async (tableName, columnName) => {
+            const deleteQuery = sql.fragment`
+                DELETE FROM ${sql.identifier([tableName])}
+                WHERE ${sql.identifier([columnName])} = ${workerId}
+            `;
+            await pool.query(deleteQuery);
+        };
+
+        await deleteRelatedData('worker_programming_languages', 'worker_id');
+        await deleteRelatedData('worker_generalized_ai_branches', 'worker_id');
+        await deleteRelatedData('worker_specialized_ai_applications', 'worker_id');
+        await deleteRelatedData('worker_ai_tools', 'worker_id');
+
+        // Delete the worker record
+        const deleteWorkerQuery = sql.fragment`
+            DELETE FROM workers
+            WHERE id = ${workerId}
+        `;
+        await pool.query(deleteWorkerQuery);
+
+        // Remove profile picture file if it exists
+        const profilePicPath = join(__dirname, 'uploads', `${workerId}-${name.toLowerCase().replace(/ /g, '-')}.png`);
+        if (fs.existsSync(profilePicPath)) {
+            fs.unlinkSync(profilePicPath);
+        }
+
+        console.log(`Worker with ID ${workerId} deleted successfully`);
+
+        // Emit the updated worker information to all clients
+        fetchAndEmitWorkerInfo();
+
+        res.json({ success: true, message: 'Worker deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting worker:', error.message);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
 });
 
 io.on('connection', (socket) => {

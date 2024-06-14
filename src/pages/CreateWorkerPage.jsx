@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import { Button, TextField, Avatar, Chip, Grid, Box, InputAdornment, IconButton, Typography } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -113,7 +114,7 @@ const isValidFullName = (name) => {
 function CreateWorkerPage({ workerOptions }) {
 
   const navigate = useNavigate();
-
+  const { setLoggedInUser, setIsLoggedIn } = useContext(AuthContext);
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
 
@@ -283,14 +284,21 @@ function CreateWorkerPage({ workerOptions }) {
   
       // Evaluate the response from the Python backend
       if (analysisResponse.data.success) {
-        // If analysis is successful, submit the form data to createWorker
         const createWorkerResponse = await axios.post('http://localhost:3000/createWorker', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
-          }
+          },
+          withCredentials: true
         });
-        alert('Worker created successfully!');
-        navigate('/');
+  
+        if (createWorkerResponse.data.success) {
+          setIsLoggedIn(true);
+          setLoggedInUser(createWorkerResponse.data.user); // Set logged in user
+          alert('Worker created successfully!');
+          navigate('/');
+        } else {
+          alert('Worker creation failed. Please check your data.');
+        }
       } else {
         // Handle failure in analysis
         alert('Worker analysis failed. Please check your data.');
