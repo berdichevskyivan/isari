@@ -22,8 +22,6 @@ function ControlsDashboard() {
 
   const { isLoggedIn, loggedInUser, login, logout } = useContext(AuthContext);
 
-  console.log('this is loggedInUser -> ', loggedInUser)
-
   const location = useLocation();
   const isHomepage = location.pathname === '/';
 

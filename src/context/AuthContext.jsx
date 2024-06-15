@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { useNotification } from './NotificationContext';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -6,6 +7,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const { openSnackbar } = useNotification();
 
   const checkAuthStatus = async () => {
     try {
@@ -43,7 +45,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login failed:', error.response.data.message);
-      alert('Login failed.');
+      openSnackbar('Login failed.');
     }
   };
 
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Logout failed:', error.response.data.message);
-      alert('Logout failed.');
+      openSnackbar('Logout failed.');
     }
   };
 

@@ -8,6 +8,7 @@ import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboardPage';
 import { socket, python_socket } from './socket';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -98,17 +99,19 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
-          <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} />
-          <Route path="/work" element={<WorkPage />} />
-          <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
-          <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <NotificationProvider>
+      <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} />} />
+              <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} />
+              <Route path="/work" element={<WorkPage />} />
+              <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
+              <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
+            </Routes>
+          </Router>
+      </AuthProvider>
+    </NotificationProvider>
   );
 }
 
