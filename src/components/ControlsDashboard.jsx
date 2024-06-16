@@ -18,7 +18,7 @@ import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 
-function ControlsDashboard() {
+function ControlsDashboard({ workerOptions, setWorkers, workers }) {
 
   const { isLoggedIn, loggedInUser, login, logout } = useContext(AuthContext);
 
@@ -101,12 +101,12 @@ function ControlsDashboard() {
                     <span className="dashboard-text hide-on-small">Isari AI</span>
                 </Link>
 
-                <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
-                    <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
-                    <span className="dashboard-text hide-on-small" >Lorenz</span>
-                </Link>
                 {isLoggedIn && (
                   <>
+                    <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
+                      <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
+                      <span className="dashboard-text hide-on-small" >Lorenz</span>
+                    </Link>
                     <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>
                       <DashboardIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Dashboard</span>
                     </Button>
@@ -157,7 +157,9 @@ function ControlsDashboard() {
               </a>
             </div>
         </div>
-        <FilterModal open={showFilters} onClose={toggleFilters} />
+        {isHomepage && (
+          <FilterModal open={showFilters} onClose={toggleFilters} workerOptions={workerOptions} setWorkers={setWorkers} workers={workers} />
+        )}
         <FeedbackModal open={showFeedback} onClose={toggleFeedbackModal} />
         <BankInfoModal open={showBankInfo} onClose={toggleBankInfoModal} />
         <LoginModal open={showLogin} onClose={toggleLoginModal} login={login}/>

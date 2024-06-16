@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login failed:', error.response.data.message);
-      openSnackbar('Login failed.');
+      openSnackbar('Login failed.', 'error');
     }
   };
 
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Logout failed:', error.response.data.message);
-      openSnackbar('Logout failed.');
+      openSnackbar('Logout failed.', 'error');
     }
   };
 

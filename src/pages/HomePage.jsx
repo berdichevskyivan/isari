@@ -70,7 +70,7 @@ function CustomCard({ worker, workerOptions }) {
   );
 }
 
-function HomePage({ workers, workerOptions }) {
+function HomePage({ workers, workerOptions, setWorkers }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
@@ -113,7 +113,7 @@ function HomePage({ workers, workerOptions }) {
           </Grid>
         ))}
       </Grid>
-      <ControlsDashboard />
+      <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
     </div>
   );
 }

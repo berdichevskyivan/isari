@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './LorenzPage.css';
-import { Modal, Card, CardContent, Typography, Avatar, Box, Grid, Button, IconButton, TextField, useTheme, useMediaQuery } from '@mui/material';
+import { Button, TextField } from '@mui/material';
 import ControlsDashboard from '../components/ControlsDashboard';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useNotification } from '../context/NotificationContext';
 import { styled } from '@mui/material/styles';
 import StarrySky from '../components/StarrySky';
 import axios from 'axios';
@@ -56,6 +56,7 @@ const StyledTextField = styled(TextField)({
 
 function LorenzPage({ TSNEData, setTSNEData, predictedTokens, setPredictedTokens }) {
 
+  const { openSnackbar } = useNotification();
   const [inferenceStatus, setInferenceStatus] = useState(false);
   const [inferenceInput, setInferenceInput] = useState('')
   const [inferenceOutput, setInferenceOutput] = useState('');
@@ -112,11 +113,11 @@ function LorenzPage({ TSNEData, setTSNEData, predictedTokens, setPredictedTokens
         setInferenceOutput(response.data.output);
       } else {
         // Handle failure in inference
-        alert('Inference failed. Please check your input data.');
+        openSnackbar('Inference failed. Please check your input data.', 'error');
       }
     } catch (error) {
       console.error('Error during inference:', error);
-      alert('Failed to process inference.');
+      openSnackbar('Failed to process inference.', 'error');
     } finally {
       setInferenceStatus(false);
     }

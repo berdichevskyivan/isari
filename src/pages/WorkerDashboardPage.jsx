@@ -16,6 +16,7 @@ import { styled } from '@mui/system';
 import Chip from '@mui/material/Chip';
 import axios from 'axios';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal'; // Import the modal component
+import { useNotification } from '../context/NotificationContext';
 
 const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   margin: '4px',
@@ -97,6 +98,7 @@ function CustomCard({ worker, workerOptions }) {
 function WorkerDashboardPage({ workerOptions }) {
   const { loggedInUser, setLoggedInUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { openSnackbar } = useNotification();
   const [selectedLangs, setSelectedLangs] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
@@ -127,22 +129,22 @@ function WorkerDashboardPage({ workerOptions }) {
   const handleUpdate = async () => {
     // Check if at least one item is selected in each category
     if (selectedLangs.length === 0) {
-      alert('Please select at least one programming language.');
+      openSnackbar('Please select at least one programming language.', 'error');
       return;
     }
 
     if (selectedBranches.length === 0) {
-      alert('Please select at least one AI branch.');
+      openSnackbar('Please select at least one AI branch.', 'error');
       return;
     }
 
     if (selectedApps.length === 0) {
-      alert('Please select at least one AI specialty.');
+      openSnackbar('Please select at least one AI specialty.', 'error');
       return;
     }
 
     if (selectedTools.length === 0) {
-      alert('Please select at least one AI tool.');
+      openSnackbar('Please select at least one AI tool.', 'error');
       return;
     }
 
@@ -168,14 +170,14 @@ function WorkerDashboardPage({ workerOptions }) {
       });
 
       if (updateResponse.data.success) {
-          alert('Worker profile updated successfully!');
+          openSnackbar('Worker profile updated successfully!', 'success');
           setLoggedInUser(updateResponse.data.updatedUser);
       } else {
-          alert('Worker profile update failed. Please check your data.');
+          openSnackbar('Worker profile update failed. Please check your data.', 'error');
       }
     } catch (error) {
       console.error('Error updating worker profile:', error);
-      alert('Failed to update worker profile.');
+      openSnackbar('Failed to update worker profile.', 'error');
     }
   };
 
@@ -186,16 +188,18 @@ function WorkerDashboardPage({ workerOptions }) {
         withCredentials: true
       });
       if (response.data.success) {
-        alert('Account deleted successfully!');
+        openSnackbar('Account deleted successfully!', 'success');
         // Handle user logout or redirection after deletion
-        logout();
-        navigate('/');
+        setTimeout(()=>{ 
+          logout();
+          navigate('/');
+        },1000);
       } else {
-        alert('Failed to delete account.');
+        openSnackbar('Failed to delete account.', 'error');
       }
     } catch (error) {
       console.error('Error deleting account:', error);
-      alert('Failed to delete account.');
+      openSnackbar('Failed to delete account.', 'error');
     }
   };
 

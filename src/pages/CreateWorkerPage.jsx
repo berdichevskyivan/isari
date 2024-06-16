@@ -1,10 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import axios from 'axios';
 import { Button, TextField, Avatar, Chip, Grid, Box, InputAdornment, IconButton, Typography } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import InfoIcon from '@mui/icons-material/Info';
+import CircularProgress from '@mui/material/CircularProgress';
 import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
@@ -113,7 +115,10 @@ const isValidFullName = (name) => {
 
 function CreateWorkerPage({ workerOptions }) {
 
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+  const { openSnackbar } = useNotification();
   const { setLoggedInUser, setIsLoggedIn } = useContext(AuthContext);
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
@@ -205,7 +210,7 @@ function CreateWorkerPage({ workerOptions }) {
 
     // Check if an image has been uploaded
     if (!profilePicFile) {
-      alert('Please upload a profile picture.');
+      openSnackbar('Please upload a profile picture.', 'error');
       return;
     }
   
@@ -235,26 +240,27 @@ function CreateWorkerPage({ workerOptions }) {
 
     // Check if at least one item is selected in each category
     if (selectedLangs.length === 0) {
-      alert('Please select at least one programming language.');
+      openSnackbar('Please select at least one programming language.', 'error');
       return;
     }
 
     if (selectedBranches.length === 0) {
-      alert('Please select at least one AI branch.');
+      openSnackbar('Please select at least one AI branch.', 'error');
       return;
     }
 
     if (selectedApps.length === 0) {
-      alert('Please select at least one AI specialty.');
+      openSnackbar('Please select at least one AI specialty.', 'error');
       return;
     }
 
     if (selectedTools.length === 0) {
-      alert('Please select at least one AI tool.');
+      openSnackbar('Please select at least one AI tool.', 'error');
       return;
     }
   
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append('fullName', fullName);
       formData.append('email', email);
@@ -294,18 +300,20 @@ function CreateWorkerPage({ workerOptions }) {
         if (createWorkerResponse.data.success) {
           setIsLoggedIn(true);
           setLoggedInUser(createWorkerResponse.data.user); // Set logged in user
-          alert('Worker created successfully!');
-          navigate('/');
+          openSnackbar('Worker created successfully!', 'success');
+          setTimeout(()=>{ navigate('/') }, 1500)
         } else {
-          alert('Worker creation failed. Please check your data.');
+          openSnackbar('Worker creation failed. Please check your data.', 'error');
         }
       } else {
         // Handle failure in analysis
-        alert('Worker analysis failed. Please check your data.');
+        openSnackbar('Worker analysis failed. Please check your data.', 'error');
       }
     } catch (error) {
       console.error('Error processing worker data:', error);
-      alert('Failed to process worker data.');
+      openSnackbar('Failed to process worker data.', 'error');
+    } finally {
+      setLoading(false);
     }
   };  
 
@@ -553,7 +561,9 @@ function CreateWorkerPage({ workerOptions }) {
               </Grid>
             ))}
           </Grid>
-          <StyledButton variant="outlined" sx={{ marginTop: 4 }} onClick={handleSubmit}>Submit</StyledButton>
+          <StyledButton variant="outlined" sx={{ marginTop: 4 }} onClick={handleSubmit}>
+            {loading ? <CircularProgress size={24} /> : 'Submit'}
+          </StyledButton>
         </Box>
       </div>
     </ThemeProvider>

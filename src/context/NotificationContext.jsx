@@ -34,10 +34,10 @@ export const NotificationProvider = ({ children }) => {
       <Snackbar
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={1500}
         onClose={closeSnackbar}
       >
-        <Alert severity={snackbar.severity} action={snackbar.action}>
+        <Alert severity={snackbar.severity} variant="filled" action={snackbar.action}>
           {snackbar.message}
         </Alert>
       </Snackbar>
