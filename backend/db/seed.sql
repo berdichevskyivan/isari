@@ -15,7 +15,8 @@ VALUES
 ('Julia', 'Julia is used in AI for its high performance in numerical and scientific computing.', '/src/assets/icons/julia.svg'),
 ('Swift', 'Swift is used in AI primarily for developing AI applications on Apple platforms.', '/src/assets/icons/swift.svg'),
 ('Scala', 'Scala is used in AI for its functional programming features and compatibility with big data tools like Apache Spark.', '/src/assets/icons/scala.svg'),
-('Kotlin', 'Kotlin is used in AI for developing Android applications and leveraging Java-based AI libraries.', '/src/assets/icons/kotlin.svg');
+('Kotlin', 'Kotlin is used in AI for developing Android applications and leveraging Java-based AI libraries.', '/src/assets/icons/kotlin.svg'),
+('Rust', 'Rust is used in AI for its memory safety, performance, and concurrency capabilities, making it suitable for building high-performance and safe AI applications.', '/src/assets/icons/rust.svg');
 
 -- Insert data into the generalized_ai_branches table
 INSERT INTO generalized_ai_branches (code, name, description)
@@ -49,4 +50,5 @@ VALUES
 ('Mistral', '/src/assets/icons/mistral.svg'),
 ('Github Copilot', '/src/assets/icons/github-copilot.svg'),
 ('Open CV', '/src/assets/icons/opencv.svg'),
-('Apache Kafka', '/src/assets/icons/apachekafka.svg');
+('Apache Kafka', '/src/assets/icons/apachekafka.svg'),
+('Hugging Face', '/src/assets/icons/hugging-face.png');
