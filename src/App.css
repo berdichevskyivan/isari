@@ -38,6 +38,7 @@
   background: black;
   overflow: hidden;
   z-index: 0;
+  padding-bottom: 5rem;
 }
 
 .star {
@@ -178,7 +179,7 @@
   width: fit-content;
   padding: 1.5rem;
   background-color: #161918a1;
-  margin-top: 2rem;
+  margin-top: 1rem;
   display: flex;
   flex-flow: column;
 }
@@ -210,6 +211,7 @@
 
 .community-icons {
   list-style: none;
+  padding: 0;
 }
 
 .community-icons-controls {
@@ -320,5 +322,11 @@
 
   .dashboard-page-in-progress-container {
     margin-top: 0;
+  }
+}
+
+@media (max-height: 700px){
+  .work-page-container {
+    justify-content: flex-start !important;
   }
 }

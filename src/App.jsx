@@ -104,7 +104,7 @@ function App() {
           <Router>
             <Routes>
               <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />
-              <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} />
+              {/* <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} /> */}
               <Route path="/work" element={<WorkPage />} />
               <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
               <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />

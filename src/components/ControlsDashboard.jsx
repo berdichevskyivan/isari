@@ -6,7 +6,7 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Link } from 'react-router-dom';
 import FeedbackModal from './modals/FeedbackModal';
 import FilterModal from './modals/FilterModal';
-import BankInfoModal from './modals/BankInfoModal';
+import DonateModal from './modals/DonateModal';
 import LoginModal from './modals/LoginModal';
 import { useGlitch } from 'react-powerglitch';
 import { useLocation } from 'react-router-dom';
@@ -48,12 +48,12 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
   
   const [showFilters, setShowFilters] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [showBankInfo, setShowBankInfo] = useState(false);
+  const [showDonation, setShowDonation] = useState(false);
   const [showLogin, setShowLogin] = useState(false);  // Add state for the login modal
 
   const toggleFilters = () => setShowFilters(!showFilters);
   const toggleFeedbackModal = () => setShowFeedback(!showFeedback);
-  const toggleBankInfoModal = () => setShowBankInfo(!showBankInfo);
+  const toggleDonationModal = () => setShowDonation(!showDonation);
   const toggleLoginModal = () => setShowLogin(!showLogin);  // Handler to toggle the modal
 
   let propertiesRegistered = false; // Global flag to check if properties are registered
@@ -103,10 +103,10 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
 
                 {isLoggedIn && (
                   <>
-                    <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
+                    {/* <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
                       <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
                       <span className="dashboard-text hide-on-small" >Lorenz</span>
-                    </Link>
+                    </Link> */}
                     <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>
                       <DashboardIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Dashboard</span>
                     </Button>
@@ -116,7 +116,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                     <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleFeedbackModal}>
                       <FeedbackIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Feedback</span>
                     </Button>
-                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleBankInfoModal}>
+                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleDonationModal}>
                       <FavoriteIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Donate</span>
                     </Button>
                     <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={logout}>
@@ -161,7 +161,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
           <FilterModal open={showFilters} onClose={toggleFilters} workerOptions={workerOptions} setWorkers={setWorkers} workers={workers} />
         )}
         <FeedbackModal open={showFeedback} onClose={toggleFeedbackModal} />
-        <BankInfoModal open={showBankInfo} onClose={toggleBankInfoModal} />
+        <DonateModal open={showDonation} onClose={toggleDonationModal} />
         <LoginModal open={showLogin} onClose={toggleLoginModal} login={login}/>
     </>
   );

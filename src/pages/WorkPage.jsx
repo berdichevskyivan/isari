@@ -18,7 +18,7 @@ function WorkPage() {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1,  // Ensure the grid is above the StarrySky
-    }}>
+    }} className="work-page-container">
       <StarrySky />
 
       <div className="work-page-in-progress-container">
