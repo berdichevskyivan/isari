@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 import json
 from flask import request, jsonify
-from transformers import AutoTokenizer
 
 # Load OpenCV's pre-trained Haar Cascade classifier for face detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')

@@ -29,6 +29,8 @@ dist-ssr
 # Ignore uploads directory
 /backend/node/uploads/
 
+/backend/python/myenv/
+
 # Ignore lorenz directory and its contents, but keep source code
 /backend/python/models
 /backend/python/offload_folder

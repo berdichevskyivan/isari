@@ -17,7 +17,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "https://isari.ai",
   methods: ["GET", "POST", "DELETE"],
   credentials: true
 }));
@@ -416,7 +416,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
-    res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'lax' });
+    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
 
     console.log('Setting cookie:', token);
     res.json({
@@ -438,7 +438,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-    res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: false, sameSite: 'lax'});
+    res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: true, sameSite: 'none'});
     res.json({ message: 'Logout successful' });
 });
 
