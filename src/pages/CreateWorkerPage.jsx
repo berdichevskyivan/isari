@@ -274,11 +274,6 @@ function CreateWorkerPage({ workerOptions }) {
         formData.append('profilePic', profilePicFile);
       }
   
-      // Log each entry in the FormData
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-  
       // Send data to Python backend for analysis
       const analysisResponse = await axios.post('http://localhost:3001/analyzeWorkerData', formData, {
         headers: {

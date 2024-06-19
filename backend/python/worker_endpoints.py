@@ -34,7 +34,6 @@ def analyze_worker_data():
     try:
         # Handle form data
         data = request.form.to_dict()
-        print("Form Data:", data)
         
         analysis_result = {}
         face_detected = False

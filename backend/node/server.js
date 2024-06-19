@@ -1,6 +1,6 @@
 import express from 'express';
 import { createPool, sql } from 'slonik';
-import { createServer } from 'node:http';
+import https from 'https';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -11,7 +11,6 @@ import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
-import serveStatic from 'serve-static';
 import path from 'path';
 
 dotenv.config();
@@ -34,7 +33,12 @@ const __dirname = dirname(__filename);
 // Serve static files from the backend/uploads folder
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
-const server = createServer(app);
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/isari.ai/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/isari.ai/fullchain.pem')
+};
+
+const server = https.createServer(options, app);
 
 // Create PostgreSQL pool
 const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASS}@localhost:${5432}/${process.env.DB_NAME}`;
@@ -560,6 +564,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
-server.listen(80, () => {
+server.listen(443, () => {
     console.log('server running at http://localhost');
 });

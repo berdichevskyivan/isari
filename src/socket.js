@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
 
 // Re-check withCredentials option passed
-export const socket = io('ws://isari.ai', {
+export const socket = io('wss://isari.ai', {
     withCredentials: false,
     transports: ['websocket'] // Ensure using the correct transport
 });
