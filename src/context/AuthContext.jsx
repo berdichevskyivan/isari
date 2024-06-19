@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/verify-auth', { withCredentials: true });
+      const response = await axios.get('/verify-auth', { withCredentials: true });
       console.log('Auth status:', response.data.isAuthenticated);
       setIsLoggedIn(response.data.isAuthenticated);
       setLoggedInUser(response.data.user);
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:3000/login', { email, password }, { withCredentials: true });
+      const response = await axios.post('/login', { email, password }, { withCredentials: true });
       if (response.data.message === 'Login successful') {
         console.log('Login successful');
         const checkAuthStatusResponse = await checkAuthStatus();
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/logout', {}, { withCredentials: true });
+      const response = await axios.post('/logout', {}, { withCredentials: true });
       if (response.data.message === 'Logout successful') {
         console.log('Logout successful');
         setIsLoggedIn(false);

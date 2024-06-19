@@ -11,6 +11,8 @@ import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
+import serveStatic from 'serve-static';
+import path from 'path';
 
 dotenv.config();
 
@@ -182,6 +184,10 @@ async function fetchWorkerOptions(req, res) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+
+// Serve static files from the dist folder
+const distPath = path.join(__dirname, '../..', 'dist'); // Correctly set the path
+app.use(express.static(distPath));
 
 app.get('/fetchWorkerOptions', fetchWorkerOptions);
 
@@ -550,6 +556,10 @@ io.on('connection', (socket) => {
 const EMIT_INTERVAL = 30000; // 30 seconds
 setInterval(fetchAndEmitWorkerInfo, EMIT_INTERVAL);
 
-server.listen(3000, () => {
-    console.log('server running at http://localhost:3000');
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
+
+server.listen(80, () => {
+    console.log('server running at http://localhost');
 });

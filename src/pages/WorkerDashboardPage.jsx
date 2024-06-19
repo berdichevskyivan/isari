@@ -44,7 +44,7 @@ function CustomCard({ worker, workerOptions }) {
     <>
       <Card sx={{ width: 250, height: 'fit-available', m: 0, mr: '1rem', ml: '-0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
-          <Avatar src={`http://localhost:3000/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
+          <Avatar src={`/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
           <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
             {worker.name}
           </Typography>
@@ -162,7 +162,7 @@ function WorkerDashboardPage({ workerOptions }) {
       }
 
       // Send data to the backend for updating the worker profile
-      const updateResponse = await axios.post('http://localhost:3000/updateWorker', formData, {
+      const updateResponse = await axios.post('/updateWorker', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -183,7 +183,7 @@ function WorkerDashboardPage({ workerOptions }) {
 
   const handleDelete = async () => {
     try {
-      const response = await axios.delete(`http://localhost:3000/deleteWorker/${loggedInUser.id}`, {
+      const response = await axios.delete(`/deleteWorker/${loggedInUser.id}`, {
         data: { name: loggedInUser.name },
         withCredentials: true
       });

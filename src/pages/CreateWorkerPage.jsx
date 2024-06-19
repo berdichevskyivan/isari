@@ -290,7 +290,7 @@ function CreateWorkerPage({ workerOptions }) {
   
       // Evaluate the response from the Python backend
       if (analysisResponse.data.success) {
-        const createWorkerResponse = await axios.post('http://localhost:3000/createWorker', formData, {
+        const createWorkerResponse = await axios.post('/createWorker', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           },

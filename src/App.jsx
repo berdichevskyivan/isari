@@ -68,7 +68,7 @@ function App() {
   useEffect(() => {
     async function fetchWorkerOptions() {
       try {
-        const response = await axios.get('http://localhost:3000/fetchWorkerOptions');
+        const response = await axios.get('/fetchWorkerOptions');
         const fetchedData = response.data;
         const storedWorkerOptions = localStorage.getItem('workerOptions');
 
