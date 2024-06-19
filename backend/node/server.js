@@ -12,6 +12,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
 
 dotenv.config();
 
@@ -32,6 +34,19 @@ const __dirname = dirname(__filename);
 
 // Serve static files from the backend/uploads folder
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
+
+// Configure rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later"
+});
+
+// Apply rate limiting to all requests
+app.use(limiter);
+
+// Configure logging
+app.use(morgan('combined'));
 
 const options = {
   key: fs.readFileSync('/etc/letsencrypt/live/isari.ai/privkey.pem'),

@@ -275,7 +275,7 @@ function CreateWorkerPage({ workerOptions }) {
       }
   
       // Send data to Python backend for analysis
-      const analysisResponse = await axios.post('http://localhost:3001/analyzeWorkerData', formData, {
+      const analysisResponse = await axios.post('https://isari.ai:3001/analyzeWorkerData', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

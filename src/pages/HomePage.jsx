@@ -1,5 +1,5 @@
 // import { Link } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { Card, CardContent, Typography, Avatar, Box, Grid, Button, IconButton, TextField, SvgIcon, useTheme, useMediaQuery } from '@mui/material';
 import ControlsDashboard from '../components/ControlsDashboard';
@@ -75,6 +75,10 @@ function HomePage({ workers, workerOptions, setWorkers }) {
   const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
   const gridColumns = matches ? 'repeat(auto-fill, minmax(250px, 1fr))' : '1fr';
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (!workerOptions) {
     return <Loading />;

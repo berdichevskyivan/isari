@@ -6,7 +6,7 @@ export const socket = io('wss://isari.ai', {
     transports: ['websocket'] // Ensure using the correct transport
 });
 
-export const python_socket = io('http://localhost:3001', {
+export const python_socket = io('wss://isari.ai:3001', {
     withCredentials: false,
     transports: ['websocket'] // Ensure using the correct transport
 });
