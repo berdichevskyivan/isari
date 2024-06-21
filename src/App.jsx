@@ -10,6 +10,8 @@ import { socket, python_socket } from './socket';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 
+const isProduction = import.meta.env.NODE_ENV === 'production';
+
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [isPythonSocketConnected, setIsPythonSocketConnected] = useState(python_socket.connected)
@@ -68,7 +70,7 @@ function App() {
   useEffect(() => {
     async function fetchWorkerOptions() {
       try {
-        const response = await axios.get('/fetchWorkerOptions');
+        const response = await axios.get(isProduction ? '/fetchWorkerOptions' : 'http://localhost/fetchWorkerOptions');
         const fetchedData = response.data;
         const storedWorkerOptions = localStorage.getItem('workerOptions');
 

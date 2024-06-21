@@ -1,16 +1,16 @@
 import { io } from 'socket.io-client';
 
-// Re-check withCredentials option passed
-export const socket = io('wss://isari.ai', {
+const isProduction = import.meta.env.NODE_ENV === 'production';
+
+const socketUrl = isProduction ? 'wss://isari.ai' : 'http://localhost';
+const pythonSocketUrl = isProduction ? 'wss://isari.ai:3001' : 'http://localhost:3001';
+
+export const socket = io(socketUrl, {
     withCredentials: false,
-    transports: ['websocket'] // Ensure using the correct transport
+    transports: ['websocket']
 });
 
-export const python_socket = io('wss://isari.ai:3001', {
+export const python_socket = io(pythonSocketUrl, {
     withCredentials: false,
-    transports: ['websocket'] // Ensure using the correct transport
+    transports: ['websocket']
 });
-
-// export const socket = io(URL, {
-//     autoConnect: false
-// });

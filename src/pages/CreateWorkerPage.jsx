@@ -15,6 +15,8 @@ import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 
+const isProduction = import.meta.env.NODE_ENV === 'production';
+
 function getInitials(name) {
   return name.split(' ').map(word => word[0]).join('').toUpperCase();
 }
@@ -275,7 +277,7 @@ function CreateWorkerPage({ workerOptions }) {
       }
   
       // Send data to Python backend for analysis
-      const analysisResponse = await axios.post('https://isari.ai:3001/analyzeWorkerData', formData, {
+      const analysisResponse = await axios.post(`${isProduction ? 'https://isari.ai:3001' : 'http://localhost:3001'}/analyzeWorkerData`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -285,7 +287,7 @@ function CreateWorkerPage({ workerOptions }) {
   
       // Evaluate the response from the Python backend
       if (analysisResponse.data.success) {
-        const createWorkerResponse = await axios.post('/createWorker', formData, {
+        const createWorkerResponse = await axios.post(`${isProduction ? '' : 'http://localhost'}/createWorker`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           },

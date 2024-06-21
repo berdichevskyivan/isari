@@ -1,6 +1,7 @@
 import express from 'express';
 import { createPool, sql } from 'slonik';
 import https from 'https';
+import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -17,10 +18,16 @@ import morgan from 'morgan';
 
 dotenv.config();
 
+console.log(process.env.NODE_ENV)
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const PORT = isProduction ? 443 : 80;
+
 const app = express();
 
 app.use(cors({
-  origin: "https://isari.ai",
+  origin: isProduction ? "https://isari.ai" : 'http://localhost:5000',
   methods: ["GET", "POST", "DELETE"],
   credentials: true
 }));
@@ -48,12 +55,14 @@ app.use(limiter);
 // Configure logging
 app.use(morgan('combined'));
 
-const options = {
+const options = isProduction ? {
   key: fs.readFileSync('/etc/letsencrypt/live/isari.ai/privkey.pem'),
   cert: fs.readFileSync('/etc/letsencrypt/live/isari.ai/fullchain.pem')
-};
+} : {};
 
-const server = https.createServer(options, app);
+const server = isProduction
+  ? https.createServer(options, app)
+  : http.createServer(app);
 
 // Create PostgreSQL pool
 const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASS}@localhost:${5432}/${process.env.DB_NAME}`;
@@ -74,7 +83,7 @@ testQuery();
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: isProduction ? "https://isari.ai" : 'http://localhost:5000',
         methods: ["GET", "POST", "DELETE"]
     }
 });
@@ -205,8 +214,10 @@ async function fetchWorkerOptions(req, res) {
 }
 
 // Serve static files from the dist folder
-const distPath = path.join(__dirname, '../..', 'dist'); // Correctly set the path
-app.use(express.static(distPath));
+if (isProduction) {
+  const distPath = path.join(__dirname, '../..', 'dist');
+  app.use(express.static(distPath));
+}
 
 app.get('/fetchWorkerOptions', fetchWorkerOptions);
 
@@ -441,7 +452,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
-    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
+    res.cookie('token', token, { httpOnly: true, secure: isProduction === true, sameSite: isProduction === true ? 'none' : 'lax' });
 
     console.log('Setting cookie:', token);
     res.json({
@@ -463,7 +474,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-    res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: true, sameSite: 'none'});
+    res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: isProduction === true, sameSite: isProduction === true ? 'none' : 'lax'});
     res.json({ message: 'Logout successful' });
 });
 
@@ -575,10 +586,12 @@ io.on('connection', (socket) => {
 const EMIT_INTERVAL = 30000; // 30 seconds
 setInterval(fetchAndEmitWorkerInfo, EMIT_INTERVAL);
 
-app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-});
+if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+    });
+}
 
-server.listen(443, () => {
-    console.log('server running at http://localhost');
+server.listen(PORT, () => {
+    console.log(`Express server running on port ${PORT}`);
 });

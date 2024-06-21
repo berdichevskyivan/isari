@@ -56,7 +56,7 @@ function FilterModal({ open, onClose, workerOptions, setWorkers, workers }) {
                 {/* Programming Languages */}
                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', mt: 2, ml: '.5rem' }}>
                     <DataArrayIcon sx={{ height: 30, width: 30, color: '#00CC00' }} />
-                    {workerOptions.programming_languages.map(pl => (
+                    {workerOptions.programming_languages && workerOptions.programming_languages.map(pl => (
                         <Tippy key={`programming_language_${pl.id}`} content={<span style={{ fontFamily: 'Orbitron' }}>{pl.name}</span>}>
                             <img
                                 src={pl.icon_url}
@@ -74,7 +74,7 @@ function FilterModal({ open, onClose, workerOptions, setWorkers, workers }) {
                 {/* Generalized AI Branches */}
                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
                     <HubIcon sx={{ height: 30, width: 30, color: '#007FFF' }} />
-                    {workerOptions.generalized_ai_branches.map(branch => (
+                    {workerOptions.generalized_ai_branches && workerOptions.generalized_ai_branches.map(branch => (
                         <Tippy key={`generalized_ai_branch_${branch.id}`} content={<span style={{ fontFamily: 'Orbitron' }}>{branch.name}</span>}>
                             <Avatar
                                 sx={{ bgcolor: 'blue', height: 30, width: 30 }}
@@ -91,7 +91,7 @@ function FilterModal({ open, onClose, workerOptions, setWorkers, workers }) {
                 {/* Specialized AI Applications */}
                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
                     <CenterFocusStrongIcon sx={{ height: 30, width: 30, color: '#7D26CD' }} />
-                    {workerOptions.specialized_ai_applications.map(application => (
+                    {workerOptions.specialized_ai_applications && workerOptions.specialized_ai_applications.map(application => (
                         <Tippy key={`specialized_ai_application_${application.id}`} content={<span style={{ fontFamily: 'Orbitron' }}>{application.name}</span>}>
                             <img
                                 src={application.icon_url}
@@ -109,7 +109,7 @@ function FilterModal({ open, onClose, workerOptions, setWorkers, workers }) {
                 {/* AI Tools */}
                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
                     <ArchitectureIcon sx={{ height: 30, width: 30, color: '#FFD700' }} />
-                    {workerOptions.ai_tools.map(tool => (
+                    {workerOptions.ai_tools && workerOptions.ai_tools.map(tool => (
                         <Tippy key={`ai_tool_${tool.id}`} content={<span style={{ fontFamily: 'Orbitron' }}>{tool.name}</span>}>
                             <img
                                 src={tool.icon_url}

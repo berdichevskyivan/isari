@@ -4,11 +4,20 @@ from flask_socketio import SocketIO
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from worker_endpoints import analyze_worker_data
+from dotenv import load_dotenv
 import logging
+import os
+
+# Load environment variables from .env file
+load_dotenv(".env")
+
+# Check if the environment is production
+isProduction = os.getenv('PYTHON_ENV') == "production"
+cors_allowed_origin = "https://isari.ai" if isProduction else "http://localhost:5000"
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-socketio = SocketIO(app, cors_allowed_origins="https://isari.ai")  # Initialize SocketIO with CORS allowed origins
+socketio = SocketIO(app, cors_allowed_origins=cors_allowed_origin)  # Initialize SocketIO with CORS allowed origins
 
 # Configure rate limiting
 limiter = Limiter(

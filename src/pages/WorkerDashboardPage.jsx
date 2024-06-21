@@ -18,6 +18,8 @@ import axios from 'axios';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal'; // Import the modal component
 import { useNotification } from '../context/NotificationContext';
 
+const isProduction = import.meta.env.NODE_ENV === 'production';
+
 const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   margin: '4px',
   boxShadow: selected ? `0 0 15px ${shadowcolor}` : 'none',
@@ -44,7 +46,7 @@ function CustomCard({ worker, workerOptions }) {
     <>
       <Card sx={{ width: 250, height: 'fit-available', m: 0, mr: '1rem', ml: '-0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
-          <Avatar src={`/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
+          <Avatar src={`${isProduction ? '' : 'http://localhost'}/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
           <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
             {worker.name}
           </Typography>
@@ -162,7 +164,7 @@ function WorkerDashboardPage({ workerOptions }) {
       }
 
       // Send data to the backend for updating the worker profile
-      const updateResponse = await axios.post('/updateWorker', formData, {
+      const updateResponse = await axios.post(`${isProduction ? '' : 'http://localhost'}/updateWorker`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -183,7 +185,7 @@ function WorkerDashboardPage({ workerOptions }) {
 
   const handleDelete = async () => {
     try {
-      const response = await axios.delete(`/deleteWorker/${loggedInUser.id}`, {
+      const response = await axios.delete(`${isProduction ? '' : 'http://localhost'}/deleteWorker/${loggedInUser.id}`, {
         data: { name: loggedInUser.name },
         withCredentials: true
       });

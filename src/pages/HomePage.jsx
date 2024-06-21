@@ -12,6 +12,8 @@ import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 
+const isProduction = import.meta.env.NODE_ENV === 'production';
+
 function getInitials(input) {
   return input.split(' ').map(word => word[0]).join('');
 }
@@ -20,7 +22,7 @@ function CustomCard({ worker, workerOptions }) {
   return (
     <Card sx={{ width: 250, height: 'fit-content', m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
-        <Avatar src={`/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
+        <Avatar src={`${isProduction ? '' : 'http://localhost'}/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
         <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
           { worker.name }
         </Typography>

@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from 'react';
 import { useNotification } from './NotificationContext';
 import axios from 'axios';
 
+const isProduction = import.meta.env.NODE_ENV === 'production';
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -11,7 +13,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await axios.get('/verify-auth', { withCredentials: true });
+      const response = await axios.get(`${isProduction ? '' : 'http://localhost'}/verify-auth`, { withCredentials: true });
       console.log('Auth status:', response.data.isAuthenticated);
       setIsLoggedIn(response.data.isAuthenticated);
       setLoggedInUser(response.data.user);
@@ -34,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/login', { email, password }, { withCredentials: true });
+      const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/login`, { email, password }, { withCredentials: true });
       if (response.data.message === 'Login successful') {
         console.log('Login successful');
         const checkAuthStatusResponse = await checkAuthStatus();
@@ -51,7 +53,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const response = await axios.post('/logout', {}, { withCredentials: true });
+      const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/logout`, {}, { withCredentials: true });
       if (response.data.message === 'Logout successful') {
         console.log('Logout successful');
         setIsLoggedIn(false);
