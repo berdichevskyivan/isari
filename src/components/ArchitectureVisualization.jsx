@@ -1,25 +1,77 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stats } from '@react-three/drei';
+import { Canvas, useFrame, extend } from '@react-three/fiber';
+import { OrbitControls, Stats, shaderMaterial } from '@react-three/drei';
 import * as THREE from 'three';
+import vertexShader from './shaders/vertexShader.glsl?raw';
+import fragmentShader from './shaders/fragmentShader.glsl?raw';
 
-const colors = ['#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF'];
+const SurroundingSpheres = () => {
+  const positions = [
+    [0, 30, 0],  // Top
+    [0, -30, 0], // Bottom
+    [-30, 0, 0], // Left
+    [30, 0, 0],  // Right
+    [0, 0, 30],  // Front
+    [0, 0, -30]  // Back
+  ];
+
+  return (
+    <>
+      {positions.map((pos, index) => (
+        <mesh key={index} position={pos}>
+          <sphereGeometry args={[5, 64, 64]} />
+          <meshPhysicalMaterial 
+              color="#ffffff" 
+              transparent 
+              opacity={0.3} 
+              roughness={1} 
+              metalness={0.1} 
+              clearcoat={1} 
+              clearcoatRoughness={0} 
+              envMap={null}
+          />
+        </mesh>
+      ))}
+    </>
+  );
+};
+
+// Define a basic custom shader material
+const GradientMaterial = shaderMaterial(
+  { u_time: 0 },
+  vertexShader,
+  fragmentShader
+);
+
+extend({ GradientMaterial });
 
 const Cube = React.forwardRef(({ position, rotation }, ref) => {
   useEffect(() => {
-    console.log(' here!!!');
     if (ref.current) {
       ref.current.position.set(...position);
       ref.current.rotation.set(...rotation);
     }
   }, [position, rotation]);
 
+  // Create a reference for the material to update time uniform
+  const materialRef = useRef();
+  const time = useRef(0);
+
+  useFrame(() => {
+    if (materialRef.current) {
+      time.current += 0.01; // Adjust the increment value as needed
+      materialRef.current.uniforms.u_time.value = time.current;
+    }
+  });
+
   return (
     <mesh ref={ref}>
       <boxGeometry args={[0.9, 0.9, 0.9]} />
-      {colors.map((color, index) => (
-        <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />
-      ))}
+      <meshStandardMaterial color="#000000" />
+      <lineSegments>
+        <edgesGeometry attach="geometry" args={[new THREE.BoxGeometry(0.9, 0.9, 0.9)]} />
+        <gradientMaterial ref={materialRef} attach="material" />
+      </lineSegments>
     </mesh>
   );
 });
@@ -27,16 +79,17 @@ const Cube = React.forwardRef(({ position, rotation }, ref) => {
 const CubeGrid = () => {
     const size = 9;
     const center = (size - 1) / 2;
-  
+    const spacing = 1.2; // Adjust this value to increase/decrease spacing between cubes
+
     const [active, setActive] = useState(true);
     const [sliceIndex, setSliceIndex] = useState(Math.floor(Math.random() * 9)); // Initial random value between 0 and 8
     const [mainAxis, setMainAxis] = useState(['x', 'y', 'z'][Math.floor(Math.random() * 3)]); // Initial random value among x, y, z
   
     const cubesRef = useRef(
       Array.from({ length: size * size * size }, (_, i) => {
-        const x = (i % size) - center;
-        const y = Math.floor(i / size) % size - center;
-        const z = Math.floor(i / (size * size)) - center;
+        const x = ((i % size) - center) * spacing;
+        const y = (Math.floor(i / size) % size - center) * spacing;
+        const z = (Math.floor(i / (size * size)) - center) * spacing;
     
         return {
           id: i,
@@ -50,7 +103,7 @@ const CubeGrid = () => {
     useFrame(({ clock }) => {
       if (!active) return;
       const elapsedTime = clock.getElapsedTime();
-      const speed = 5; // Seconds per full rotation
+      const speed = 2; // Seconds per full rotation
       const angle = (elapsedTime / speed) * 2 * Math.PI; // Ensure it completes a full rotation in 'speed' seconds
   
       cubesRef.current.forEach((cube) => {
@@ -62,15 +115,15 @@ const CubeGrid = () => {
         let newRotation = [rotation[0], rotation[1], rotation[2] + angle]; // Default to z-axis rotation
   
         if (mainAxis === 'x') {
-          isCenterSlice = Math.round(cubePosition.x) === sliceIndex - center;
+          isCenterSlice = Math.round(cubePosition.x / spacing) === sliceIndex - center;
           rotationAxis = new THREE.Vector3(1, 0, 0);
           newRotation = [rotation[0] + angle, rotation[1], rotation[2]];
         } else if (mainAxis === 'y') {
-          isCenterSlice = Math.round(cubePosition.y) === sliceIndex - center;
+          isCenterSlice = Math.round(cubePosition.y / spacing) === sliceIndex - center;
           rotationAxis = new THREE.Vector3(0, 1, 0);
           newRotation = [rotation[0], rotation[1] + angle, rotation[2]];
         } else if (mainAxis === 'z') {
-          isCenterSlice = Math.round(cubePosition.z) === sliceIndex - center;
+          isCenterSlice = Math.round(cubePosition.z / spacing) === sliceIndex - center;
           rotationAxis = new THREE.Vector3(0, 0, 1);
           newRotation = [rotation[0], rotation[1], rotation[2] + angle];
         }
@@ -115,11 +168,27 @@ const ArchitectureVisualization = () => {
   return (
     <Canvas camera={{ position: [15, 15, 15], fov: 50 }}>
       <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
-      <CubeGrid />
+      <pointLight position={[20, 20, 20]} intensity={0.5} />
+      <mesh>
+        <sphereGeometry args={[15, 64, 64]} />
+        <meshPhysicalMaterial 
+            color="#ffffff" 
+            transparent 
+            opacity={0.3} 
+            roughness={1} 
+            metalness={0.1} 
+            clearcoat={1} 
+            clearcoatRoughness={0} 
+            envMap={null} // Ensure environment mapping is disabled
+        />
+        <CubeGrid />
+      </mesh>
+
+      <SurroundingSpheres />
+      
       <OrbitControls />
-      <axesHelper args={[15]} />
-      <gridHelper />
+      {/* <axesHelper args={[15]} />
+      <gridHelper /> */}
       <Stats />
     </Canvas>
   );
