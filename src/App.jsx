@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import HomePage from './pages/HomePage';
+import WorkersPage from './pages/WorkersPage'
+import LearningPage from './pages/LearningPage';
 import WorkPage from './pages/WorkPage';
-import LorenzPage from './pages/LorenzPage';
+// import LorenzPage from './pages/LorenzPage';
 import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboardPage';
 import { socket, python_socket } from './socket';
@@ -105,11 +107,13 @@ function App() {
       <AuthProvider>
           <Router>
             <Routes>
-              <Route path="/" element={<HomePage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />
-              {/* <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} /> */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/workers" element={<WorkersPage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />
+              <Route path="/learning" element={<LearningPage />} />
               <Route path="/work" element={<WorkPage />} />
               <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
               <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
+              {/* <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} /> */}
             </Routes>
           </Router>
       </AuthProvider>

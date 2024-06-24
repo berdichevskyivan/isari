@@ -17,13 +17,15 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 
 function ControlsDashboard({ workerOptions, setWorkers, workers }) {
 
   const { isLoggedIn, loggedInUser, login, logout } = useContext(AuthContext);
 
   const location = useLocation();
-  const isHomepage = location.pathname === '/';
+  const isWorkersPage = location.pathname === '/workers';
 
     const glitch = useGlitch({
         glitchTimeSpan: {
@@ -55,6 +57,14 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
   const toggleFeedbackModal = () => setShowFeedback(!showFeedback);
   const toggleDonationModal = () => setShowDonation(!showDonation);
   const toggleLoginModal = () => setShowLogin(!showLogin);  // Handler to toggle the modal
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1412);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1412);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   let propertiesRegistered = false; // Global flag to check if properties are registered
 
@@ -126,18 +136,24 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                 )}
                 {!isLoggedIn && (
                   <>
-                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleLoginModal}>
-                      <LoginIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Login</span>
+                    <Button variant="contained" href="/workers" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <EngineeringIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Workers</span>
+                    </Button>
+                    <Button variant="contained" href="/learning" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <LocalLibraryIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Learning</span>
                     </Button>
                     <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
-                      <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Create Account</span>
+                      <AccountCircleIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Create Account</span>
+                    </Button>
+                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleLoginModal}>
+                      <LoginIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Login</span>
                     </Button>
                   </>
                 )}
-                {isHomepage && (
-                  <IconButton onClick={toggleFilters} style={{ margin: '0 auto' }}>  {/* This will auto-center the button */}
-                      <FilterAltIcon className="icon-large" sx={{ color: '#00B2AA' }} />
-                  </IconButton>
+                {isWorkersPage && (
+                  <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleFilters}>
+                    <FilterAltIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Filters</span>
+                  </Button>
                 )}
             </div>
 
@@ -157,7 +173,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
               </a>
             </div>
         </div>
-        {isHomepage && (
+        {isWorkersPage && (
           <FilterModal open={showFilters} onClose={toggleFilters} workerOptions={workerOptions} setWorkers={setWorkers} workers={workers} />
         )}
         <FeedbackModal open={showFeedback} onClose={toggleFeedbackModal} />
