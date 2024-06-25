@@ -383,8 +383,25 @@ const CubeGrid = () => {
   };
 
 const ArchitectureVisualization = () => {
+
+  const [cameraPosition, setCameraPosition] = useState([50, 50, 50]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+  
+      if (width < 1415) {
+        setCameraPosition([30, 30, 45]);
+      } else {
+        setCameraPosition([40, 40, 40]);
+      }
+    };
+  
+    handleResize();
+  }, []);
+
   return (
-    <Canvas camera={{ position: [50, 50, 50], fov: 50 }}>
+    <Canvas camera={{ position: cameraPosition, fov: 50 }}>
       <ambientLight intensity={0.5} />
       <pointLight position={[20, 20, 20]} intensity={0.5} />
       <mesh>
@@ -408,7 +425,7 @@ const ArchitectureVisualization = () => {
       <OrbitControls />
       {/* <axesHelper args={[15]} /> */}
       {/* <gridHelper /> */}
-      <Stats />
+      {/* <Stats /> */}
     </Canvas>
   );
 };
