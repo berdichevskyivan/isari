@@ -9,16 +9,21 @@ import tubeFragmentShader from './shaders/tubeFragmentShader.glsl?raw';
 import octaVertexShader from './shaders/octaVertexShader.glsl?raw';
 import octaFragmentShader from './shaders/octaFragmentShader.glsl?raw';
 
+const distance = 25;
+const sin45 = Math.sin(Math.PI / 4);
+
 const positions = [
-  [0, 30, 0],  // Top
-  [0, -30, 0], // Bottom
-  [-30, 0, 0], // Left
-  [30, 0, 0],  // Right
-  [0, 0, 30],  // Front
-  [0, 0, -30],  // Back
+  [-distance * sin45, 0, distance * sin45], // Left-Front
+  [distance * sin45, 0, distance * sin45],  // Right-Front
+  [-distance * sin45, 0, -distance * sin45], // Left-Back
+  [distance * sin45, 0, -distance * sin45],  // Right-Back
+  [-distance, 0, 0],       // Left
+  [distance, 0, 0],        // Right
+  [0, 0, distance],        // Front
+  [0, 0, -distance],       // Back
 ];
 
-const mainSphereRadius = 10;
+const mainSphereRadius = 11;
 const satelliteSphereRadius = 4;
 const octaHedronSize = 2.5;
 
@@ -145,9 +150,13 @@ const ConnectingTubes = ({ speed = 0.5 }) => {
           )
         );
 
-        const reverseRotation = (Math.abs(direction.x) > 0.9) ? 
-        new THREE.Euler(rotation.x, rotation.y + Math.PI, rotation.z, rotation.order) :
-        new THREE.Euler(rotation.x + Math.PI, rotation.y, rotation.z, rotation.order);
+        const reverseDirection = direction.clone().negate();
+        const reverseRotation = new THREE.Euler().setFromQuaternion(
+          new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            reverseDirection.normalize()
+          )
+        );               
       
         let perpendicular;
         if (Math.abs(direction.y) > 0.9) {
@@ -218,80 +227,150 @@ const Cube = React.forwardRef(({ position, rotation }, ref) => {
 const CubeGrid = () => {
     const size = 9;
     const center = (size - 1) / 2;
-    const spacing = 1.2; // Adjust this value to increase/decrease spacing between cubes
-
+    const spacing = useRef(1.2); // Adjust this value to increase/decrease spacing between cubes
+    const stepsTaken = useRef(0);
+    const axes = ['x', 'y', 'z']
     const [active, setActive] = useState(true);
     const [sliceIndex, setSliceIndex] = useState(Math.floor(Math.random() * 9)); // Initial random value between 0 and 8
     const [mainAxis, setMainAxis] = useState(['x', 'y', 'z'][Math.floor(Math.random() * 3)]); // Initial random value among x, y, z
   
     const cubesRef = useRef(
       Array.from({ length: size * size * size }, (_, i) => {
-        const x = ((i % size) - center) * spacing;
-        const y = (Math.floor(i / size) % size - center) * spacing;
-        const z = (Math.floor(i / (size * size)) - center) * spacing;
+        const x = ((i % size) - center) * spacing.current;
+        const y = (Math.floor(i / size) % size - center) * spacing.current;
+        const z = (Math.floor(i / (size * size)) - center) * spacing.current;
+        const randomAxis = axes[Math.floor(Math.random() * axes.length)];
     
         return {
           id: i,
           position: [x, y, z],
           rotation: [0, 0, 0],
           ref: React.createRef(),
+          randomAxis: randomAxis,
         };
       })
     );
+
+    const speed = 2;
+    const seconds = 4;
+    const expansionFactor = 1.1;
   
     useFrame(({ clock }) => {
       if (!active) return;
+
       const elapsedTime = clock.getElapsedTime();
-      const speed = 2; // Seconds per full rotation
-      const angle = (elapsedTime / speed) * 2 * Math.PI; // Ensure it completes a full rotation in 'speed' seconds
-  
-      cubesRef.current.forEach((cube) => {
-        const { position, rotation, ref } = cube;
-        const cubePosition = new THREE.Vector3(...position);
-  
-        let isCenterSlice = false;
-        let rotationAxis = new THREE.Vector3(0, 0, 1); // Default to z-axis
-        let newRotation = [rotation[0], rotation[1], rotation[2] + angle]; // Default to z-axis rotation
-  
-        if (mainAxis === 'x') {
-          isCenterSlice = Math.round(cubePosition.x / spacing) === sliceIndex - center;
-          rotationAxis = new THREE.Vector3(1, 0, 0);
-          newRotation = [rotation[0] + angle, rotation[1], rotation[2]];
-        } else if (mainAxis === 'y') {
-          isCenterSlice = Math.round(cubePosition.y / spacing) === sliceIndex - center;
-          rotationAxis = new THREE.Vector3(0, 1, 0);
-          newRotation = [rotation[0], rotation[1] + angle, rotation[2]];
-        } else if (mainAxis === 'z') {
-          isCenterSlice = Math.round(cubePosition.z / spacing) === sliceIndex - center;
-          rotationAxis = new THREE.Vector3(0, 0, 1);
-          newRotation = [rotation[0], rotation[1], rotation[2] + angle];
+
+      if (stepsTaken.current === 4) {
+        // First second of animation: Increase spacing
+        if (elapsedTime <= 1) {
+          cubesRef.current.forEach(cube => {
+            const progress = elapsedTime; // Progress from 0 to 1
+            const initialX = ((cube.id % size) - center) * spacing.current;
+            const initialY = (Math.floor(cube.id / size) % size - center) * spacing.current;
+            const initialZ = (Math.floor(cube.id / (size * size)) - center) * spacing.current;
+            const x = initialX * (1 + progress * (expansionFactor - 1));
+            const y = initialY * (1 + progress * (expansionFactor - 1));
+            const z = initialZ * (1 + progress * (expansionFactor - 1));
+            cube.position = [x, y, z];
+            if (cube.ref.current) {
+              cube.ref.current.position.set(x, y, z);
+            }
+          });
         }
-  
-        if (isCenterSlice) {
-          const rotatedPosition = cubePosition.applyAxisAngle(rotationAxis, angle);
-          if (ref.current) {
-            ref.current.position.set(rotatedPosition.x, rotatedPosition.y, rotatedPosition.z);
-            ref.current.rotation.set(...newRotation);
+      
+        // Second and third seconds of animation: Rotate the cubes individually around z-axis
+        if (elapsedTime > 1 && elapsedTime <= 3) {
+          const angle = (elapsedTime - 1) * Math.PI; // Rotate over 2 seconds
+          cubesRef.current.forEach(cube => {
+            if (cube.ref.current) {
+              if (cube.randomAxis === 'x') {
+                cube.ref.current.rotation.set(angle, 0, 0);
+              } else if (cube.randomAxis === 'y') {
+                cube.ref.current.rotation.set(0, angle, 0);
+              } else if (cube.randomAxis === 'z') {
+                cube.ref.current.rotation.set(0, 0, angle);
+              }
+            }
+          });
+        }
+      
+        // Fourth second of animation: Return to original positions smoothly
+        if (elapsedTime > 3 && elapsedTime <= 4) {
+          const progress = (4 - elapsedTime); // Progress from 1 to 0
+          cubesRef.current.forEach(cube => {
+            const initialX = ((cube.id % size) - center) * spacing.current;
+            const initialY = (Math.floor(cube.id / size) % size - center) * spacing.current;
+            const initialZ = (Math.floor(cube.id / (size * size)) - center) * spacing.current;
+            const x = initialX * (1 + progress * (expansionFactor - 1));
+            const y = initialY * (1 + progress * (expansionFactor - 1));
+            const z = initialZ * (1 + progress * (expansionFactor - 1));
+            cube.position = [x, y, z];
+            if (cube.ref.current) {
+              cube.ref.current.position.set(x, y, z);
+            }
+          });
+        }
+      
+        if (elapsedTime > seconds) {
+          clock.start(); // Reset the clock for the next rotation
+          stepsTaken.current = 0; // Steps are reset
+        }
+      } else {
+        const angle = (elapsedTime / speed) * 2 * Math.PI; // Ensure it completes a full rotation in 'speed' seconds
+    
+        cubesRef.current.forEach((cube) => {
+          const { position, rotation, ref } = cube;
+          const cubePosition = new THREE.Vector3(...position);
+    
+          let isCenterSlice = false;
+          let rotationAxis = new THREE.Vector3(0, 0, 1); // Default to z-axis
+          let newRotation = [rotation[0], rotation[1], rotation[2] + angle]; // Default to z-axis rotation
+    
+          if (mainAxis === 'x') {
+            isCenterSlice = Math.round(cubePosition.x / spacing.current) === sliceIndex - center;
+            rotationAxis = new THREE.Vector3(1, 0, 0);
+            newRotation = [rotation[0] + angle, rotation[1], rotation[2]];
+          } else if (mainAxis === 'y') {
+            isCenterSlice = Math.round(cubePosition.y / spacing.current) === sliceIndex - center;
+            rotationAxis = new THREE.Vector3(0, 1, 0);
+            newRotation = [rotation[0], rotation[1] + angle, rotation[2]];
+          } else if (mainAxis === 'z') {
+            isCenterSlice = Math.round(cubePosition.z / spacing.current) === sliceIndex - center;
+            rotationAxis = new THREE.Vector3(0, 0, 1);
+            newRotation = [rotation[0], rotation[1], rotation[2] + angle];
           }
-        }
-      });
+    
+          if (isCenterSlice) {
+            const rotatedPosition = cubePosition.applyAxisAngle(rotationAxis, angle);
+            if (ref.current) {
+              ref.current.position.set(rotatedPosition.x, rotatedPosition.y, rotatedPosition.z);
+              ref.current.rotation.set(...newRotation);
+            }
+          }
+        });
+    
+        if (elapsedTime > speed) {
+          // Set a new random sliceIndex and mainAxis
+          let newSliceIndex = Math.floor(Math.random() * 9);
+          while (newSliceIndex === sliceIndex) {
+            newSliceIndex = Math.floor(Math.random() * 9); // Ensure it's different from the previous one
+          }
+    
+          let newMainAxis = ['x', 'y', 'z'][Math.floor(Math.random() * 3)];
+          while (newMainAxis === mainAxis) {
+            newMainAxis = ['x', 'y', 'z'][Math.floor(Math.random() * 3)]; // Ensure it's different from the previous one
+          }
+    
+          setSliceIndex(newSliceIndex);
+          setMainAxis(newMainAxis);
+          clock.start(); // Reset the clock for the next rotation
   
-      if (elapsedTime > speed) {
-        // Set a new random sliceIndex and mainAxis
-        let newSliceIndex = Math.floor(Math.random() * 9);
-        while (newSliceIndex === sliceIndex) {
-          newSliceIndex = Math.floor(Math.random() * 9); // Ensure it's different from the previous one
+          // A step was taken
+          stepsTaken.current += 1;
         }
-  
-        let newMainAxis = ['x', 'y', 'z'][Math.floor(Math.random() * 3)];
-        while (newMainAxis === mainAxis) {
-          newMainAxis = ['x', 'y', 'z'][Math.floor(Math.random() * 3)]; // Ensure it's different from the previous one
-        }
-  
-        setSliceIndex(newSliceIndex);
-        setMainAxis(newMainAxis);
-        clock.start(); // Reset the clock for the next rotation
       }
+
+
     });
   
     return (
