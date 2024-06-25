@@ -6,6 +6,21 @@ import vertexShader from './shaders/vertexShader.glsl?raw';
 import fragmentShader from './shaders/fragmentShader.glsl?raw';
 import tubeVertexShader from './shaders/tubeVertexShader.glsl?raw';
 import tubeFragmentShader from './shaders/tubeFragmentShader.glsl?raw';
+import octaVertexShader from './shaders/octaVertexShader.glsl?raw';
+import octaFragmentShader from './shaders/octaFragmentShader.glsl?raw';
+
+const positions = [
+  [0, 30, 0],  // Top
+  [0, -30, 0], // Bottom
+  [-30, 0, 0], // Left
+  [30, 0, 0],  // Right
+  [0, 0, 30],  // Front
+  [0, 0, -30],  // Back
+];
+
+const mainSphereRadius = 10;
+const satelliteSphereRadius = 4;
+const octaHedronSize = 2.5;
 
 const FlowShaderMaterial = shaderMaterial(
   { u_time: 0, u_color: new THREE.Color(0x00ffff), u_speed: 0.1 },
@@ -15,21 +30,64 @@ const FlowShaderMaterial = shaderMaterial(
 
 extend({ FlowShaderMaterial });
 
+const OctaShaderMaterial = shaderMaterial(
+  { u_time: 0 },
+  octaVertexShader,
+  octaFragmentShader,
+  (material) => {
+    material.lights = false;
+  }
+);
+
+extend({ OctaShaderMaterial });
+
+const CustomOctahedron = ({ position }) => {
+  const materialRef = useRef();
+  const groupRef = useRef();
+  const time = useRef(0);
+
+  useFrame((state, delta) => {
+    if (materialRef.current) {
+      time.current += 0.01; // Adjust the speed as necessary
+      materialRef.current.uniforms.u_time.value = time.current;
+    }
+    if (groupRef.current) {
+      // Rotate the group around the Y axis
+      groupRef.current.rotation.y += delta * 3; // Adjust the 0.5 to change rotation speed
+    }
+  });
+
+  const geometry = new THREE.OctahedronGeometry(octaHedronSize, 0);
+  const vertices = geometry.attributes.position.array;
+  const edges = new THREE.EdgesGeometry(geometry);
+
+  const vertexToAlign = new THREE.Vector3(vertices[0], vertices[1], vertices[2]);
+  const target = new THREE.Vector3(0, 1, 0);
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(vertexToAlign.clone().normalize(), target);
+
+  return (
+    <group ref={groupRef} position={position} quaternion={quaternion}>
+      <mesh>
+        <octahedronGeometry args={[octaHedronSize, 0]} />
+        <octaShaderMaterial ref={materialRef} lights={false}/>
+      </mesh>
+      <lineSegments geometry={edges}>
+        <lineBasicMaterial color="black" />
+      </lineSegments>
+    </group>
+  );
+};
+
 const SurroundingSpheres = () => {
-  const positions = [
-    [0, 30, 0],  // Top
-    [0, -30, 0], // Bottom
-    [-30, 0, 0], // Left
-    [30, 0, 0],  // Right
-    [0, 0, 30],  // Front
-    [0, 0, -30]  // Back
-  ];
+  // Create a quaternion to align with the global Y-axis
+  const alignQuaternion = new THREE.Quaternion();
+  alignQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0);
 
   return (
     <>
       {positions.map((pos, index) => (
-        <mesh key={index} position={pos}>
-          <sphereGeometry args={[5, 64, 64]} />
+        <mesh key={index} position={pos} quaternion={alignQuaternion}>
+          <sphereGeometry args={[satelliteSphereRadius, 64, 64]} />
           <meshPhysicalMaterial 
               color="#ffffff" 
               transparent 
@@ -40,24 +98,14 @@ const SurroundingSpheres = () => {
               clearcoatRoughness={0} 
               envMap={null}
           />
+          <CustomOctahedron />
         </mesh>
       ))}
     </>
   );
 };
 
-const ConnectingTubes = ({ color = '#00ffff', speed = 0.3 }) => {
-  const positions = [
-    [0, 30, 0],  // Top
-    [0, -30, 0], // Bottom
-    [-30, 0, 0], // Left
-    [30, 0, 0],  // Right
-    [0, 0, 30],  // Front
-    [0, 0, -30]  // Back
-  ];
-
-  const mainSphereRadius = 15; // Radius of the main sphere
-  const satelliteSphereRadius = 5; // Radius of the satellite spheres
+const ConnectingTubes = ({ speed = 0.5 }) => {
 
   return (
     <>
@@ -261,7 +309,7 @@ const ArchitectureVisualization = () => {
       <ambientLight intensity={0.5} />
       <pointLight position={[20, 20, 20]} intensity={0.5} />
       <mesh>
-        <sphereGeometry args={[15, 64, 64]} />
+        <sphereGeometry args={[mainSphereRadius, 64, 64]} />
         <meshPhysicalMaterial 
             color="#ffffff" 
             transparent 
@@ -270,7 +318,7 @@ const ArchitectureVisualization = () => {
             metalness={0.1} 
             clearcoat={1} 
             clearcoatRoughness={0} 
-            envMap={null} // Ensure environment mapping is disabled
+            envMap={null}
         />
         <CubeGrid />
       </mesh>
@@ -279,8 +327,8 @@ const ArchitectureVisualization = () => {
       <ConnectingTubes />
       
       <OrbitControls />
-      {/* <axesHelper args={[15]} />
-      <gridHelper /> */}
+      {/* <axesHelper args={[15]} /> */}
+      {/* <gridHelper /> */}
       <Stats />
     </Canvas>
   );
