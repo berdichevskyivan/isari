@@ -45,7 +45,7 @@ app.use('/uploads', express.static(join(__dirname, 'uploads')));
 // Configure rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 200, // Limit each IP to 100 requests per windowMs
   message: "Too many requests from this IP, please try again later"
 });
 
@@ -587,6 +587,7 @@ const EMIT_INTERVAL = 30000; // 30 seconds
 setInterval(fetchAndEmitWorkerInfo, EMIT_INTERVAL);
 
 if (process.env.NODE_ENV === 'production') {
+    const distPath = path.join(__dirname, '../..', 'dist');
     app.get('*', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
     });

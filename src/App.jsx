@@ -12,7 +12,7 @@ import { socket, python_socket } from './socket';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
+const isProduction = import.meta.env.MODE === 'production';
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);

@@ -5,7 +5,7 @@ import StarrySky from '../components/StarrySky';
 import ArchitectureVisualization from '../components/ArchitectureVisualization';
 import Loading from '../components/Loading';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
+const isProduction = import.meta.env.MODE === 'production';
 
 function HomePage({ workers, workerOptions, setWorkers }) {
 

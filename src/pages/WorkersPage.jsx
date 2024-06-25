@@ -12,7 +12,7 @@ import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
+const isProduction = import.meta.env.MODE === 'production';
 
 function getInitials(input) {
   return input.split(' ').map(word => word[0]).join('');

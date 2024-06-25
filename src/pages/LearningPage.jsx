@@ -4,7 +4,7 @@ import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
 import Loading from '../components/Loading';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
+const isProduction = import.meta.env.MODE === 'production';
 
 function LearningPage({ workers, workerOptions, setWorkers }) {
 

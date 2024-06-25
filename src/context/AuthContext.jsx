@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import { useNotification } from './NotificationContext';
 import axios from 'axios';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
+const isProduction = import.meta.env.MODE === 'production';
 
 const AuthContext = createContext();
 

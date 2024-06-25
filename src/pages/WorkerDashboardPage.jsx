@@ -18,7 +18,7 @@ import axios from 'axios';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal'; // Import the modal component
 import { useNotification } from '../context/NotificationContext';
 
-const isProduction = import.meta.env.NODE_ENV === 'production';
+const isProduction = import.meta.env.MODE === 'production';
 
 const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   margin: '4px',
