@@ -4,6 +4,16 @@ import { OrbitControls, Stats, shaderMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import vertexShader from './shaders/vertexShader.glsl?raw';
 import fragmentShader from './shaders/fragmentShader.glsl?raw';
+import tubeVertexShader from './shaders/tubeVertexShader.glsl?raw';
+import tubeFragmentShader from './shaders/tubeFragmentShader.glsl?raw';
+
+const FlowShaderMaterial = shaderMaterial(
+  { u_time: 0, u_color: new THREE.Color(0x00ffff), u_speed: 0.1 },
+  tubeVertexShader,
+  tubeFragmentShader
+);
+
+extend({ FlowShaderMaterial });
 
 const SurroundingSpheres = () => {
   const positions = [
@@ -32,6 +42,87 @@ const SurroundingSpheres = () => {
           />
         </mesh>
       ))}
+    </>
+  );
+};
+
+const ConnectingTubes = ({ color = '#00ffff', speed = 0.3 }) => {
+  const positions = [
+    [0, 30, 0],  // Top
+    [0, -30, 0], // Bottom
+    [-30, 0, 0], // Left
+    [30, 0, 0],  // Right
+    [0, 0, 30],  // Front
+    [0, 0, -30]  // Back
+  ];
+
+  const mainSphereRadius = 15; // Radius of the main sphere
+  const satelliteSphereRadius = 5; // Radius of the satellite spheres
+
+  return (
+    <>
+      {positions.map((pos, index) => {
+        // Create a separate shader reference for each tube
+        const shaderRef1 = useRef();
+        const shaderRef2 = useRef();
+        const time1 = useRef(0);
+        const time2 = useRef(0);
+
+        useFrame(() => {
+          if (shaderRef1.current) {
+            time1.current += 0.01; // Adjust the speed as necessary
+            shaderRef1.current.uniforms.u_time.value = time1.current;
+          }
+          if (shaderRef2.current) {
+            time2.current += 0.01; // Adjust the speed as necessary
+            shaderRef2.current.uniforms.u_time.value = time2.current;
+          }
+        });
+
+        // Calculate the vector from the main sphere to the satellite sphere
+        const mainSphereCenter = new THREE.Vector3(0, 0, 0);
+        const satelliteSphereCenter = new THREE.Vector3(...pos);
+        const direction = new THREE.Vector3().subVectors(satelliteSphereCenter, mainSphereCenter);
+        const totalLength = direction.length();
+        const visibleLength = totalLength - (mainSphereRadius + satelliteSphereRadius);
+
+        // Calculate the midpoint for the position of the cylinder
+        const midpoint = new THREE.Vector3().addVectors(mainSphereCenter, direction.normalize().multiplyScalar(mainSphereRadius + visibleLength / 2));
+
+        // Calculate the rotation for the cylinder to align with the direction
+        const rotation = new THREE.Euler().setFromQuaternion(
+          new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            direction.normalize()
+          )
+        );
+
+        const reverseRotation = (Math.abs(direction.x) > 0.9) ? 
+        new THREE.Euler(rotation.x, rotation.y + Math.PI, rotation.z, rotation.order) :
+        new THREE.Euler(rotation.x + Math.PI, rotation.y, rotation.z, rotation.order);
+      
+        let perpendicular;
+        if (Math.abs(direction.y) > 0.9) {
+          // For top and bottom, use the x-axis for perpendicular calculation
+          perpendicular = new THREE.Vector3().crossVectors(direction, new THREE.Vector3(1, 0, 0)).normalize().multiplyScalar(0.2);
+        } else {
+          // For other directions, use the y-axis
+          perpendicular = new THREE.Vector3().crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar(0.2);
+        }
+
+        return (
+          <>
+            <mesh key={`${index}-1`} position={midpoint.clone().add(perpendicular)} rotation={rotation}>
+              <cylinderGeometry args={[0.1, 0.1, visibleLength, 64]} />
+              <flowShaderMaterial ref={shaderRef1} u_color={new THREE.Color(0.0, 1.0, 1.0)} u_speed={speed} />
+            </mesh>
+            <mesh key={`${index}-2`} position={midpoint.clone().sub(perpendicular)} rotation={reverseRotation}>
+              <cylinderGeometry args={[0.1, 0.1, visibleLength, 64]} />
+              <flowShaderMaterial ref={shaderRef2} u_color={new THREE.Color(1.0, 0.0, 1.0)} u_speed={speed} />
+            </mesh>
+          </>
+        );
+      })}
     </>
   );
 };
@@ -166,7 +257,7 @@ const CubeGrid = () => {
 
 const ArchitectureVisualization = () => {
   return (
-    <Canvas camera={{ position: [15, 15, 15], fov: 50 }}>
+    <Canvas camera={{ position: [50, 50, 50], fov: 50 }}>
       <ambientLight intensity={0.5} />
       <pointLight position={[20, 20, 20]} intensity={0.5} />
       <mesh>
@@ -185,6 +276,7 @@ const ArchitectureVisualization = () => {
       </mesh>
 
       <SurroundingSpheres />
+      <ConnectingTubes />
       
       <OrbitControls />
       {/* <axesHelper args={[15]} />
