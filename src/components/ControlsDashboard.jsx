@@ -120,6 +120,12 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                     <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>
                       <DashboardIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Dashboard</span>
                     </Button>
+                    <Button variant="contained" href="/learning" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <LocalLibraryIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Learning</span>
+                    </Button>
+                    <Button variant="contained" href="/workers" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <EngineeringIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Workers</span>
+                    </Button>
                     <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
                       <ConstructionIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Work</span>
                     </Button>
@@ -136,17 +142,17 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                 )}
                 {!isLoggedIn && (
                   <>
-                    <Button variant="contained" href="/workers" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
-                      <EngineeringIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Workers</span>
-                    </Button>
-                    <Button variant="contained" href="/learning" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
-                      <LocalLibraryIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Learning</span>
-                    </Button>
                     <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
                       <AccountCircleIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Create Account</span>
                     </Button>
                     <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleLoginModal}>
                       <LoginIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Login</span>
+                    </Button>
+                    <Button variant="contained" href="/learning" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <LocalLibraryIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Learning</span>
+                    </Button>
+                    <Button variant="contained" href="/workers" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <EngineeringIcon sx={{ marginRight: isMobile ? '0' : '0.5rem' }} /> <span className="hide-on-small">Workers</span>
                     </Button>
                   </>
                 )}
