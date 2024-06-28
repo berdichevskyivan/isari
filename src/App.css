@@ -263,7 +263,7 @@
 
 .disclaimer {
   margin-bottom: .5rem !important;
-  font-family: 'Roboto', sans-serif; /* Added a fallback font */
+  font-family: 'Roboto', sans-serif;
   color: #00e6da;
   font-size: 14px;
   text-align: left;
@@ -276,7 +276,7 @@
 .homepage-main-container {
   display: flex;
   flex-direction: row;
-  height: calc(100vh - 70px); /* Here we account for the ControlsDashboard height */
+  height: calc(100vh - 70px);
   width: 100%;
   align-items: center;
   justify-content: space-between;
@@ -298,6 +298,10 @@
   z-index: 2;
 }
 
+.homepage-visualization-container::-webkit-scrollbar, .homepage-info-container::-webkit-scrollbar {
+  display: none;
+}
+
 .homepage-visualization-container {
   margin-top: -52px;
 }
@@ -313,11 +317,11 @@
   }
 }
 
-/* Responsive adjustments */
+/* Less than 600px */
 @media (max-width: 600px) {
   .stickyBar {
-    padding: 10px;  /* Reduce padding on smaller screens */
-    justify-content: center;  /* Center content on smaller screens */
+    padding: 10px;
+    justify-content: center;
   }
 }
 
@@ -360,12 +364,12 @@
     flex: none;
     width: 100%;
     height: 50%;
-    align-items: flex-start; /* Corrected 'start' to 'flex-start' */
-    flex-flow: column nowrap; /* Ensure vertical flow and no wrapping */
-
-    /* Ensure text wrapping and proper alignment */
+    align-items: flex-start;
+    flex-flow: column nowrap;
     word-wrap: break-word; 
     justify-content: flex-start;
+    overflow: auto;
+    margin-bottom: 1rem;
     
     h1 {
       font-size: 20px;

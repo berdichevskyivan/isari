@@ -122,7 +122,7 @@ def get_activation(name):
             ]
 
             # Convert to JSON string
-            json_string = json.dumps(json_results, indent=2)
+            # json_string = json.dumps(json_results, indent=2)
 
             # Print or send the JSON string
             # print(json_string)
@@ -191,8 +191,8 @@ def load_model_and_tokenizer(model_path):
     print(f"Loading model from: {model_path}")
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        device_map="auto",  # Use 'cuda' for GPU or 'auto' to automatically select the device
-        torch_dtype="auto",  # Use appropriate dtype
+        device_map="auto",
+        torch_dtype="auto",
         trust_remote_code=True,
     )
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -224,13 +224,13 @@ def run_inference(model, tokenizer, input_text):
         print(module)
 
     # Register hooks for a layer
-    layer_name = 'model.layers.31'  # You can change this to any layer you are interested in
+    layer_name = 'model.layers.31'
     layer = dict([*model.named_modules()])[layer_name]
     hook_handle = layer.register_forward_hook(get_activation(layer_name))
     hook_handles.append(hook_handle)
 
     # Register hook for last layer
-    last_layer_name = 'lm_head'  # You can change this to any layer you are interested in
+    last_layer_name = 'lm_head'
     last_layer = dict([*model.named_modules()])[last_layer_name]
     last_hook_handle = last_layer.register_forward_hook(get_last_activation(last_layer_name, tokenizer))
     hook_handles.append(last_hook_handle)
@@ -243,14 +243,12 @@ def run_inference(model, tokenizer, input_text):
         #     layer.register_forward_hook(get_activation(module_name))
         #     print("Hook attached to layer: ", module_name)
 
-    # Create a text generation pipeline
     pipe = pipeline(
         "text-generation",
         model=model,
         tokenizer=tokenizer,
     )
 
-    # Define the generation arguments
     generation_args = {
         "max_new_tokens": 50,  # Limit to a smaller number for testing
         "return_full_text": False,
@@ -260,12 +258,10 @@ def run_inference(model, tokenizer, input_text):
         "top_p": 0.9,
     }
 
-    # Run the pipeline with the input text and generation arguments
     output = pipe(messages, **generation_args)
 
     print("output: ", output)
 
-    # Print the generated output
     generated_text = output[0]['generated_text']
 
     return generated_text
