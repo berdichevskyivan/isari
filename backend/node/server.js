@@ -15,6 +15,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
+import { initTaskManager } from './taskManager.js'
 
 dotenv.config();
 
@@ -73,6 +74,8 @@ async function testQuery() {
         const { rows } = await pool.query(sql.unsafe`SELECT 1 AS value`);
         if (rows[0]?.value === 1) {
             console.log('Connected to Postgres DB successfully.');
+            // Initializing Task Manager
+            initTaskManager(sql, pool);
         }
     } catch (error) {
         console.error('Error executing query:', error.message);
@@ -151,7 +154,7 @@ async function fetchAndEmitWorkerInfo(socket) {
         }else{
           io.emit('updateWorkers', workers);
         }
-        console.log('Emitted worker information to all clients');
+        // console.log('Emitted worker information to all clients');
     } catch (error) {
         console.error('Error fetching worker information:', error.message);
     }
