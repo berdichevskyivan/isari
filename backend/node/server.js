@@ -75,7 +75,7 @@ async function testQuery() {
         if (rows[0]?.value === 1) {
             console.log('Connected to Postgres DB successfully.');
             // Initializing Task Manager
-            initTaskManager(sql, pool);
+            initTaskManager(app, sql, pool);
         }
     } catch (error) {
         console.error('Error executing query:', error.message);
