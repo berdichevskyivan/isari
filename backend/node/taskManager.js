@@ -11,7 +11,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
             FROM tasks
             WHERE task_type_id = ${taskTypeId}
         )
-        ${taskTypeId === 1 ? 'AND granularity <= 4' : ''}
+        AND granularity <= 4
         ORDER BY id ASC
         LIMIT 1;
     `;
@@ -83,6 +83,18 @@ export async function initTaskManager(app, sql, pool) {
         // This is the worker to be added to the worker_id column in tasks table
         // We assume the worker was approved. We need to now look for pending tasks
 
+        // First, we check if the worker requesting the task already has an ACTIVE task assigned to him.
+        // If it has a COMPLETE task assigned to him. We let him get another task
+        const checkWorkerQuery = sql.fragment`SELECT 1 FROM tasks WHERE status = 'active' and worker_id = ${workerId}`;
+
+        const checkWorkerResult = await pool.query(checkWorkerQuery);
+
+        if(checkWorkerResult.rows.length > 0){
+            console.log(`Worker ${workerId} already has a task assigned`);
+            res.json({ success: false, message: `Worker ${workerId} already has a task assigned` });
+            return;
+        }
+
         // We check for 'pending' tasks.
         // If a task is found, we immediatly update the status (to active) and the worker_id
         const nextTaskQuery = sql.fragment`
@@ -103,19 +115,39 @@ export async function initTaskManager(app, sql, pool) {
 
         } catch (error) {
             console.error('Error executing query:', error);
+            res.json({ success: false, message: `There are no tasks available` });
+            return;
         }
         const nextTaskResult = await pool.query(nextTaskQuery);
 
         console.log('nextTaskResult: ', nextTaskResult);
 
-        // Once we have the task data and task_id, we need to retrieve: 
-        // 1) unique issue data based on issue_id from task
-        // 2) task_types data based on task_type_id from task
-        // 3) instructions data based on task_type_id from task
+        const nextTask = nextTaskResult.rows[0];
+
+        console.log("nextTask: ", nextTask);
+
+        const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
+        const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${nextTask.task_type_id}`
+        const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${nextTask.task_type_id}`
+
+        const [issue, taskType, instructions] = await Promise.all([
+            pool.query(issueQuery),
+            pool.query(taskTypeQuery),
+            pool.query(instructionsQuery),
+        ]);
+
+        const response = {
+            task: nextTask,
+            issue: issue.rows[0],
+            taskType: taskType.rows[0],
+            instructions: instructions.rows,
+        }
+
+        console.log(response);
         // Depending on the task, other things may have to be retrieved (causes or other info table when doing evaluation, for example, but for now, lets focus on subdivision)
 
         // Is there are no pending tasks, we tell that to the client
-        
+        res.json({ success: true, result: response });
     });    
 
     // Run the task assignment function immediately
