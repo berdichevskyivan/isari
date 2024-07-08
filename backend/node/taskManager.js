@@ -172,7 +172,7 @@ export async function initTaskManager(app, sql, pool) {
     
                     for (const item of outputJson) {
                         const insertIssueQuery = sql.fragment`
-                            INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, rca_done)
+                            INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, analysis_done)
                             VALUES (
                                 ${taskInfo.issue_id},
                                 (SELECT granularity + 1 FROM issues WHERE id = ${taskInfo.issue_id}),
@@ -197,6 +197,54 @@ export async function initTaskManager(app, sql, pool) {
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
+                    // If there is an error, we update the task back to pending
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'pending', worker_id = NULL
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    res.status(500).json({ success: false, message: 'Error processing task' });
+                }
+                break;
+            case 2:
+                console.log("Received output from Analysis task")
+                try {
+                    const outputJson = JSON.parse(output);
+            
+                    for (const item of outputJson) {
+                        const insertInsightQuery = sql.fragment`
+                            INSERT INTO insights (issue_id, description, field)
+                            VALUES (
+                                ${taskInfo.issue_id},
+                                ${item.description},
+                                ${item.field}
+                            );
+                        `;
+                        await pool.query(insertInsightQuery);
+                    }
+            
+                    // Update the task status to 'completed'
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'completed'
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+
+                    // Need to update the issues' column analysis_done to true
+                    
+                    console.log("Inserted insights successfully")
+                    res.json({ success: true });
+                } catch (error) {
+                    console.error('Error parsing output JSON or inserting insights:', error);
+                    // If there is an error, we update the task back to pending
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'pending', worker_id = NULL
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
                     res.status(500).json({ success: false, message: 'Error processing task' });
                 }
                 break;

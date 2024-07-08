@@ -11,7 +11,7 @@ CREATE TABLE task_types (
 -- Insert data into the task_types table
 INSERT INTO task_types (id, name, description, role) VALUES
     (1, 'subdivision', 'Generates sub-issues with increased granularity relative to the parent, if there is one.', 'divider'),
-    (2, 'analysis', 'Performs Root Cause Analysis (RCA) and stores results for use as context by Evaluators.', 'analyzer'),
+    (2, 'analysis', 'Performs a detailed analysis of the issue. Extract relevant data points (insights) related to the issue from various fields.', 'analyzer'),
     (3, 'evaluation', 'Applies scores based on metrics and contextual information to assess the issue.', 'evaluator');
 
 -- Create the instructions table
@@ -33,8 +33,15 @@ VALUES
  'The descriptions must describe the name field, and not propose a solution or actions.'
  'The output must consist only of the JSON array and nothing else.',
  'output'),
-(2, '', 'output'),
-(3, '', 'output');
+(2,
+ 'The output must be formatted as a JSON array containing up to four objects with the following fields: description and field. '
+ 'The description field must contain the insight derived from the specific issue. Which must be concise, informative and insightful. '
+ 'The field must be at most two words long and is defined as the field under which the insight is categorized based on relevant themes or areas of impact. Ensure each insight is clearly described. '
+ 'The output must consist only of the JSON array and nothing else.',
+ 'output'),
+(3,
+ '',
+ 'output');
 
 -- Create the issues table
 CREATE TABLE issues (
@@ -46,12 +53,12 @@ CREATE TABLE issues (
     field VARCHAR(255),
     complexity_score INTEGER,
     scope_score INTEGER,
-    rca_done BOOLEAN -- root cause analysis
+    analysis_done BOOLEAN
 );
 
 -- Insert data into the issues table
 -- Insert issues into the issues table
-INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, rca_done)
+INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, analysis_done)
 VALUES
 (NULL, 1, 'Unemployment', 'The condition where individuals who are capable of working and are actively seeking work are unable to find any employment.', 'Economics', 100, 100, FALSE),
 (NULL, 1, 'Tinnitus', 'A condition characterized by the perception of noise or ringing in the ears, which can be caused by age-related hearing loss, ear injury, or a circulatory system disorder.', 'Healthcare', 100, 100, FALSE),
@@ -79,20 +86,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create the trigger to call the function before each row update
+-- Create the trigger and assign to tasks table
 CREATE TRIGGER update_tasks_updated_date
 BEFORE UPDATE ON tasks
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_date_column();
 
 
--- After performing RCA, we store the results here
-CREATE TABLE causes (
+-- After performing analysis, we store the results here
+CREATE TABLE insights (
     id SERIAL PRIMARY KEY,
     issue_id INTEGER REFERENCES issues(id),
-    name VARCHAR(255),
-    description TEXT
+    description TEXT,
+    field VARCHAR(255),
+    created_date TIMESTAMP DEFAULT clock_timestamp(),
+    updated_date TIMESTAMP DEFAULT clock_timestamp()
 );
+
+-- Create the trigger and assign to insights table
+CREATE TRIGGER update_insights_updated_date
+BEFORE UPDATE ON insights
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_date_column();
 
 -- Defines the metrics by which we evaluate and score issues
 -- Each metric has its own set of criterias
