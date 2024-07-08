@@ -1,6 +1,6 @@
 // taskManager.js
 async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
-    console.log(`Current Task Type: ${taskTypeName} (${taskTypeId})`);
+    // console.log(`Current Task Type: ${taskTypeName} (${taskTypeId})`);
 
     // Query to find the next issue for the given task type
     const nextIssueQuery = sql.fragment`
@@ -31,7 +31,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
         console.log(`Task with type ${taskTypeName} created for issue ID ${issueId}`);
         return true; // Indicate that a task was created
     } else {
-        console.log(`No issues found for ${taskTypeName}`);
+        // console.log(`No issues found for ${taskTypeName}`);
         return false; // Indicate that no task was created
     }
 }
@@ -46,7 +46,7 @@ async function checkAndAssignTasks(sql, pool) {
         if (issuesResult.rows.length === 0) {
             console.log("No records in the issues table");
         } else {
-            console.log("Records found in the issues table");
+            console.log("Records found in the issues table. Will iterate over task types.");
 
             // Query to get all task types
             const taskTypesQuery = sql.fragment`SELECT * FROM task_types`;
@@ -59,7 +59,6 @@ async function checkAndAssignTasks(sql, pool) {
             if(taskTypes.length === 0) return;
 
             // Iterating over task types
-            console.log('Iterating over Task Types');
             for (let i = 0; i < taskTypes.length; i++) {
                 const { id, name } = taskTypes[i];
                 const taskCreated = await handleTaskType(sql, pool, id, name);
@@ -85,13 +84,13 @@ export async function initTaskManager(app, sql, pool) {
 
         // First, we check if the worker requesting the task already has an ACTIVE task assigned to him.
         // If it has a COMPLETE task assigned to him. We let him get another task
-        const checkWorkerQuery = sql.fragment`SELECT 1 FROM tasks WHERE status = 'active' and worker_id = ${workerId}`;
+        const checkWorkerQuery = sql.fragment`SELECT id FROM tasks WHERE status = 'active' and worker_id = ${workerId}`;
 
         const checkWorkerResult = await pool.query(checkWorkerQuery);
 
         if(checkWorkerResult.rows.length > 0){
             console.log(`Worker ${workerId} already has a task assigned`);
-            res.json({ success: false, message: `Worker ${workerId} already has a task assigned` });
+            res.json({ success: false, message: `Worker ${workerId} already has a task assigned`, error_code: 'ACTIVE_TASK', task_id: checkWorkerResult.rows[0].id });
             return;
         }
 
@@ -118,13 +117,9 @@ export async function initTaskManager(app, sql, pool) {
             res.json({ success: false, message: `There are no tasks available` });
             return;
         }
+
         const nextTaskResult = await pool.query(nextTaskQuery);
-
-        console.log('nextTaskResult: ', nextTaskResult);
-
         const nextTask = nextTaskResult.rows[0];
-
-        console.log("nextTask: ", nextTask);
 
         const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
         const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${nextTask.task_type_id}`
@@ -148,7 +143,69 @@ export async function initTaskManager(app, sql, pool) {
 
         // Is there are no pending tasks, we tell that to the client
         res.json({ success: true, result: response });
-    });    
+    });
+    
+    app.post('/storeCompletedTask', async (req, res) => {
+        console.log('this is the body received -> ', req.body)
+
+        const workerId = req.body.worker_id;
+        const taskId = req.body.task_id;
+        const output = req.body.output;
+
+        const getTaskInfoQuery = sql.fragment`SELECT * FROM tasks WHERE id = ${taskId} AND worker_id = ${workerId}`;
+        const taskInfoResult = await pool.query(getTaskInfoQuery);
+        const taskInfo = taskInfoResult.rows[0];
+
+        if (!taskInfo) {
+            res.status(404).json({ success: false, message: 'Task not found' });
+            return;
+        }
+    
+        const taskTypeId = taskInfo.task_type_id;
+
+        switch (taskTypeId) {
+            // SUBDIVISION
+            case 1:
+                console.log("Received output from Subdivision task")
+                try {
+                    const outputJson = JSON.parse(output);
+    
+                    for (const item of outputJson) {
+                        const insertIssueQuery = sql.fragment`
+                            INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, rca_done)
+                            VALUES (
+                                ${taskInfo.issue_id},
+                                (SELECT granularity + 1 FROM issues WHERE id = ${taskInfo.issue_id}),
+                                ${item.name},
+                                ${item.description},
+                                ${item.field},
+                                0, 0, false
+                            );
+                        `;
+                        await pool.query(insertIssueQuery);
+                    }
+
+                    // Update the task status to 'completed'
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'completed'
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    
+                    console.log("Inserted output successfully")
+                    res.json({ success: true });
+                } catch (error) {
+                    console.error('Error parsing output JSON or inserting issues:', error);
+                    res.status(500).json({ success: false, message: 'Error processing task' });
+                }
+                break;
+            default:
+                console.log('Unknown or Unhandled task type:', taskTypeId);
+                res.status(400).json({ success: false, message: 'Unknown or Unhandled task type' });
+                return;
+        }
+    })
 
     // Run the task assignment function immediately
     await checkAndAssignTasks(sql, pool);
