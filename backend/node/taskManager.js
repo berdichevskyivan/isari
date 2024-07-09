@@ -3,6 +3,8 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
     // console.log(`Current Task Type: ${taskTypeName} (${taskTypeId})`);
 
     // Query to find the next issue for the given task type
+    // TO DO: Evaluation tasks will NOT be done with the issue has no parent_id
+    // This means its scores default to the maximum (100 in this case)
     const nextIssueQuery = sql.fragment`
         SELECT *
         FROM issues
@@ -40,16 +42,16 @@ async function checkAndAssignTasks(sql, pool) {
     
     try {
         // Check if issues table has data
+        // Right now we're checking only for issues
+        // But eventually we will also check for actions
         const issuesQuery = sql.fragment`SELECT 1 FROM issues LIMIT 1`;
         const issuesResult = await pool.query(issuesQuery);
 
         if (issuesResult.rows.length === 0) {
             console.log("No records in the issues table");
         } else {
-            console.log("Records found in the issues table. Will iterate over task types.");
-
             // Query to get all task types
-            const taskTypesQuery = sql.fragment`SELECT * FROM task_types`;
+            const taskTypesQuery = sql.fragment`SELECT * FROM task_types ORDER BY id asc`;
             const taskTypesResult = await pool.query(taskTypesQuery);
 
             // Store the result into a constant
@@ -58,13 +60,19 @@ async function checkAndAssignTasks(sql, pool) {
             // If taskTypes is empty, return
             if(taskTypes.length === 0) return;
 
+            let taskCreated = null;
+
             // Iterating over task types
             for (let i = 0; i < taskTypes.length; i++) {
                 const { id, name } = taskTypes[i];
-                const taskCreated = await handleTaskType(sql, pool, id, name);
+                taskCreated = await handleTaskType(sql, pool, id, name);
                 if (taskCreated) {
                     break; // Stop execution after creating a task
                 }
+            }
+
+            if(!taskCreated){
+                console.log('No tasks were created on this run.')
             }
         }
 
@@ -83,7 +91,7 @@ export async function initTaskManager(app, sql, pool) {
         // We assume the worker was approved. We need to now look for pending tasks
 
         // First, we check if the worker requesting the task already has an ACTIVE task assigned to him.
-        // If it has a COMPLETE task assigned to him. We let him get another task
+        // If it has a COMPLETED task assigned to him. We let him get another task
         const checkWorkerQuery = sql.fragment`SELECT id FROM tasks WHERE status = 'active' and worker_id = ${workerId}`;
 
         const checkWorkerResult = await pool.query(checkWorkerQuery);
@@ -131,18 +139,52 @@ export async function initTaskManager(app, sql, pool) {
             pool.query(instructionsQuery),
         ]);
 
+        const taskTypeId = taskType.rows[0].id;
+
+        let metrics = [];
+
+        if(taskTypeId === 3){
+            // Get the data and assign to metrics
+            // in this format { complexity: [criteria, criteria, criteria], scope: [criteria, criteria, criteria] }
+            // the metrics (complexity, scope) are in the issue metrics table
+            // the criteria are in the issue_metrics_criteria table issue_metrics_criteria
+            // We may not only need the criteria, but also, parent and grandparent issues for more context
+            // Will probably have to gather the score for the parent_id issue and the insights previously gathered.
+            // This is up for debate.
+            const issueMetricsQuery = sql.fragment`SELECT * FROM issue_metrics`
+            const issueMetricsCriteriaQuery = sql.fragment`SELECT * FROM issue_metrics_criteria`
+
+            const [issueMetrics, issueMetricsCriteria] = await Promise.all([
+                pool.query(issueMetricsQuery),
+                pool.query(issueMetricsCriteriaQuery),
+            ]);
+
+            // Now i need to insert all the data into the metrics object
+            // Let's first start by iterating over the rows from the metrics (The amount of children objects within the parent object)
+            for(const row of issueMetrics.rows){
+                const metric = {
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    criteria: issueMetricsCriteria.rows.filter(criteriaRow => criteriaRow.issue_metric_id === row.id)
+                };
+                metrics.push(metric);
+            }
+        }
+
+        console.log('these are the metrics: ', JSON.stringify(metrics, null, 2));
+
         const response = {
             task: nextTask,
             issue: issue.rows[0],
             taskType: taskType.rows[0],
             instructions: instructions.rows,
+            metrics: metrics, // EVALUATION
         }
 
         console.log(response);
-        // Depending on the task, other things may have to be retrieved (causes or other info table when doing evaluation, for example, but for now, lets focus on subdivision)
-
-        // Is there are no pending tasks, we tell that to the client
         res.json({ success: true, result: response });
+        // res.json({success: false}) // FOR TESTING
     });
     
     app.post('/storeCompletedTask', async (req, res) => {
@@ -232,7 +274,13 @@ export async function initTaskManager(app, sql, pool) {
                     `;
                     await pool.query(updateTaskQuery);
 
-                    // Need to update the issues' column analysis_done to true
+                    // Update analysis_done field
+                    const updateIssue = sql.fragment`
+                    UPDATE issues
+                    SET analysis_done = TRUE
+                    WHERE id = ${taskInfo.issue_id};
+                    `;
+                    await pool.query(updateIssue);
                     
                     console.log("Inserted insights successfully")
                     res.json({ success: true });

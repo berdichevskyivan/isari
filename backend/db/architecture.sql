@@ -40,7 +40,9 @@ VALUES
  'The output must consist only of the JSON array and nothing else.',
  'output'),
 (3,
- '',
+ 'The output must be formatted as a JSON object containing fields called after the name of the metrics that will be described next. '
+ 'Each metric must be evaluated as a single integer value ranging from 1 to 99, based on the criteria described below. '
+ 'Do not provide values for individual criteria. ',
  'output');
 
 -- Create the issues table
