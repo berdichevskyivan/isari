@@ -5,7 +5,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
     // Query to find the next issue for the given task type
     // TO DO: Evaluation tasks will NOT be done with the issue has no parent_id
     // This means its scores default to the maximum (100 in this case)
-    const nextIssueQuery = sql.fragment`
+    const nextIssueQuery = taskTypeId !== 3 ? sql.fragment`
         SELECT *
         FROM issues
         WHERE id NOT IN (
@@ -16,11 +16,30 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
         AND granularity <= 4
         ORDER BY id ASC
         LIMIT 1;
-    `;
+    ` : sql.fragment`
+        SELECT *
+        FROM issues
+        WHERE id NOT IN (
+            SELECT issue_id
+            FROM tasks
+            WHERE task_type_id = ${taskTypeId}
+        )
+        AND granularity > 1
+        AND granularity <= 4
+        ORDER BY id ASC
+        LIMIT 1;
+    `
     const nextIssueResult = await pool.query(nextIssueQuery);
 
     if (nextIssueResult.rows.length > 0) {
         const issueId = nextIssueResult.rows[0].id;
+        const granularity = nextIssueResult.rows[0].granularity;
+
+        // We do NOT generate SUBDIVISION tasks on issues with granularity >= 4
+        if(granularity >= 4 && taskTypeId === 1){
+            return false;
+        }
+
         console.log(`Creating Task with type ${taskTypeName} for issue ID ${issueId}`);
 
         // Insert a task for the given task type
@@ -122,12 +141,17 @@ export async function initTaskManager(app, sql, pool) {
 
         } catch (error) {
             console.error('Error executing query:', error);
-            res.json({ success: false, message: `There are no tasks available` });
+            res.json({ success: false, message: `Error getting the task` });
             return;
         }
 
         const nextTaskResult = await pool.query(nextTaskQuery);
         const nextTask = nextTaskResult.rows[0];
+
+        if(!nextTask){
+            res.json({ success: false, error_code: 'NO_MORE_TASKS' }) // There are no more tasks
+            return;
+        }
 
         const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
         const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${nextTask.task_type_id}`
@@ -249,6 +273,7 @@ export async function initTaskManager(app, sql, pool) {
                     res.status(500).json({ success: false, message: 'Error processing task' });
                 }
                 break;
+            // ANALYSIS
             case 2:
                 console.log("Received output from Analysis task")
                 try {
@@ -275,14 +300,49 @@ export async function initTaskManager(app, sql, pool) {
                     await pool.query(updateTaskQuery);
 
                     // Update analysis_done field
-                    const updateIssue = sql.fragment`
+                    const updateIssueQuery = sql.fragment`
                     UPDATE issues
                     SET analysis_done = TRUE
                     WHERE id = ${taskInfo.issue_id};
                     `;
-                    await pool.query(updateIssue);
+                    await pool.query(updateIssueQuery);
                     
                     console.log("Inserted insights successfully")
+                    res.json({ success: true });
+                } catch (error) {
+                    console.error('Error parsing output JSON or inserting insights:', error);
+                    // If there is an error, we update the task back to pending
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'pending', worker_id = NULL
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    res.status(500).json({ success: false, message: 'Error processing task' });
+                }
+                break;
+            // EVALUATION
+            case 3:
+                console.log("Received output from Evaluation task")
+                try {
+                    const outputJson = JSON.parse(output);
+
+                    // Update complexity score and scope score field
+                    const updateIssueQuery = sql.fragment`
+                    UPDATE issues
+                    SET complexity_score = ${outputJson.complexity}, scope_score = ${outputJson.scope}
+                    WHERE id = ${taskInfo.issue_id};
+                    `;
+                    await pool.query(updateIssueQuery);
+            
+                    // Update the task status to 'completed'
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'completed'
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
