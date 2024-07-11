@@ -13,6 +13,7 @@ INSERT INTO task_types (id, name, description, role) VALUES
     (1, 'subdivision', 'Generates sub-issues with increased granularity relative to the parent, if there is one.', 'divider'),
     (2, 'analysis', 'Performs a detailed analysis of the issue. Extract relevant data points (insights) related to the issue from various fields.', 'analyzer'),
     (3, 'evaluation', 'Applies scores based on metrics and contextual information to assess the issue.', 'evaluator');
+    (4, 'proposition', 'Generates proposed actions or solutions to address the issue.', 'proposer')
 
 -- Create the instructions table
 CREATE TABLE instructions (
@@ -43,6 +44,14 @@ VALUES
  'The output must be formatted as a JSON object containing fields called after the name of the metrics that will be described next. '
  'Each metric must be evaluated as a single integer value ranging from 1 to 99, based on the criteria described below. '
  'Do not provide values for individual criteria. ',
+ 'output'),
+ (4, 
+ 'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
+ 'The name must be the title for the proposed action or solution, the description must provide detailed information about the proposed action or solution, '
+ 'and the field must be at most two words long and is defined as the field under which the proposed action is categorized, '
+ 'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples. '
+ 'The descriptions must describe the name field, focusing on the proposed action or solution without evaluating or implementing it. '
+ 'The output must consist only of the JSON array and nothing else.',
  'output');
 
 -- Create the issues table
@@ -147,7 +156,35 @@ INSERT INTO issue_metrics_criteria (issue_metric_id, name, description) VALUES
     (2, 'strategic_importance', 'The criticality of the issue in relation to organizational goals and strategic priorities.'),
     (2, 'economic_impact', 'The financial implications and economic consequences of the issue.');
 
+-- Create the proposals table
+CREATE TABLE proposals (
+    id SERIAL PRIMARY KEY,
+    issue_id INTEGER REFERENCES issues(id),
+    name VARCHAR(255),
+    description TEXT,
+    field VARCHAR(255),
+    practicality_score INTEGER DEFAULT 0,
+    efficiency_score INTEGER DEFAULT 0,
+    depth_of_solution_score INTEGER DEFAULT 0,
+    innovativeness_score INTEGER DEFAULT 0,
+    cost_effectiveness_score INTEGER DEFAULT 0,
+    safety_and_risk_score INTEGER DEFAULT 0,
+    scalability_score INTEGER DEFAULT 0
+);
 
+-- Create the proposal_metrics table
+CREATE TABLE proposal_metrics (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    description TEXT
+);
 
-
--- Instead of `solutions` table we will have an `actions` table
+-- Insert data into the proposal_metrics table
+INSERT INTO proposal_metrics (id, name, description) VALUES
+    (1, 'practicality', 'The measure of how practical and feasible the proposed action is in real-world scenarios.'),
+    (2, 'efficiency', 'The evaluation of how efficiently the proposed action utilizes resources and time.'),
+    (3, 'depth_of_solution', 'The assessment of how thoroughly the proposed action addresses the issue at hand.'),
+    (4, 'innovativeness', 'The measure of how innovative and creative the proposed action is in solving the issue.'),
+    (5, 'cost_effectiveness', 'The evaluation of the cost-effectiveness of the proposed action in terms of benefits versus costs.'),
+    (6, 'safety_and_risk', 'The assessment of the safety and associated risks of implementing the proposed action.'),
+    (7, 'scalability', 'The measure of how scalable the proposed action is, considering its potential to be expanded or replicated.');

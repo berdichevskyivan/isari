@@ -1,10 +1,7 @@
-// taskManager.js
-async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
-    // console.log(`Current Task Type: ${taskTypeName} (${taskTypeId})`);
+const GLOBAL_GRANULARITY = 3;
 
-    // Query to find the next issue for the given task type
-    // TO DO: Evaluation tasks will NOT be done with the issue has no parent_id
-    // This means its scores default to the maximum (100 in this case)
+async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
+
     const nextIssueQuery = taskTypeId !== 3 ? sql.fragment`
         SELECT *
         FROM issues
@@ -13,7 +10,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
             FROM tasks
             WHERE task_type_id = ${taskTypeId}
         )
-        AND granularity <= 4
+        AND granularity <= ${GLOBAL_GRANULARITY}
         ORDER BY id ASC
         LIMIT 1;
     ` : sql.fragment`
@@ -25,7 +22,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
             WHERE task_type_id = ${taskTypeId}
         )
         AND granularity > 1
-        AND granularity <= 4
+        AND granularity <= ${GLOBAL_GRANULARITY}
         ORDER BY id ASC
         LIMIT 1;
     `
@@ -35,8 +32,8 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
         const issueId = nextIssueResult.rows[0].id;
         const granularity = nextIssueResult.rows[0].granularity;
 
-        // We do NOT generate SUBDIVISION tasks on issues with granularity >= 4
-        if(granularity >= 4 && taskTypeId === 1){
+        // We do NOT generate SUBDIVISION tasks on issues with granularity >= GLOBAL_GRANULARITY
+        if(granularity >= GLOBAL_GRANULARITY && taskTypeId === 1){
             return false;
         }
 
@@ -55,6 +52,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
         // console.log(`No issues found for ${taskTypeName}`);
         return false; // Indicate that no task was created
     }
+    
 }
 
 async function checkAndAssignTasks(sql, pool) {
@@ -346,6 +344,47 @@ export async function initTaskManager(app, sql, pool) {
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
+                    // If there is an error, we update the task back to pending
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'pending', worker_id = NULL
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    res.status(500).json({ success: false, message: 'Error processing task' });
+                }
+                break;
+            // PROPOSITION
+            case 4:
+                console.log("Received output from Proposition task")
+                try {
+                    const outputJson = JSON.parse(output);
+    
+                    for (const item of outputJson) {
+                        const insertProposalQuery = sql.fragment`
+                            INSERT INTO proposals (issue_id, name, description, field)
+                            VALUES (
+                                ${taskInfo.issue_id},
+                                ${item.name},
+                                ${item.description},
+                                ${item.field}
+                            );
+                        `;
+                        await pool.query(insertProposalQuery);
+                    }
+
+                    // Update the task status to 'completed'
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'completed'
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    
+                    console.log("Inserted output successfully")
+                    res.json({ success: true });
+                } catch (error) {
+                    console.error('Error parsing output JSON or inserting issues:', error);
                     // If there is an error, we update the task back to pending
                     const updateTaskQuery = sql.fragment`
                     UPDATE tasks
