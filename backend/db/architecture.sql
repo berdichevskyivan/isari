@@ -86,6 +86,10 @@ VALUES
 (NULL, 1, 'Increased Power Consumption', 'The rise in the amount of electricity used by residential, commercial, and industrial sectors, leading to higher energy costs and environmental impact.', 'Energy', 100, 100, FALSE),
 (NULL, 1, 'Lack of progress towards true Artificial General Intelligence', 'The slow advancement in developing AI systems that possess the ability to understand, learn, and apply knowledge across a wide range of tasks at a human-like level.', 'Artificial Intelligence', 100, 100, FALSE);
 
+-- Testing with new data
+INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, analysis_done)
+VALUES
+(NULL, 1, 'Error saving AI model weights with non-contiguous tensors', 'A technical challenge in which AI model weights that are stored in non-contiguous memory tensors cannot be saved properly, potentially leading to data loss or corruption during the model serialization process.', 'Artificial Intelligence', 100, 100, FALSE);
 
 -- Create the tasks table
 CREATE TABLE tasks (
