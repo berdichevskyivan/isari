@@ -395,6 +395,47 @@ export async function initTaskManager(app, sql, pool) {
                     res.status(500).json({ success: false, message: 'Error processing task' });
                 }
                 break;
+            // EXTRAPOLATION
+            case 5:
+                console.log("Received output from Extrapolation task")
+                try {
+                    const outputJson = JSON.parse(output);
+    
+                    for (const item of outputJson) {
+                        const insertExtrapolationQuery = sql.fragment`
+                            INSERT INTO extrapolations (issue_id, name, description, field)
+                            VALUES (
+                                ${taskInfo.issue_id},
+                                ${item.name},
+                                ${item.description},
+                                ${item.field}
+                            );
+                        `;
+                        await pool.query(insertExtrapolationQuery);
+                    }
+
+                    // Update the task status to 'completed'
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'completed'
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    
+                    console.log("Inserted output successfully")
+                    res.json({ success: true });
+                } catch (error) {
+                    console.error('Error parsing output JSON or inserting issues:', error);
+                    // If there is an error, we update the task back to pending
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'pending', worker_id = NULL
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    res.status(500).json({ success: false, message: 'Error processing task' });
+                }
+                break;
             default:
                 console.log('Unknown or Unhandled task type:', taskTypeId);
                 res.status(400).json({ success: false, message: 'Unknown or Unhandled task type' });

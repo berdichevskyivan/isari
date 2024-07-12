@@ -1,19 +1,21 @@
--- INSTEAD OF issueS AND SOLUTIONS, WE WILL HAVE ISSUES AND ACTIONS
-
 -- Create the task_types table
 CREATE TABLE task_types (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255),
     description TEXT,
-    role VARCHAR(255)
+    role VARCHAR(255),
+    temperature FLOAT DEFAULT 0
 );
 
 -- Insert data into the task_types table
-INSERT INTO task_types (id, name, description, role) VALUES
-    (1, 'subdivision', 'Generates sub-issues with increased granularity relative to the parent, if there is one.', 'divider'),
-    (2, 'analysis', 'Performs a detailed analysis of the issue. Extract relevant data points (insights) related to the issue from various fields.', 'analyzer'),
-    (3, 'evaluation', 'Applies scores based on metrics and contextual information to assess the issue.', 'evaluator');
-    (4, 'proposition', 'Generates proposed actions or solutions to address the issue.', 'proposer')
+INSERT INTO task_types (id, name, description, role, temperature) VALUES
+    (1, 'subdivision', 'Generates sub-issues with increased granularity relative to the parent, if there is one.', 'divider', 0.1),
+    (2, 'analysis', 'Performs a detailed analysis of the issue. Extract relevant data points (insights) related to the issue from various fields.', 'analyzer', 0.1),
+    (3, 'evaluation', 'Applies scores based on metrics and contextual information to assess the issue.', 'evaluator', 0.1),
+    (4, 'proposition', 'Generates proposed actions or solutions to address the issue.', 'proposer', 0.1),
+    (5, 'extrapolation', 'Involves taking solutions or proposals that have been effective in one field and applying them to issues in a different field. '
+    'This process relies on identifying parallels between the two fields, allowing insights or methods that work well in one context to address challenges in another. '
+    'This cross-disciplinary approach aims to leverage successful strategies from various domains to find innovative solutions for problems that might not have been addressed using traditional methods within the specific field.', 'extrapolator', 0.7);
 
 -- Create the instructions table
 CREATE TABLE instructions (
@@ -51,6 +53,14 @@ VALUES
  'and the field must be at most two words long and is defined as the field under which the proposed action is categorized, '
  'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples. '
  'The descriptions must describe the name field, focusing on the proposed action or solution without evaluating or implementing it. '
+ 'The output must consist only of the JSON array and nothing else.',
+ 'output'),
+  (5, 
+ 'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
+ 'The name is the title of the proposed action or solution. The description provides detailed information about the proposal, staying brief but informative. '
+ 'The field indicates the category of the originating idea and must be at most two words long, such as Neuroscience, Economics, Technology, or Physics. '
+ 'The solutions should be derived by applying concepts, methods, or ideas from one field to another, focusing on innovative, cross-disciplinary approaches from STEM fields. '
+ 'Avoid phrases like "Taking cues from" or "Inspired by the principles of" or "Borrowing from" or "Drawing from" and directly state the concept. '
  'The output must consist only of the JSON array and nothing else.',
  'output');
 
@@ -188,3 +198,19 @@ INSERT INTO proposal_metrics (id, name, description) VALUES
     (5, 'cost_effectiveness', 'The evaluation of the cost-effectiveness of the proposed action in terms of benefits versus costs.'),
     (6, 'safety_and_risk', 'The assessment of the safety and associated risks of implementing the proposed action.'),
     (7, 'scalability', 'The measure of how scalable the proposed action is, considering its potential to be expanded or replicated.');
+
+-- Create the extrapolations table
+CREATE TABLE extrapolations (
+    id SERIAL PRIMARY KEY,
+    issue_id INTEGER REFERENCES issues(id),
+    name VARCHAR(255),
+    description TEXT,
+    field VARCHAR(255),
+    practicality_score INTEGER DEFAULT 0,
+    efficiency_score INTEGER DEFAULT 0,
+    depth_of_solution_score INTEGER DEFAULT 0,
+    innovativeness_score INTEGER DEFAULT 0,
+    cost_effectiveness_score INTEGER DEFAULT 0,
+    safety_and_risk_score INTEGER DEFAULT 0,
+    scalability_score INTEGER DEFAULT 0
+);
