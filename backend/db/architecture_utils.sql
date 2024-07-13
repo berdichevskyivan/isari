@@ -22,5 +22,5 @@ ALTER SEQUENCE issues_id_seq RESTART WITH 5;
 
 -- In case you need to append to instructions or any other text field
 UPDATE instructions
-SET instruction = instruction || ' Ensure the fields name, description and field exist in the JSON objects within the JSON array.'
-WHERE task_type_id = 5;
+SET instruction = instruction || ' Ensure the JSON array contains ONLY up to four JSON objects.'
+WHERE task_type_id = 1;

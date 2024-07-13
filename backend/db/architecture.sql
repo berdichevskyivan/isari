@@ -4,7 +4,8 @@ CREATE TABLE task_types (
     name VARCHAR(255),
     description TEXT,
     role VARCHAR(255),
-    temperature FLOAT DEFAULT 0
+    temperature FLOAT DEFAULT 0,
+    skip BOOLEAN DEFAULT false,
 );
 
 -- Insert data into the task_types table
@@ -35,6 +36,7 @@ VALUES
  'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples.'
  'The descriptions must describe the name field, and not propose a solution or actions.'
  'The output must consist only of the JSON array and nothing else.',
+ 'Ensure the JSON array contains ONLY up to four JSON objects.',
  'output'),
 (2,
  'The output must be formatted as a JSON array containing up to four objects with the following fields: description and field. '
@@ -89,7 +91,8 @@ VALUES
 -- Testing with new data
 INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, analysis_done)
 VALUES
-(NULL, 1, 'Error saving AI model weights with non-contiguous tensors', 'A technical challenge in which AI model weights that are stored in non-contiguous memory tensors cannot be saved properly, potentially leading to data loss or corruption during the model serialization process.', 'Artificial Intelligence', 100, 100, FALSE);
+(NULL, 1, 'Innovative methods to remove microplastics from the world''s oceans without harming marine ecosystems', 'Developing and implementing new techniques to effectively remove microplastics from ocean waters without causing harm to marine life and ecosystems. This involves addressing the challenges of microplastic detection, collection, and disposal while ensuring the safety and health of the marine environment.', 'Environmental Science', 100, 100, FALSE),
+(NULL, 1, 'Redesign educational systems to better prepare students for jobs that don''t yet exist due to rapid technological advancements', 'Reforming educational curricula and teaching methodologies to equip students with the skills and knowledge required for future job markets shaped by rapid technological changes. This includes fostering critical thinking, adaptability, and continuous learning habits to ensure students can thrive in evolving industries.', 'Education', 100, 100, FALSE);
 
 -- Create the tasks table
 CREATE TABLE tasks (

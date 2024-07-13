@@ -68,7 +68,7 @@ async function checkAndAssignTasks(sql, pool) {
             console.log("No records in the issues table");
         } else {
             // Query to get all task types
-            const taskTypesQuery = sql.fragment`SELECT * FROM task_types ORDER BY id asc`;
+            const taskTypesQuery = sql.fragment`SELECT * FROM task_types WHERE skip = false ORDER BY id asc`;
             const taskTypesResult = await pool.query(taskTypesQuery);
 
             // Store the result into a constant
