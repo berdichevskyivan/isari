@@ -55,9 +55,40 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
     
 }
 
-async function checkAndAssignTasks(sql, pool) {
+async function generateTasks(sql, pool) {
     
     try {
+        // We check first if user_inputs have ANY data
+        // if `generated` field is true, we do not generate any task for this user_input
+        // When we generate tasks for the user_inputs, these will be of `generation` task_type
+        // We don't need to generate them one by one. If there are 2 or 3 user_inputs, we already generate 2 or 3 `generation` tasks (type 1)
+        const userInputsQuery = sql.fragment`
+            WITH user_inputs_to_generate AS (
+                SELECT id, issue_title, issue_context
+                FROM user_inputs
+                WHERE generated = false
+            ), insert_tasks AS (
+                INSERT INTO tasks (task_type_id, issue_id, worker_id, status)
+                SELECT 1, NULL, NULL, 'pending'
+                FROM user_inputs_to_generate
+                RETURNING id
+            )
+            UPDATE user_inputs
+            SET generated = true
+            WHERE id IN (SELECT id FROM user_inputs_to_generate)
+            RETURNING *;
+        `;
+
+        const userInputsResult = await pool.query(userInputsQuery);
+
+        if (userInputsResult.rows.length > 0) {
+            console.log("Tasks were generated from user inputs.");
+            console.log(`Number of tasks generated from user inputs: ${userInputsResult.rows.length}`);
+            return;
+        } else {
+            console.log('No user inputs to process.');
+        }
+
         // Check if issues table has data
         // Right now we're checking only for issues
         // But eventually we will also check for actions
@@ -67,8 +98,8 @@ async function checkAndAssignTasks(sql, pool) {
         if (issuesResult.rows.length === 0) {
             console.log("No records in the issues table");
         } else {
-            // Query to get all task types
-            const taskTypesQuery = sql.fragment`SELECT * FROM task_types WHERE skip = false ORDER BY id asc`;
+            // Query to get all task types but the generation task_type (which relates to user_inputs and not to issues)
+            const taskTypesQuery = sql.fragment`SELECT * FROM task_types WHERE skip = false and id != 1 ORDER BY id asc`;
             const taskTypesResult = await pool.query(taskTypesQuery);
 
             // Store the result into a constant
@@ -151,17 +182,24 @@ export async function initTaskManager(app, sql, pool) {
             return;
         }
 
+        const taskTypeId = nextTask.task_type_id;
+
+        if(taskType === 1){
+            // We perform specific queries
+            // and send a specific response
+            // so all of that will be done in this code, and then a `return` at the code to stop code execution
+            return;
+        }
+
         const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
-        const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${nextTask.task_type_id}`
-        const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${nextTask.task_type_id}`
+        const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${taskTypeId}`
+        const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${taskTypeId}`
 
         const [issue, taskType, instructions] = await Promise.all([
             pool.query(issueQuery),
             pool.query(taskTypeQuery),
             pool.query(instructionsQuery),
         ]);
-
-        const taskTypeId = taskType.rows[0].id;
 
         let metrics = [];
 
@@ -444,10 +482,10 @@ export async function initTaskManager(app, sql, pool) {
     })
 
     // Run the task assignment function immediately
-    await checkAndAssignTasks(sql, pool);
+    await generateTasks(sql, pool);
 
     // Schedule the task assignment function to run every 10 seconds
     setInterval(async () => {
-        await checkAndAssignTasks(sql, pool);
+        await generateTasks(sql, pool);
     }, 10000);
 }

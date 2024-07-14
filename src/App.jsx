@@ -5,12 +5,14 @@ import HomePage from './pages/HomePage';
 import WorkersPage from './pages/WorkersPage'
 import LearningPage from './pages/LearningPage';
 import WorkPage from './pages/WorkPage';
-// import LorenzPage from './pages/LorenzPage';
 import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboardPage';
 import { socket, python_socket } from './socket';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import TaskViewerPage from './pages/TaskViewerPage';
+import IssueViewerPage from './pages/IssueViewerPage';
+import SubmitIssuePage from './pages/SubmitIssuePage';
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -20,8 +22,8 @@ function App() {
   const [workers, setWorkers] = useState([]);
   const [workerOptions, setWorkerOptions] = useState(null);
 
-  const [TSNEData, setTSNEData] = useState([]);
-  const [predictedTokens, setPredictedTokens] = useState([])
+  const [tasks, setTasks] = useState([]);
+  const [issues, setIssues] = useState([]);
 
   useEffect(() => {
     function onConnect() {
@@ -44,18 +46,7 @@ function App() {
     socket.on('disconnect', onDisconnect);
 
     socket.on('updateWorkers', (data) => {
-      // console.log('updateWorkers called: ', data);
       setWorkers(data);
-    })
-
-    python_socket.on('updateTSNEData', (data) => {
-      console.log('updateTSNEData called: ', data);
-      setTSNEData(data);
-    })
-
-    python_socket.on('updatePredictedTokensData', (data) => {
-      console.log('updatePredictedTokensData called: ', data);
-      setPredictedTokens(data);
     })
 
     python_socket.on('connect', onPythonSocketConnect);
@@ -108,12 +99,14 @@ function App() {
           <Router>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/task-viewer" element={<TaskViewerPage />} />
+              <Route path="/issue-viewer" element={<IssueViewerPage />} />
+              <Route path="/submit-issue" element={<SubmitIssuePage />} />
               <Route path="/workers" element={<WorkersPage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />
               <Route path="/learning" element={<LearningPage />} />
               <Route path="/work" element={<WorkPage />} />
               <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
               <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
-              {/* <Route path="/lorenz" element={<LorenzPage TSNEData={TSNEData} setTSNEData={setTSNEData} predictedTokens={predictedTokens} setPredictedTokens={setPredictedTokens} />} /> */}
             </Routes>
           </Router>
       </AuthProvider>

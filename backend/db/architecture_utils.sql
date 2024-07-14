@@ -24,3 +24,14 @@ ALTER SEQUENCE issues_id_seq RESTART WITH 5;
 UPDATE instructions
 SET instruction = instruction || ' Ensure the JSON array contains ONLY up to four JSON objects.'
 WHERE task_type_id = 1;
+
+-- IN case you need to add a column
+ALTER TABLE issues
+ADD COLUMN context TEXT;
+
+-- Set task_type skip column to true to not do those tasks temporarily (analysis and evaluation)
+UPDATE task_types SET skip = true where id = 3 OR id = 4;
+
+-- In case you need to rename a column
+ALTER TABLE user_inputs
+RENAME COLUMN issue_title TO new_issue_title;
