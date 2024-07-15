@@ -68,8 +68,8 @@ async function generateTasks(sql, pool) {
                 FROM user_inputs
                 WHERE generated = false
             ), insert_tasks AS (
-                INSERT INTO tasks (task_type_id, issue_id, worker_id, status)
-                SELECT 1, NULL, NULL, 'pending'
+                INSERT INTO tasks (task_type_id, issue_id, user_input_id, worker_id, status)
+                SELECT 1, NULL, id, NULL, 'pending'
                 FROM user_inputs_to_generate
                 RETURNING id
             )

@@ -35,3 +35,10 @@ UPDATE task_types SET skip = true where id = 3 OR id = 4;
 -- In case you need to rename a column
 ALTER TABLE user_inputs
 RENAME COLUMN issue_title TO new_issue_title;
+
+-- Makes a master key
+UPDATE usage_keys set type = 'master' where id = 2;
+
+-- ADDS A COLUMN
+ALTER TABLE tasks
+ADD COLUMN user_input_id INTEGER REFERENCES user_inputs(id);

@@ -574,6 +574,89 @@ app.delete('/deleteWorker/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// New route for creating a worker
+app.post('/submitIssue', async (req, res) => {
+    console.log('submitIssue called: ', req.body);
+
+    const { issueTitle, issueContext, usageKey } = req.body;
+
+    // First, we validate the usageKey
+    // On this, we first validate if it exist
+    const getUsageKeyQuery = sql.fragment`SELECT * FROM usage_keys WHERE key = ${usageKey}`;
+    const getUsageKeyResult = await pool.query(getUsageKeyQuery);
+
+    if(getUsageKeyResult.rows.length > 0){
+        // We found a key!
+        // Now we check it's validity
+        console.log('key: ', getUsageKeyResult.rows[0]);
+        const key = getUsageKeyResult.rows[0];
+
+        if(key.used){
+            // The key is used, but is it a master key
+            if(key.type === 'master'){
+                // If it is, we disregard the used rule and proceed with the task
+                const insertUserInputQuery = sql.fragment`
+                INSERT INTO user_inputs (issue_title, issue_context)
+                VALUES (
+                    ${issueTitle},
+                    ${issueContext}
+                );
+                `;
+                await pool.query(insertUserInputQuery);
+    
+                // After we do this, remember to update the used field on the key
+                const updateKeyQuery = sql.fragment`
+                UPDATE usage_keys
+                SET used = true
+                WHERE key = ${key.key};
+                `;
+                await pool.query(updateKeyQuery);
+
+                // After this is done, we notify the user that the insert was done successfully
+                const message = 'Data was inserted successfully'
+                res.json({ success: true, message });
+            } else {
+                // It means it's a single-use and has be used already
+                // So the user gets an error
+                const message = 'Usage key was already used';
+                console.log(message)
+                res.json({ success: false, message });
+            }
+        }else{
+            // The key is not used, and can be used, wether it's a master key or not
+            // Proceed with the task of inserting the data into the user_inputs table
+            const insertUserInputQuery = sql.fragment`
+            INSERT INTO user_inputs (issue_title, issue_context)
+            VALUES (
+                ${issueTitle},
+                ${issueContext}
+            );
+            `;
+            await pool.query(insertUserInputQuery);
+
+            // After we do this, remember to update the used field on the key
+            const updateKeyQuery = sql.fragment`
+            UPDATE usage_keys
+            SET used = true
+            WHERE key = ${key.key};
+            `;
+            await pool.query(updateKeyQuery);
+
+            // After this is done, we notify the user that the insert was done successfully
+            const message = 'Data was inserted successfully'
+            res.json({ success: true, message });
+        }
+
+    } else {
+        // We did not find a key and we return an error
+        const message = 'Usage key was not found';
+        console.log(message)
+        res.json({ success: false, message });
+        return
+    }
+
+});
+
 io.on('connection', (socket) => {
     console.log('a user connected');
 

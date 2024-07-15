@@ -24,6 +24,7 @@ CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     task_type_id INTEGER REFERENCES task_types(id),
     issue_id INTEGER REFERENCES issues(id),
+    user_input_id INTEGER REFERENCES user_inputs(id),
     worker_id INTEGER REFERENCES workers(id),
     status VARCHAR(20),
     created_date TIMESTAMP DEFAULT clock_timestamp(),
@@ -242,7 +243,7 @@ CREATE TABLE user_inputs (
 -- We have 'master' keys and 'single-use' keys
 CREATE TABLE usage_keys (
     id SERIAL PRIMARY KEY,
-    key VARCHAR(255) NOT NULL,
+    key VARCHAR(255) NOT NULL UNIQUE,
     type VARCHAR(255) NOT NULL,
     used BOOLEAN DEFAULT FALSE,
     created_date TIMESTAMP DEFAULT clock_timestamp(),
@@ -254,3 +255,25 @@ CREATE TRIGGER update_usage_keys_updated_date
 BEFORE UPDATE ON usage_keys
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_date_column();
+
+-- Create the function that generates the random 16 character keys
+CREATE OR REPLACE FUNCTION generate_random_string(length INTEGER) RETURNS TEXT AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+[]{}|;:,.<>?';
+    result TEXT := '';
+    i INTEGER := 0;
+BEGIN
+    IF length < 1 THEN
+        RETURN result;
+    END IF;
+    FOR i IN 1..length LOOP
+        result := result || substr(chars, (random() * length(chars) + 1)::INTEGER, 1);
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Insert them as single_use keys, and change to master as needed
+INSERT INTO usage_keys (key, type)
+VALUES (generate_random_string(16), 'single_use'),
+(generate_random_string(16), 'single_use');

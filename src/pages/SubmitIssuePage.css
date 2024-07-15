@@ -1,0 +1,12 @@
+.submit-issue-container {
+    padding: 1rem;
+    border: 1px solid turquoise;
+    border-radius: 5px;
+    height: 500px;
+    width: 500px;
+    z-index: 2;
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-start;
+    align-items: center;
+}

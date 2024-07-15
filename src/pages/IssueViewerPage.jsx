@@ -32,7 +32,7 @@ function IssueViewerPage({ workers, workerOptions, setWorkers }) {
         width: '100%',
         zIndex: 2,
       }}>
-        <h1 style={{ fontFamily: 'Orbitron', color: 'turquoise', zIndex: 2, padding: '1rem', border: '2px solid turquoise', borderRadius: '14px' }}>In construction</h1>
+        <h1 style={{ fontFamily: 'Orbitron', color: 'turquoise', zIndex: 2, padding: '1rem', border: '2px solid turquoise', borderRadius: '14px' }}>In construction - Issue Viewer</h1>
       </div>
       <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
     </div>

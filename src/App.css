@@ -309,11 +309,12 @@
 .homepage-info-container {
 
   h1 {
-    font-size: 26px;
+    font-size: 22px;
   }
 
   p {
-    font-size: 23px;
+    margin-bottom: 0;
+    font-size: 16px;
   }
 }
 
