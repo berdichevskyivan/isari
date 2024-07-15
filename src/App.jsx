@@ -49,6 +49,11 @@ function App() {
       setWorkers(data);
     })
 
+    socket.on('updateTasks', (data) => {
+      console.log('Receiving tasks: ', data);
+      setTasks(data);
+    })
+
     python_socket.on('connect', onPythonSocketConnect);
     python_socket.on('disconnect', onPythonSocketDisconnect);
 

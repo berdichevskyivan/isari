@@ -69,13 +69,20 @@ const server = isProduction
 const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASS}@localhost:${5432}/${process.env.DB_NAME}`;
 const pool = await createPool(connectionString);
 
+const io = new Server(server, {
+    cors: {
+        origin: isProduction ? "https://isari.ai" : 'http://localhost:5000',
+        methods: ["GET", "POST", "DELETE"]
+    }
+});
+
 async function testQuery() {
     try {
         const { rows } = await pool.query(sql.unsafe`SELECT 1 AS value`);
         if (rows[0]?.value === 1) {
             console.log('Connected to Postgres DB successfully.');
             // Initializing Task Manager
-            initTaskManager(app, sql, pool);
+            initTaskManager(app, sql, pool, io);
         }
     } catch (error) {
         console.error('Error executing query:', error.message);
@@ -83,13 +90,6 @@ async function testQuery() {
 }
 
 testQuery();
-
-const io = new Server(server, {
-    cors: {
-        origin: isProduction ? "https://isari.ai" : 'http://localhost:5000',
-        methods: ["GET", "POST", "DELETE"]
-    }
-});
 
 // Configure Multer for handling file uploads and other fields
 const storage = multer.diskStorage({

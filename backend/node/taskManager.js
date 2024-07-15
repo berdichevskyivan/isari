@@ -1,5 +1,43 @@
 const GLOBAL_GRANULARITY = 3;
 
+export async function retrieveAndEmitTasks(sql, pool, io) {
+    console.log('Retrieving all tasks with associated information and emitting...')
+    try {
+        const tasksQuery = sql.fragment`
+        SELECT 
+            a.id as task_id,
+            b.name as task_type_name,
+            a.status as task_status,
+            a.created_date as task_created_date,
+            a.updated_date as task_updated_date,
+            a.issue_id as task_issue_id,
+            a.user_input_id as task_user_input_id,
+            c.parent_id as task_issue_parent_id,
+            c.granularity as task_issue_granularity,
+            c.name as task_issue_name,
+            c.description as task_issue_description,
+            c.field as task_issue_field,
+            d.issue_title as task_user_input_issue_title,
+            d.issue_context as task_user_input_issue_context
+        FROM 
+            tasks a 
+        LEFT JOIN 
+            task_types b ON a.task_type_id = b.id 
+        LEFT JOIN 
+            issues c ON a.issue_id = b.id 
+        LEFT JOIN 
+            user_inputs d ON a.user_input_id = d.id;
+        `
+        const tasksResult = await pool.query(tasksQuery);
+        
+        const tasks = tasksResult.rows;
+
+        io.emit('updateTasks', tasks);
+    } catch (error) {
+        console.error('Error executing query:', error);
+    }
+}
+
 async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
 
     const nextIssueQuery = taskTypeId !== 3 ? sql.fragment`
@@ -129,7 +167,7 @@ async function generateTasks(sql, pool) {
     }
 }
 
-export async function initTaskManager(app, sql, pool) {
+export async function initTaskManager(app, sql, pool, io) {
     console.log("Initializing Task Manager");
 
     app.post('/checkForTask', async (req, res) => {
@@ -484,8 +522,12 @@ export async function initTaskManager(app, sql, pool) {
     // Run the task assignment function immediately
     await generateTasks(sql, pool);
 
+    // Run the tasks retrieval function immediately
+    retrieveAndEmitTasks(sql, pool, io);
+
     // Schedule the task assignment function to run every 10 seconds
     setInterval(async () => {
         await generateTasks(sql, pool);
+        retrieveAndEmitTasks(sql, pool, io);
     }, 10000);
 }
