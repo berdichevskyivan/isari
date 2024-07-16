@@ -26,7 +26,8 @@ export async function retrieveAndEmitTasks(sql, pool, io) {
         LEFT JOIN 
             issues c ON a.issue_id = b.id 
         LEFT JOIN 
-            user_inputs d ON a.user_input_id = d.id;
+            user_inputs d ON a.user_input_id = d.id
+        ORDER BY a.id asc;
         `
         const tasksResult = await pool.query(tasksQuery);
         
@@ -153,6 +154,7 @@ async function generateTasks(sql, pool) {
                 const { id, name } = taskTypes[i];
                 taskCreated = await handleTaskType(sql, pool, id, name);
                 if (taskCreated) {
+                    retrieveAndEmitTasks(sql, pool, io);
                     break; // Stop execution after creating a task
                 }
             }

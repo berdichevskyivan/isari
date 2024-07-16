@@ -104,7 +104,7 @@ function App() {
           <Router>
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/task-viewer" element={<TaskViewerPage />} />
+              <Route path="/task-viewer" element={<TaskViewerPage tasks={tasks} />} />
               <Route path="/issue-viewer" element={<IssueViewerPage />} />
               <Route path="/submit-issue" element={<SubmitIssuePage />} />
               <Route path="/workers" element={<WorkersPage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />

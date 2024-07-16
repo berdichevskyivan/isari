@@ -15,7 +15,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
-import { initTaskManager } from './taskManager.js'
+import { initTaskManager, retrieveAndEmitTasks } from './taskManager.js'
 
 dotenv.config();
 
@@ -662,6 +662,7 @@ io.on('connection', (socket) => {
 
     // When user connects, I send the workers info, but to the socket.
     fetchAndEmitWorkerInfo(socket);
+    retrieveAndEmitTasks(sql, pool, io);
 
     socket.on('disconnect', () => {
         console.log('a user disconnected');

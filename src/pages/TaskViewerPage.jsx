@@ -3,36 +3,20 @@ import '../App.css';
 import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
 import Loading from '../components/Loading';
-import { Box, Collapse, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper } from '@mui/material';
+import { Box, Collapse, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, Button } from '@mui/material';
 import { KeyboardArrowDown as KeyboardArrowDownIcon, KeyboardArrowUp as KeyboardArrowUpIcon } from '@mui/icons-material';
+import CycloneIcon from '@mui/icons-material/Cyclone';
+import BackupIcon from '@mui/icons-material/Backup';
 
 const isProduction = import.meta.env.MODE === 'production';
 
-function createData(name, calories, fat, carbs, protein, price) {
-  return {
-    name,
-    calories,
-    fat,
-    carbs,
-    protein,
-    price,
-    history: [
-      {
-        date: '2020-01-05',
-        customerId: '11091700',
-        amount: 3,
-      },
-      {
-        date: '2020-01-02',
-        customerId: 'Anonymous',
-        amount: 1,
-      },
-    ],
-  };
+const formattedDate = (date) => {
+  const formattedText = new Date(date).toLocaleDateString()
+  return formattedText;
 }
 
-function Row(props) {
-  const { row } = props;
+function Row({ task }) {
+  console.log('task is -> ', task)
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -48,44 +32,43 @@ function Row(props) {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.name}
+          {task.task_id}
         </TableCell>
-        <TableCell align="right">{row.calories}</TableCell>
-        <TableCell align="right">{row.fat}</TableCell>
-        <TableCell align="right">{row.carbs}</TableCell>
-        <TableCell align="right">{row.protein}</TableCell>
+        <TableCell align="right">{task.task_type_name}</TableCell>
+        <TableCell align="right">{task.task_status}</TableCell>
+        <TableCell align="right">{formattedDate(task.task_created_date)}</TableCell>
+        <TableCell align="right">{formattedDate(task.task_updated_date)}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6} align='right'>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                History
-              </Typography>
-              <Table size="small" aria-label="purchases">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Total price ($)</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {row.history.map((historyRow) => (
-                    <TableRow key={historyRow.date}>
-                      <TableCell component="th" scope="row">
-                        {historyRow.date}
-                      </TableCell>
-                      <TableCell>{historyRow.customerId}</TableCell>
-                      <TableCell align="right">{historyRow.amount}</TableCell>
-                      <TableCell align="right">
-                        {Math.round(historyRow.amount * row.price * 100) / 100}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {/* Task is related to a user_input */}
+              { task.task_user_input_id && (
+                <>
+                  <Table size="small" aria-label="purchases">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Issue Title</TableCell>
+                        <TableCell>Issue Context</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow key={task.task_user_input_id}>
+                        <TableCell component="th" scope="row">
+                          {task.task_user_input_issue_title}
+                        </TableCell>
+                        <TableCell>{task.task_user_input_issue_context}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </>
+              ) }
+              {/* Task is related to an issue */}
+              { task.task_issue_id && (
+                <>
+                </>
+              ) }
             </Box>
           </Collapse>
         </TableCell>
@@ -94,20 +77,11 @@ function Row(props) {
   );
 }
 
-const rows = [
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0, 3.99),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3, 4.99),
-  createData('Eclair', 262, 16.0, 24, 6.0, 3.79),
-  createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
-  createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
-];
+function TaskViewerPage({ workers, workerOptions, setWorkers, tasks }) {
 
-function TaskViewerPage({ workers, workerOptions, setWorkers }) {
-
-  // Add later but on another condition
-  // if (!workerOptions) {
-  //   return <Loading />;
-  // }
+  if (!tasks) {
+    return <Loading />;
+  }
 
   return (
     <div style={{
@@ -128,26 +102,36 @@ function TaskViewerPage({ workers, workerOptions, setWorkers }) {
         width: '100%',
         zIndex: 2,
       }}>
+        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'white' }}>
         
-        <TableContainer component={Paper} sx={{ zIndex: 2 }}>
-          <Table stickyHeader aria-label="collapsible table">
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                <TableCell>Task ID</TableCell>
-                <TableCell align="right">Task Type</TableCell>
-                <TableCell align="right">Task Status</TableCell>
-                <TableCell align="right">Created on</TableCell>
-                <TableCell align="right">Updated on</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row) => (
-                <Row key={row.name} row={row} />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+          <TableContainer component={Paper} sx={{ zIndex: 2 }}>
+            <Table stickyHeader aria-label="collapsible table">
+              <TableHead>
+                <TableRow>
+                  <TableCell />
+                  <TableCell>Task ID</TableCell>
+                  <TableCell align="right">Task Type</TableCell>
+                  <TableCell align="right">Task Status</TableCell>
+                  <TableCell align="right">Created on</TableCell>
+                  <TableCell align="right">Updated on</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tasks.map((task) => (
+                  <Row key={task.task_id} task={task} />
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem' }}>
+            <Button variant="contained" href="/issue-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
+              <CycloneIcon sx={{ marginRight: '0.5rem' }} />Issue Viewer
+            </Button>
+            <Button variant="contained" href="/submit-issue" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
+              <BackupIcon sx={{ marginRight: '0.5rem' }} />Submit Issue
+            </Button>
+          </div>
+        </div>
 
       </div>
       <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
