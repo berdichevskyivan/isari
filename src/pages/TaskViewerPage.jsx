@@ -46,7 +46,7 @@ function Row({ task }) {
               {/* Task is related to a user_input */}
               { task.task_user_input_id && (
                 <>
-                  <Table size="small" aria-label="purchases">
+                  <Table size="small" aria-label="user_inputs">
                     <TableHead>
                       <TableRow>
                         <TableCell>Issue Title</TableCell>
@@ -67,6 +67,24 @@ function Row({ task }) {
               {/* Task is related to an issue */}
               { task.task_issue_id && (
                 <>
+                  <Table size="small" aria-label="issues">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Issue Name</TableCell>
+                        <TableCell>Issue Description</TableCell>
+                        <TableCell>Issue Field</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow key={task.task_issue_id}>
+                        <TableCell component="th" scope="row">
+                          {task.task_issue_name}
+                        </TableCell>
+                        <TableCell>{task.task_issue_description}</TableCell>
+                        <TableCell>{task.task_issue_field}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
                 </>
               ) }
             </Box>

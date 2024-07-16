@@ -24,7 +24,7 @@ export async function retrieveAndEmitTasks(sql, pool, io) {
         LEFT JOIN 
             task_types b ON a.task_type_id = b.id 
         LEFT JOIN 
-            issues c ON a.issue_id = b.id 
+            issues c ON a.issue_id = c.id 
         LEFT JOIN 
             user_inputs d ON a.user_input_id = d.id
         ORDER BY a.id asc;
@@ -222,69 +222,81 @@ export async function initTaskManager(app, sql, pool, io) {
             return;
         }
 
+        // We updated a task so we emit this information
+        retrieveAndEmitTasks(sql, pool, io);
+
         const taskTypeId = nextTask.task_type_id;
 
-        if(taskType === 1){
-            // We perform specific queries
-            // and send a specific response
-            // so all of that will be done in this code, and then a `return` at the code to stop code execution
-            return;
-        }
-
-        const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
-        const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${taskTypeId}`
-        const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${taskTypeId}`
-
-        const [issue, taskType, instructions] = await Promise.all([
-            pool.query(issueQuery),
-            pool.query(taskTypeQuery),
-            pool.query(instructionsQuery),
-        ]);
-
-        let metrics = [];
-
-        if(taskTypeId === 3){
-            // Get the data and assign to metrics
-            // in this format { complexity: [criteria, criteria, criteria], scope: [criteria, criteria, criteria] }
-            // the metrics (complexity, scope) are in the issue metrics table
-            // the criteria are in the issue_metrics_criteria table issue_metrics_criteria
-            // We may not only need the criteria, but also, parent and grandparent issues for more context
-            // Will probably have to gather the score for the parent_id issue and the insights previously gathered.
-            // This is up for debate.
-            const issueMetricsQuery = sql.fragment`SELECT * FROM issue_metrics`
-            const issueMetricsCriteriaQuery = sql.fragment`SELECT * FROM issue_metrics_criteria`
-
-            const [issueMetrics, issueMetricsCriteria] = await Promise.all([
-                pool.query(issueMetricsQuery),
-                pool.query(issueMetricsCriteriaQuery),
+        // GENERATION of a root issue from a user input
+        if(taskTypeId === 1){
+            const userInputQuery = sql.fragment`SELECT * FROM user_inputs WHERE id = ${nextTask.user_input_id}`
+            const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${taskTypeId}`
+            const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${taskTypeId}`
+    
+            const [userInput, taskType, instructions] = await Promise.all([
+                pool.query(userInputQuery),
+                pool.query(taskTypeQuery),
+                pool.query(instructionsQuery),
             ]);
 
-            // Now i need to insert all the data into the metrics object
-            // Let's first start by iterating over the rows from the metrics (The amount of children objects within the parent object)
-            for(const row of issueMetrics.rows){
-                const metric = {
-                    id: row.id,
-                    name: row.name,
-                    description: row.description,
-                    criteria: issueMetricsCriteria.rows.filter(criteriaRow => criteriaRow.issue_metric_id === row.id)
-                };
-                metrics.push(metric);
+            const response = {
+                task: nextTask,
+                userInput: userInput.rows[0],
+                taskType: taskType.rows[0],
+                instructions: instructions.rows
             }
+    
+            console.log(response);
+            res.json({ success: true, result: response });
+
+            return;
+        } else {
+            const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
+            const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${taskTypeId}`
+            const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${taskTypeId}`
+    
+            const [issue, taskType, instructions] = await Promise.all([
+                pool.query(issueQuery),
+                pool.query(taskTypeQuery),
+                pool.query(instructionsQuery),
+            ]);
+    
+            let metrics = [];
+    
+            if(taskTypeId === 3){
+                const issueMetricsQuery = sql.fragment`SELECT * FROM issue_metrics`
+                const issueMetricsCriteriaQuery = sql.fragment`SELECT * FROM issue_metrics_criteria`
+    
+                const [issueMetrics, issueMetricsCriteria] = await Promise.all([
+                    pool.query(issueMetricsQuery),
+                    pool.query(issueMetricsCriteriaQuery),
+                ]);
+    
+                for(const row of issueMetrics.rows){
+                    const metric = {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        criteria: issueMetricsCriteria.rows.filter(criteriaRow => criteriaRow.issue_metric_id === row.id)
+                    };
+                    metrics.push(metric);
+                }
+
+                console.log('these are the metrics: ', JSON.stringify(metrics, null, 2));
+            }
+    
+            const response = {
+                task: nextTask,
+                issue: issue.rows[0],
+                taskType: taskType.rows[0],
+                instructions: instructions.rows,
+                metrics: metrics, // EVALUATION
+            }
+    
+            console.log(response);
+            res.json({ success: true, result: response });
         }
 
-        console.log('these are the metrics: ', JSON.stringify(metrics, null, 2));
-
-        const response = {
-            task: nextTask,
-            issue: issue.rows[0],
-            taskType: taskType.rows[0],
-            instructions: instructions.rows,
-            metrics: metrics, // EVALUATION
-        }
-
-        console.log(response);
-        res.json({ success: true, result: response });
-        // res.json({success: false}) // FOR TESTING
     });
     
     app.post('/storeCompletedTask', async (req, res) => {
@@ -306,8 +318,54 @@ export async function initTaskManager(app, sql, pool, io) {
         const taskTypeId = taskInfo.task_type_id;
 
         switch (taskTypeId) {
-            // SUBDIVISION
+            // GENERATION
             case 1:
+                console.log("Received output from Generation task")
+                try {
+                    const outputJson = JSON.parse(output);
+    
+                    const insertIssueQuery = sql.fragment`
+                        INSERT INTO issues (parent_id, granularity, name, description, field, context, complexity_score, scope_score, analysis_done)
+                        VALUES (
+                            NULL,
+                            1,
+                            ${outputJson.name},
+                            ${outputJson.description},
+                            ${outputJson.field},
+                            ${outputJson.context},
+                            100, 100, false
+                        );
+                    `;
+                    await pool.query(insertIssueQuery);
+
+                    // Update the task status to 'completed'
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'completed'
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    
+                    console.log("Inserted output successfully")
+
+                    // If everything was inserted successfully
+                    // We generate the first task related to this newly created issue
+                    await generateTasks(sql, pool);
+                    res.json({ success: true });
+                } catch (error) {
+                    console.error('Error parsing output JSON or inserting issues:', error);
+                    // If there is an error, we update the task back to pending
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE tasks
+                    SET status = 'pending', worker_id = NULL
+                    WHERE id = ${taskId};
+                    `;
+                    await pool.query(updateTaskQuery);
+                    res.status(500).json({ success: false, message: 'Error processing task' });
+                }
+                break;
+            // SUBDIVISION
+            case 2:
                 console.log("Received output from Subdivision task")
                 try {
                     const outputJson = JSON.parse(output);
@@ -350,7 +408,7 @@ export async function initTaskManager(app, sql, pool, io) {
                 }
                 break;
             // ANALYSIS
-            case 2:
+            case 3:
                 console.log("Received output from Analysis task")
                 try {
                     const outputJson = JSON.parse(output);
@@ -398,7 +456,7 @@ export async function initTaskManager(app, sql, pool, io) {
                 }
                 break;
             // EVALUATION
-            case 3:
+            case 4:
                 console.log("Received output from Evaluation task")
                 try {
                     const outputJson = JSON.parse(output);
@@ -433,7 +491,7 @@ export async function initTaskManager(app, sql, pool, io) {
                 }
                 break;
             // PROPOSITION
-            case 4:
+            case 5:
                 console.log("Received output from Proposition task")
                 try {
                     const outputJson = JSON.parse(output);
@@ -474,7 +532,7 @@ export async function initTaskManager(app, sql, pool, io) {
                 }
                 break;
             // EXTRAPOLATION
-            case 5:
+            case 6:
                 console.log("Received output from Extrapolation task")
                 try {
                     const outputJson = JSON.parse(output);
