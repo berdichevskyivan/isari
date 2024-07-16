@@ -277,3 +277,28 @@ $$ LANGUAGE plpgsql;
 INSERT INTO usage_keys (key, type)
 VALUES (generate_random_string(16), 'single_use'),
 (generate_random_string(16), 'single_use');
+
+-- Create the table worker_keys
+-- Type default, for now.
+CREATE TABLE worker_keys (
+    id SERIAL PRIMARY KEY,
+    worker_id INT NOT NULL,
+    FOREIGN KEY (worker_id) REFERENCES workers(id),
+    key VARCHAR(255) NOT NULL UNIQUE,
+    type VARCHAR(255) NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_date TIMESTAMP DEFAULT clock_timestamp(),
+    updated_date TIMESTAMP DEFAULT clock_timestamp()
+);
+
+-- We add this to track the last usage of the worker_key
+CREATE TRIGGER update_worker_keys_updated_date
+BEFORE UPDATE ON worker_keys
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_date_column();
+
+-- Use this to generate a worker_key for a specific worker
+-- The worker must exist in the workers table
+-- Worker keys have 32 characters
+INSERT INTO worker_keys (worker_id, key, type)
+VALUES (20, generate_random_string(32), 'default');

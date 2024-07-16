@@ -51,6 +51,7 @@ function App() {
 
     socket.on('updateTasks', (data) => {
       console.log('Receiving tasks: ', data);
+      localStorage.setItem('tasks', JSON.stringify(data));
       setTasks(data);
     })
 

@@ -16,7 +16,6 @@ const formattedDate = (date) => {
 }
 
 function Row({ task }) {
-  console.log('task is -> ', task)
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -99,6 +98,12 @@ function TaskViewerPage({ workers, workerOptions, setWorkers, tasks }) {
 
   if (!tasks) {
     return <Loading />;
+  }
+
+  if(tasks.length === 0){
+    if(localStorage.getItem('tasks')){
+      tasks = JSON.parse(localStorage.getItem('tasks'))
+    }
   }
 
   return (

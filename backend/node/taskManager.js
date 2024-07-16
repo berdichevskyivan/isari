@@ -173,7 +173,26 @@ export async function initTaskManager(app, sql, pool, io) {
     console.log("Initializing Task Manager");
 
     app.post('/checkForTask', async (req, res) => {
-        const workerId = req.body.workerId;
+        const workerKey = req.body.workerKey;
+        const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;
+        const checkWorkerKeyResult = await pool.query(checkWorkerKeyQuery);
+
+        let workerId = null
+
+        if(checkWorkerKeyResult.rows.length === 0){
+            // We did not find a key, thus, we send an error message to the user.
+            console.log('Worker key is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Worker Key is not valid.' });
+            return;
+        }else{
+            workerId = checkWorkerKeyResult.rows[0].id
+            // We also asynchronously update the worker_keys table to reflect last time of usage
+            const updateWorkerKeyQuery = sql.fragment`UPDATE worker_keys SET used = true WHERE key = ${workerKey}`;
+            pool.query(updateWorkerKeyQuery);
+        }
+
+        const worker = checkWorkerKeyResult.rows[0]
+        console.log(`Worker checking for tasks: ${worker.id} | ${worker.name}`)
         // Right now we won't do any auth, but it IS a must before the release.
         // This is the worker to be added to the worker_id column in tasks table
         // We assume the worker was approved. We need to now look for pending tasks
@@ -302,7 +321,27 @@ export async function initTaskManager(app, sql, pool, io) {
     app.post('/storeCompletedTask', async (req, res) => {
         console.log('this is the body received -> ', req.body)
 
-        const workerId = req.body.worker_id;
+        const workerKey = req.body.workerKey;
+        const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;
+        const checkWorkerKeyResult = await pool.query(checkWorkerKeyQuery);
+
+        let workerId = null
+
+        if(checkWorkerKeyResult.rows.length === 0){
+            // We did not find a key, thus, we send an error message to the user.
+            console.log('Worker key is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Worker Key is not valid. CANNOT insert a completed task.' });
+            return;
+        }else{
+            workerId = checkWorkerKeyResult.rows[0].id
+            // We also asynchronously update the worker_keys table to reflect last time of usage
+            const updateWorkerKeyQuery = sql.fragment`UPDATE worker_keys SET used = true WHERE key = ${workerKey}`;
+            pool.query(updateWorkerKeyQuery);
+        }
+
+        const worker = checkWorkerKeyResult.rows[0]
+        console.log(`Worker storing a completed task: ${worker.id} | ${worker.name}`)
+
         const taskId = req.body.task_id;
         const output = req.body.output;
 
