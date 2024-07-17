@@ -578,7 +578,9 @@ app.delete('/deleteWorker/:id', authenticateToken, async (req, res) => {
 app.post('/submitIssue', async (req, res) => {
     console.log('submitIssue called: ', req.body);
 
-    const { issueTitle, issueContext, usageKey } = req.body;
+    const { issueTitle, issueContext, usageKey, workerId } = req.body;
+
+    console.log('workerId is -> ', workerId);
 
     // First, we validate the usageKey
     // On this, we first validate if it exist
@@ -623,8 +625,23 @@ app.post('/submitIssue', async (req, res) => {
                 res.json({ success: false, message });
             }
         }else{
-            // The key is not used, and can be used, wether it's a master key or not
-            // Proceed with the task of inserting the data into the user_inputs table
+            // The key is NOT used and can be used, but if the workerId is null (no logged in user)
+            // AND the key is assigned to a worker_id
+            // First condition means the key belongs to someone
+            // If it belongs to someone, we make sure that's the workerId provided
+            // If it is NOT, we return an error message and the key CANNOT be used
+            if(key.worker_id !== null && key.worker_id !== workerId){
+                const message = 'Invalid usage key';
+                console.log(message)
+                res.json({ success: false, message });
+                return;
+            }
+
+            // We continue if key.worker_id === null (the key is public)
+            // if the key is NOT public and the private key does NOT match the worker id
+            // We don't allow usage
+
+            // And now proceed with inserting the user input
             const insertUserInputQuery = sql.fragment`
             INSERT INTO user_inputs (issue_title, issue_context)
             VALUES (

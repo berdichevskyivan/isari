@@ -8,6 +8,7 @@ CREATE TABLE workers (
     profile_picture_url VARCHAR(255),
     wallet_address VARCHAR(255),
     salt VARCHAR(255),
+    task_counter INTEGER DEFAULT 0,
     CONSTRAINT unique_name UNIQUE (name),
     CONSTRAINT unique_email UNIQUE (email)
 );

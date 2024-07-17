@@ -243,6 +243,7 @@ CREATE TABLE user_inputs (
 -- We have 'master' keys and 'single-use' keys
 CREATE TABLE usage_keys (
     id SERIAL PRIMARY KEY,
+    worker_id INT REFERENCES workers(id),
     key VARCHAR(255) NOT NULL UNIQUE,
     type VARCHAR(255) NOT NULL,
     used BOOLEAN DEFAULT FALSE,

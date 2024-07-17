@@ -1,4 +1,36 @@
 const GLOBAL_GRANULARITY = 3;
+const TASKS_FOR_SINGLE_USE_KEY = 5;
+
+async function increaseTaskCounter(sql, pool, workerId){
+    console.log(`Task completed by worker ID ${workerId}. Increasing his task counter by one...`)
+    try {
+        const getWorkerTaskCounterQuery = sql.fragment`SELECT task_counter FROM workers WHERE id = ${workerId}`
+        const getWorkerTaskCounterResult = await pool.query(getWorkerTaskCounterQuery);
+        
+        const taskCounter = getWorkerTaskCounterResult.rows[0].task_counter;
+        const newTaskCounter = taskCounter + 1;
+
+        if(newTaskCounter >= TASKS_FOR_SINGLE_USE_KEY){
+            console.log('Awarding worker a single-use key.')
+            // Congrats! We award the worker a single-use key
+            // And update the task_counter back to zero
+            const updateTaskCounterQuery = sql.fragment`UPDATE workers SET task_counter = 0 WHERE id = ${workerId}`
+            const insertSingleUseKey = sql.fragment`
+            INSERT INTO usage_keys (worker_id, key, type) VALUES (${workerId},generate_random_string(16), 'single_use')`;
+
+            await pool.query(updateTaskCounterQuery);
+            await pool.query(insertSingleUseKey);
+        }else{
+            // We just increase the task_counter field
+            console.log('Increasing task counter for worker.')
+            const updateTaskCounterQuery = sql.fragment`UPDATE workers SET task_counter = ${newTaskCounter} WHERE id = ${workerId}`
+            await pool.query(updateTaskCounterQuery);
+        }
+
+    } catch (error) {
+        console.error('Error executing query:', error);
+    }
+}
 
 export async function retrieveAndEmitTasks(sql, pool, io) {
     console.log('Retrieving all tasks with associated information and emitting...')
@@ -291,19 +323,19 @@ export async function initTaskManager(app, sql, pool, io) {
             RETURNING *;
         `;
 
-        try {
+        let nextTask = null;
 
+        try {
+            const nextTaskResult = await pool.query(nextTaskQuery);
+            nextTask = nextTaskResult.rows[0];
+    
+            if(!nextTask){
+                res.json({ success: false, error_code: 'NO_MORE_TASKS' }) // There are no more tasks
+                return;
+            }
         } catch (error) {
             console.error('Error executing query:', error);
             res.json({ success: false, message: `Error getting the task` });
-            return;
-        }
-
-        const nextTaskResult = await pool.query(nextTaskQuery);
-        const nextTask = nextTaskResult.rows[0];
-
-        if(!nextTask){
-            res.json({ success: false, error_code: 'NO_MORE_TASKS' }) // There are no more tasks
             return;
         }
 
@@ -457,6 +489,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     // We generate the first task related to this newly created issue
                     await generateTasks(sql, pool, io);
                     retrieveAndEmitIssues(sql, pool, io);
+                    increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -501,6 +534,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     
                     console.log("Inserted output successfully")
                     retrieveAndEmitIssues(sql, pool, io);
+                    increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -550,6 +584,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     
                     console.log("Inserted insights successfully")
                     retrieveAndEmitIssues(sql, pool, io);
+                    increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
@@ -586,6 +621,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     retrieveAndEmitIssues(sql, pool, io);
+                    increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
@@ -628,6 +664,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     
                     console.log("Inserted output successfully")
                     retrieveAndEmitIssues(sql, pool, io);
+                    increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -670,6 +707,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     
                     console.log("Inserted output successfully")
                     retrieveAndEmitIssues(sql, pool, io);
+                    increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);

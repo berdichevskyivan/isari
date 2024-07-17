@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import AuthContext from '../context/AuthContext';
 import { styled } from '@mui/system';
 import { Button, TextField, CircularProgress, Typography } from '@mui/material';
 import { useNotification } from '../context/NotificationContext';
@@ -92,6 +93,7 @@ function isValidUsageKey(key) {
 }
 
 function SubmitIssuePage({ workers, workerOptions, setWorkers }) {
+  const { loggedInUser } = useContext(AuthContext);
   const [issueTitle, setIssueTitle] = useState('');
   const [issueContext, setIssueContext] = useState('');
   const [usageKey, setUsageKey] = useState('');
@@ -159,6 +161,7 @@ function SubmitIssuePage({ workers, workerOptions, setWorkers }) {
         issueTitle,
         issueContext,
         usageKey,
+        workerId: loggedInUser ? loggedInUser.id : null,
       }
 
       const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/submitIssue`, data, { withCredentials: true });
