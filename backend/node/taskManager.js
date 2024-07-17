@@ -39,6 +39,72 @@ export async function retrieveAndEmitTasks(sql, pool, io) {
     }
 }
 
+export async function retrieveAndEmitIssues(sql, pool, io) {
+    console.log('Retrieving all issues with associated information and emitting...')
+    try {
+        const issuesQuery = sql.fragment`SELECT * FROM issues;`
+        const proposalsQuery = sql.fragment`SELECT * FROM proposals;`
+        const extrapolationsQuery = sql.fragment`SELECT * FROM extrapolations;`
+
+        const [issuesResult, proposalsResult, extrapolationsResult] = await Promise.all([
+            pool.query(issuesQuery),
+            pool.query(proposalsQuery),
+            pool.query(extrapolationsQuery),
+        ]);
+        
+        const issues = issuesResult.rows;
+        const proposals = proposalsResult.rows;
+        const extrapolations = extrapolationsResult.rows;
+
+        const issuesToEmit = []
+
+        const rootIssues = issues.filter(i => i.parent_id === null);
+
+        for (const rootIssue of rootIssues) {
+            let obj = {
+                ...rootIssue,
+                proposals: proposals.filter(p => p.issue_id === rootIssue.id),
+                extrapolations: extrapolations.filter(e => e.issue_id === rootIssue.id),
+                children: issues.filter(i => i.parent_id === rootIssue.id)
+            };
+        
+            // Loop through children of root issues if any.
+            if (obj.children.length > 0) {
+                obj.children = obj.children.map(child => {
+                    let childObj = {
+                        ...child,
+                        proposals: proposals.filter(p => p.issue_id === child.id),
+                        extrapolations: extrapolations.filter(e => e.issue_id === child.id),
+                        children: issues.filter(i => i.parent_id === child.id)
+                    };
+        
+                    // Loop through children of child issues if any.
+                    if (childObj.children.length > 0) {
+                        childObj.children = childObj.children.map(grandchild => {
+                            let grandchildObj = {
+                                ...grandchild,
+                                proposals: proposals.filter(p => p.issue_id === grandchild.id),
+                                extrapolations: extrapolations.filter(e => e.issue_id === grandchild.id),
+                                children: issues.filter(i => i.parent_id === grandchild.id)
+                            };
+        
+                            return grandchildObj;
+                        });
+                    }
+        
+                    return childObj;
+                });
+            }
+        
+            issuesToEmit.push(obj);
+        }
+
+        io.emit('updateIssues', issuesToEmit);
+    } catch (error) {
+        console.error('Error executing query:', error);
+    }
+}
+
 async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
 
     const nextIssueQuery = taskTypeId !== 3 ? sql.fragment`
@@ -94,7 +160,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
     
 }
 
-async function generateTasks(sql, pool) {
+async function generateTasks(sql, pool, io) {
     
     try {
         // We check first if user_inputs have ANY data
@@ -389,7 +455,8 @@ export async function initTaskManager(app, sql, pool, io) {
 
                     // If everything was inserted successfully
                     // We generate the first task related to this newly created issue
-                    await generateTasks(sql, pool);
+                    await generateTasks(sql, pool, io);
+                    retrieveAndEmitIssues(sql, pool, io);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -433,6 +500,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     console.log("Inserted output successfully")
+                    retrieveAndEmitIssues(sql, pool, io);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -481,6 +549,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateIssueQuery);
                     
                     console.log("Inserted insights successfully")
+                    retrieveAndEmitIssues(sql, pool, io);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
@@ -516,6 +585,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     `;
                     await pool.query(updateTaskQuery);
                     
+                    retrieveAndEmitIssues(sql, pool, io);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
@@ -557,6 +627,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     console.log("Inserted output successfully")
+                    retrieveAndEmitIssues(sql, pool, io);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -598,6 +669,7 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     console.log("Inserted output successfully")
+                    retrieveAndEmitIssues(sql, pool, io);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -619,14 +691,16 @@ export async function initTaskManager(app, sql, pool, io) {
     })
 
     // Run the task assignment function immediately
-    await generateTasks(sql, pool);
+    await generateTasks(sql, pool, io);
 
     // Run the tasks retrieval function immediately
     retrieveAndEmitTasks(sql, pool, io);
+    retrieveAndEmitIssues(sql, pool, io);
 
     // Schedule the task assignment function to run every 10 seconds
     setInterval(async () => {
-        await generateTasks(sql, pool);
+        await generateTasks(sql, pool, io);
         retrieveAndEmitTasks(sql, pool, io);
+        retrieveAndEmitIssues(sql, pool, io);
     }, 10000);
 }

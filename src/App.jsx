@@ -55,6 +55,12 @@ function App() {
       setTasks(data);
     })
 
+    socket.on('updateIssues', (data) => {
+      console.log('Receiving issues: ', data);
+      localStorage.setItem('issues', JSON.stringify(data));
+      setIssues(data);
+    })
+
     python_socket.on('connect', onPythonSocketConnect);
     python_socket.on('disconnect', onPythonSocketDisconnect);
 
@@ -106,7 +112,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/task-viewer" element={<TaskViewerPage tasks={tasks} />} />
-              <Route path="/issue-viewer" element={<IssueViewerPage />} />
+              <Route path="/issue-viewer" element={<IssueViewerPage issues={issues} />} />
               <Route path="/submit-issue" element={<SubmitIssuePage />} />
               <Route path="/workers" element={<WorkersPage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />
               <Route path="/learning" element={<LearningPage />} />

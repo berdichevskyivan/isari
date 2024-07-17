@@ -52,15 +52,15 @@ function HomePage({ workers, workerOptions, setWorkers }) {
             To submit an issue, you will need to request a single-use key through our communication channels. In order to collaborate with the project, you can run the <a href="https://github.com/berdichevskyivan/isari-client" target="_blank" style={{color:'magenta', textDecoration: 'none'}}>client script</a>, 
             provided you have the appropiate credentials in a local .env file.
           </p>
-          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem', width: '100%' }}>
             <Button variant="contained" href="/task-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <PendingActionsIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Task Viewer</span>
+              <PendingActionsIcon sx={{ marginRight: '0.5rem' }} />Task Viewer
             </Button>
             <Button variant="contained" href="/issue-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <CycloneIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Issue Viewer</span>
+              <CycloneIcon sx={{ marginRight: '0.5rem' }} />Issue Viewer
             </Button>
             <Button variant="contained" href="/submit-issue" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <BackupIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Submit Issue</span>
+              <BackupIcon sx={{ marginRight: '0.5rem' }} />Submit Issue
             </Button>
           </div>
         </div>

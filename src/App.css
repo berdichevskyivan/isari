@@ -370,7 +370,7 @@
     word-wrap: break-word; 
     justify-content: flex-start;
     overflow: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
     
     h1 {
       font-size: 20px;
