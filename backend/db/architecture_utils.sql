@@ -47,3 +47,18 @@ ADD COLUMN user_input_id INTEGER REFERENCES user_inputs(id);
 insert into client_script_hash(hash) values ('1f8cf7e99493917803abd1bae070862f3b14e6e75df0da0c4a981e25546da12a');
 -- UPDATE THE HASH
 update client_script_hash set hash = 'a099390adf734931b4a4897ecb4e999e9f95b2909388a8abf0399af795cf2a95'
+
+-- Add column anonymize to workers table
+ALTER TABLE workers
+ADD COLUMN anonymize BOOLEAN DEFAULT FALSE;
+
+-- Delete worker information from relational tables
+delete from worker_programming_languages where worker_id != 20;
+delete from worker_ai_tools where worker_id != 20;
+delete from worker_generalized_ai_branches where worker_id != 20;
+delete from worker_specialized_ai_applications where worker_id != 20;
+delete from workers where id != 20;
+
+-- Insert new icons of fields like this, order them in the frontend
+INSERT INTO specialized_ai_applications (name, icon_url)
+VALUES ('Artificial Intelligence', '/icons/artificial-intelligence.png');

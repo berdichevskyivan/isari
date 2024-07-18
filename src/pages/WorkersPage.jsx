@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { Card, CardContent, Typography, Avatar, Box, Grid, Button, IconButton, TextField, SvgIcon, useTheme, useMediaQuery } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import ControlsDashboard from '../components/ControlsDashboard';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import HubIcon from '@mui/icons-material/Hub';
@@ -10,7 +11,27 @@ import ArchitectureIcon from '@mui/icons-material/Architecture';
 import StarrySky from '../components/StarrySky';
 import Loading from '../components/Loading';
 import Tippy from '@tippyjs/react';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import EmailIcon from '@mui/icons-material/Email';
+import InfoIcon from '@mui/icons-material/Info';
 import 'tippy.js/dist/tippy.css';
+
+const StyledAvatar = styled(Avatar)({
+  '& img': {
+    objectFit: 'fill',
+  },
+});
+
+const sortSpecializedAiApplications = (applications, options) => {
+  return applications.sort((a, b) => {
+    const appA = options.find(app => app.id === a);
+    const appB = options.find(app => app.id === b);
+
+    if (appA && appA.name === 'Artificial Intelligence') return -1;
+    if (appB && appB.name === 'Artificial Intelligence') return 1;
+    return 0;
+  });
+};
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -19,15 +40,29 @@ function getInitials(input) {
 }
 
 function CustomCard({ worker, workerOptions }) {
+  console.log(worker)
   return (
     <Card sx={{ width: 250, height: 'fit-content', m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>
-        <Avatar src={`${isProduction ? '' : 'http://localhost'}/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
-        <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
-          { worker.name }
-        </Typography>
+        { worker.anonymize && (
+          <>
+            <StyledAvatar src='/isari-logo.png' alt={worker.name} sx={{ width: 40, height: 40 }} />
+            <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
+              { worker.name }
+            </Typography>
+          </>
+        ) }
+        { !worker.anonymize && (
+          <>
+            <Avatar src={`${isProduction ? '' : 'http://localhost'}/uploads/${worker.profile_picture_url}`} alt={worker.name} sx={{ width: 40, height: 40 }} />
+            <Typography variant="h5" component="div" gutterBottom align="center" sx={{ marginBottom: 0, marginLeft: '.5rem', fontSize: '16px', fontFamily: 'Orbitron, sans-serif', alignSelf: 'center', color: '#00B2AA' }}>
+              { worker.name }
+            </Typography>
+          </>
+        ) }
+
       </Box>
-      <CardContent sx={{ flexGrow: 1, width: '100%', pt: 0 }}>
+      <CardContent sx={{ flexGrow: 1, width: '100%', pt: 0, paddingBottom: '10px !important' }}>
         {/* Programming Languages */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', mt: 2, ml: '.5rem' }}>
           <DataArrayIcon sx={{ height: 30, width: 30, color: '#00CC00'}} />
@@ -51,7 +86,7 @@ function CustomCard({ worker, workerOptions }) {
         {/* Specialized AI Applications */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem' }}>
           <CenterFocusStrongIcon sx={{ height: 30, width: 30, color: '#7D26CD'}} />
-          { worker.specialized_ai_applications?.length > 0 && worker.specialized_ai_applications.map(application => (
+          { worker.specialized_ai_applications?.length > 0 && sortSpecializedAiApplications(worker.specialized_ai_applications, workerOptions.specialized_ai_applications).map(application => (
             <Tippy key={`specialized_ai_application_${application}`} content={<span style={{ fontFamily: 'Orbitron' }}>{ workerOptions.specialized_ai_applications.find(application2 => application2.id === application).name }</span>}>
               <img key={`specialized_ai_application_${application}`} src={workerOptions.specialized_ai_applications.find(application2 => application2.id === application).icon_url} alt="specialized-ai-application-logo" width={30} height={30} className="category-icon"/>
             </Tippy>
@@ -66,6 +101,43 @@ function CustomCard({ worker, workerOptions }) {
               <img key={`ai_tool_${tool}`} src={workerOptions.ai_tools.find(tool2 => tool2.id === tool).icon_url} alt="ai-tool-logo" width={30} height={30} className="category-icon"/>
             </Tippy>
           )) }
+        </Box>
+        
+        {/* Contact Information */}
+        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', pt: 2, ml: '.6rem' }}>
+          <div style={{ marginRight: '1rem' }}>
+            { worker.anonymize && (
+              <Tippy content={
+                <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                  <p style={{ margin: 0, textAlign: 'center' }}>This worker has chosen to anonymize his personal and contact information</p>
+                </span>}
+              >
+                <InfoIcon sx={{ height: 30, width: 30, color: 'white'}} />
+              </Tippy>
+            ) }
+            { !worker.anonymize && (
+              <>
+                { worker.email && (
+                  <Tippy content={
+                    <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                      <p style={{ margin: 0, textAlign: 'center' }}>{ worker.email }</p>
+                    </span>}
+                  >
+                    <EmailIcon sx={{ height: 30, width: 30, color: 'white', marginRight: '.5rem'}} />
+                  </Tippy>
+                ) }
+                { worker.github_url && (
+                  <Tippy content={
+                    <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                      <p style={{ margin: 0, textAlign: 'center' }}>{ worker.github_url }</p>
+                    </span>}
+                  >
+                    <GitHubIcon sx={{ height: 30, width: 30, color: 'white', marginRight: '.5rem'}} />
+                  </Tippy>
+                ) }
+              </>
+            ) }
+          </div>
         </Box>
       </CardContent>
     </Card>

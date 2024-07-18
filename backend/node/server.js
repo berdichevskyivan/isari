@@ -2,6 +2,7 @@ import express from 'express';
 import { createPool, sql } from 'slonik';
 import https from 'https';
 import http from 'http';
+import crypto from 'crypto';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -116,10 +117,14 @@ function authenticateToken(req, res, next) {
     }
 }
 
+const generateHashFromId = (id) => {
+  return crypto.createHash('sha256').update(id.toString()).digest('hex').substring(0, 6); // First 6 characters of the hash
+};
+
 async function fetchAndEmitWorkerInfo(socket) {
     try {
         const workersQuery = sql.fragment`
-            SELECT w.id, w.name, w.profile_picture_url,
+            SELECT w.id, w.name, w.email, w.github_url, w.anonymize, w.profile_picture_url,
                 array_agg(DISTINCT pl.id) as programming_languages,
                 array_agg(DISTINCT g.id) as generalized_ai_branches,
                 array_agg(DISTINCT sa.id) as specialized_ai_applications,
@@ -141,7 +146,10 @@ async function fetchAndEmitWorkerInfo(socket) {
         
         const workers = result.rows.map(row => ({
             id: row.id,
-            name: row.name.trim(),
+            name: row.anonymize ? 'Worker ' + generateHashFromId(row.id) : row.name.trim(),
+            email: row.anonymize ? null : row.email,
+            github_url: row.anonymize ? null : row.github_url,
+            anonymize: row.anonymize,
             profile_picture_url: row.profile_picture_url.trim(),
             programming_languages: row.programming_languages.filter(Boolean),
             generalized_ai_branches: row.generalized_ai_branches.filter(Boolean),
@@ -166,7 +174,16 @@ async function fetchWorkerOptions(req, res) {
     try {
         const programmingLanguagesQuery = sql.fragment`SELECT id, name, description, icon_url FROM programming_languages ORDER BY id ASC`;
         const generalizedAiBranchesQuery = sql.fragment`SELECT id, name, description FROM generalized_ai_branches ORDER BY id ASC`;
-        const specializedAiApplicationsQuery = sql.fragment`SELECT id, name, icon_url FROM specialized_ai_applications ORDER BY id ASC`;
+        const specializedAiApplicationsQuery = sql.fragment`
+            SELECT id, name, icon_url
+            FROM specialized_ai_applications
+            ORDER BY 
+                CASE 
+                    WHEN name = 'Artificial Intelligence' THEN 0 
+                    ELSE 1 
+                END, 
+                id ASC
+        `;
         const aiToolsQuery = sql.fragment`SELECT id, name, icon_url FROM ai_tools ORDER BY id ASC`;
 
         const [programmingLanguages, generalizedAiBranches, specializedAiApplications, aiTools] = await Promise.all([
@@ -347,7 +364,7 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
 app.post('/updateWorker', upload.none(), async (req, res) => {
     console.log('updateWorker called');
 
-    const { workerId, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds } = req.body;
+    const { workerId, programmingLanguagesIds, generalizedAiBranches, specializedAiApplicationsIds, aiToolsIds, workerEmail, workerGithubUrl, anonymize } = req.body;
 
     console.log('programmingLanguagesIds is -> ', programmingLanguagesIds);
     console.log('workerId is -> ', workerId);
@@ -384,6 +401,14 @@ app.post('/updateWorker', upload.none(), async (req, res) => {
         await updateRelationalData('worker_specialized_ai_applications', workerId, JSON.parse(specializedAiApplicationsIds), 'ai_application_id');
         await updateRelationalData('worker_ai_tools', workerId, JSON.parse(aiToolsIds), 'ai_tool_id');
 
+        // Update the worker email, github_url and anonymize fields
+        const updateWorkerInfoQuery = sql.fragment`UPDATE workers SET email = ${workerEmail}, github_url = ${workerGithubUrl}, anonymize = ${anonymize} WHERE id = ${workerId}`
+        await pool.query(updateWorkerInfoQuery)
+
+        // Also get the worker usage keys to return back
+        const workerUsageKeysResult = await pool.query(sql.fragment`SELECT key FROM usage_keys WHERE worker_id = ${workerId} AND used = false`);
+        const workerUsageKeys = workerUsageKeysResult.rows;
+
         // Fetch the updated worker data
         const updatedWorkerQuery = sql.fragment`
             SELECT * FROM workers WHERE id = ${workerId}
@@ -399,6 +424,7 @@ app.post('/updateWorker', upload.none(), async (req, res) => {
             message: 'Worker badges updated successfully',
             updatedUser: {
                 ...updatedWorker,
+                usage_keys: workerUsageKeys,
                 programming_languages: JSON.parse(programmingLanguagesIds),
                 generalized_ai_branches: JSON.parse(generalizedAiBranches),
                 specialized_ai_applications: JSON.parse(specializedAiApplicationsIds),
@@ -429,7 +455,7 @@ app.post('/login', async (req, res) => {
 
   try {
     // Query to get user details including password and salt
-    const userResult = await pool.query(sql.fragment`SELECT id, email, name, password, salt FROM workers WHERE email = ${email}`);
+    const userResult = await pool.query(sql.fragment`SELECT id, email, name, github_url, anonymize, password, salt FROM workers WHERE email = ${email}`);
     if (userResult.rowCount === 0) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -453,6 +479,10 @@ app.post('/login', async (req, res) => {
     const aiTools = aiToolsResult.rows.map(row => row.ai_tool_id);
     const specializedAiApplications = specializedAiApplicationsResult.rows.map(row => row.ai_application_id);
 
+    // Get the worker specific private single-use usage keys
+    const workerUsageKeysResult = await pool.query(sql.fragment`SELECT key FROM usage_keys WHERE worker_id = ${user.id} AND used = false`);
+    const workerUsageKeys = workerUsageKeysResult.rows;
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
     res.cookie('token', token, { httpOnly: true, secure: isProduction === true, sameSite: isProduction === true ? 'none' : 'lax' });
@@ -463,6 +493,10 @@ app.post('/login', async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
+        email: user.email,
+        github_url: user.github_url,
+        anonymize: user.anonymize,
+        usage_keys: workerUsageKeys,
         profile_picture_url: `${user.id}-${user.name.toLowerCase().replace(/ /g, '-')}.png`,
         programming_languages: programmingLanguages,
         generalized_ai_branches: generalizedAiBranches,
@@ -493,7 +527,7 @@ app.get('/verify-auth', async (req, res) => {
     const userId = decoded.id;
 
     // Query to get user details
-    const userResult = await pool.query(sql.fragment`SELECT id, email, name FROM workers WHERE id = ${userId}`);
+    const userResult = await pool.query(sql.fragment`SELECT id, email, name, github_url, anonymize FROM workers WHERE id = ${userId}`);
     if (userResult.rowCount === 0) {
       return res.json({ isAuthenticated: false });
     }
@@ -512,11 +546,18 @@ app.get('/verify-auth', async (req, res) => {
     const aiTools = aiToolsResult.rows.map(row => row.ai_tool_id);
     const specializedAiApplications = specializedAiApplicationsResult.rows.map(row => row.ai_application_id);
 
+    const workerUsageKeysResult = await pool.query(sql.fragment`SELECT key FROM usage_keys WHERE worker_id = ${user.id} AND used = false`);
+    const workerUsageKeys = workerUsageKeysResult.rows;
+
     res.json({
       isAuthenticated: true,
       user: {
         id: user.id,
         name: user.name,
+        email: user.email,
+        github_url: user.github_url,
+        anonymize: user.anonymize,
+        usage_keys: workerUsageKeys,
         profile_picture_url: `${user.id}-${user.name.toLowerCase().replace(/ /g, '-')}.png`,
         programming_languages: programmingLanguages,
         generalized_ai_branches: generalizedAiBranches,

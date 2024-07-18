@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
-import { Card, CardContent, Typography, Avatar, Box, Button, Grid } from '@mui/material';
+import { Card, CardContent, Typography, Avatar, Box, Button, Grid, TextField, FormControlLabel, Checkbox } from '@mui/material';
 import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
 import Loading from '../components/Loading';
@@ -10,6 +10,9 @@ import DataArrayIcon from '@mui/icons-material/DataArray';
 import HubIcon from '@mui/icons-material/Hub';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import EmailIcon from '@mui/icons-material/Email';
+import InfoIcon from '@mui/icons-material/Info';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { styled } from '@mui/system';
@@ -37,11 +40,55 @@ const StyledChip = styled(Chip)(({ selected, shadowcolor }) => ({
   },
 }));
 
+const StyledTextField = styled(TextField)({
+  width: '80%',
+  maxWidth: '100% !important',
+  '& input': {
+    color: 'white',
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '12px',
+    height: '30px',
+    padding: '0 8px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'center',
+    '&::placeholder': {
+      fontFamily: 'Orbitron, sans-serif',
+      color: 'white',
+      fontSize: '12px',
+    },
+  },
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: 'turquoise',
+    },
+    '&:hover fieldset': {
+      borderColor: 'turquoise',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'turquoise',
+    },
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '12px',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    '& textarea': {
+      '&::placeholder': {
+        fontFamily: 'Orbitron, sans-serif',
+      },
+    },
+  },
+  '.MuiFormLabel-root': {
+    display: 'none',
+  },
+});
+
 function getInitials(input) {
   return input.split(' ').map(word => word[0]).join('');
 }
 
-function CustomCard({ worker, workerOptions }) {
+function CustomCard({ worker, workerOptions, workerEmail, workerGithubUrl, anonymize, setWorkerEmail, setWorkerGithubUrl, setAnonymize }) {
   return (
     <>
       <Card sx={{ width: 250, height: 'fit-available', m: 0, mr: '1rem', ml: '-0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
@@ -91,6 +138,56 @@ function CustomCard({ worker, workerOptions }) {
               </Tippy>
             ))}
           </Box>
+
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem', alignItems: 'center' }}>
+            <EmailIcon sx={{ height: 30, width: 30, color: 'white' }} />
+            <StyledTextField
+              placeholder="Email Address"
+              variant="outlined"
+              fullWidth
+              sx={{ backgroundColor: 'black', maxWidth: '50%', marginBottom: '.1rem !important', marginLeft: '.2rem' }}
+              inputProps={{ maxLength: 40 }}
+              value={workerEmail}
+              autoComplete='off'
+              onChange={(e) => setWorkerEmail(e.target.value)}
+            />
+          </Box>
+
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem', alignItems: 'center' }}>
+            <GitHubIcon sx={{ height: 30, width: 30, color: 'white' }} />
+            <StyledTextField
+              placeholder="Github Url"
+              variant="outlined"
+              fullWidth
+              sx={{ backgroundColor: 'black', maxWidth: '50%', marginBottom: '.1rem !important', marginLeft: '.2rem' }}
+              inputProps={{ maxLength: 40 }}
+              value={workerGithubUrl}
+              autoComplete='off'
+              onChange={(e) => setWorkerGithubUrl(e.target.value)}
+            />
+          </Box>
+
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, alignItems: 'center' }}>
+            <FormControlLabel
+              sx={{ color: 'white', marginLeft: '0.1rem' }}
+              control={
+                <Checkbox
+                  checked={anonymize}
+                  sx={{ color: 'turquoise', '&.Mui-checked': { color: 'turquoise' } }}
+                  onChange={(e) => setAnonymize(e.target.checked)}
+                />
+              }
+              label="Anonymize"
+            />
+            <Tippy content={
+              <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                <p style={{ margin: 0, textAlign: 'center' }}>Toggle this on to hide your name and contact information to the public</p>
+              </span>}
+            >
+              <InfoIcon sx={{ color: 'white', marginLeft: '-5px' }}/>
+            </Tippy>
+          </Box>
+
         </CardContent>
       </Card>
     </>
@@ -107,12 +204,21 @@ function WorkerDashboardPage({ workerOptions }) {
   const [selectedTools, setSelectedTools] = useState([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const [workerEmail, setWorkerEmail] = useState('');
+  const [workerGithubUrl, setWorkerGithubUrl] = useState('');
+  const [anonymize, setAnonymize] = useState(false); 
+  const [workerUsageKeys, setWorkerUsageKeys] = useState([]);
+
   useEffect(() => {
     if (loggedInUser) {
       setSelectedLangs(loggedInUser.programming_languages || []);
       setSelectedBranches(loggedInUser.generalized_ai_branches || []);
       setSelectedApps(loggedInUser.specialized_ai_applications || []);
       setSelectedTools(loggedInUser.ai_tools || []);
+      setWorkerEmail(loggedInUser.email || '');
+      setWorkerGithubUrl(loggedInUser.github_url || '');
+      setAnonymize(loggedInUser.anonymize || false)
+      setWorkerUsageKeys(loggedInUser.usage_keys || []);
     }
   }, [loggedInUser]);
 
@@ -150,6 +256,18 @@ function WorkerDashboardPage({ workerOptions }) {
       return;
     }
 
+    if (workerEmail.length === 0 || (workerEmail.length > 0 && !workerEmail.includes('@'))) {
+      openSnackbar('Your Email Address is Invalid', 'error');
+      return;
+    }
+
+    if (workerGithubUrl.length > 0 && !workerGithubUrl.includes('github')) {
+      openSnackbar('Your Github URL is Invalid', 'error');
+      return;
+    }
+
+    const cleansedGithubUrl = workerGithubUrl.length === 0 ? '' : 'github' + workerGithubUrl.split('github')[1];
+
     try {
       const formData = new FormData();
       formData.append('workerId', loggedInUser.id);
@@ -157,6 +275,9 @@ function WorkerDashboardPage({ workerOptions }) {
       formData.append('generalizedAiBranches', JSON.stringify(selectedBranches));
       formData.append('specializedAiApplicationsIds', JSON.stringify(selectedApps));
       formData.append('aiToolsIds', JSON.stringify(selectedTools));
+      formData.append('workerEmail', workerEmail);
+      formData.append('workerGithubUrl', cleansedGithubUrl);
+      formData.append('anonymize', anonymize);
 
       // Log each entry in the FormData
       for (let [key, value] of formData.entries()) {
@@ -215,6 +336,12 @@ function WorkerDashboardPage({ workerOptions }) {
             <CustomCard
               worker={loggedInUser}
               workerOptions={workerOptions}
+              workerEmail={workerEmail}
+              workerGithubUrl={workerGithubUrl}
+              anonymize={anonymize}
+              setWorkerEmail={setWorkerEmail}
+              setWorkerGithubUrl={setWorkerGithubUrl}
+              setAnonymize={setAnonymize}
             />
           )}
 
@@ -297,6 +424,18 @@ function WorkerDashboardPage({ workerOptions }) {
           <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'red', color: 'white' }} onClick={() => setIsDeleteModalOpen(true)}>
             Delete Account
           </Button>
+        </div>
+        <div style={{ display: 'flex', flexFlow: 'column', marginTop: '1.5rem', justifyContent: 'center', width: '100%' }}>
+        <Typography sx={{textAlign: 'center', fontFamily: 'Orbitron, Roboton, sans-serif', color: 'turquoise', fontWeight: 'bold'}}>Usage Keys</Typography>
+              <div className="usage-keys-container no-scrollbar">
+                { workerUsageKeys.length > 0 && (
+                  <>
+                    { workerUsageKeys.map((usageKey) => (
+                      <p key={usageKey.key}>{usageKey.key}</p>
+                    )) }
+                  </>
+                ) }
+              </div>
         </div>
       </div>
 

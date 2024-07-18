@@ -31,6 +31,7 @@ VALUES
 -- Insert data into the specialized_ai_applications table
 INSERT INTO specialized_ai_applications (name, icon_url)
 VALUES 
+('Artificial Intelligence', '/icons/artificial-intelligence.png'),
 ('Healthcare', '/icons/healthcare.png'),
 ('Autonomous Vehicles', '/icons/autonomous-vehicles.png'),
 ('Gaming', '/icons/gaming.png'),
