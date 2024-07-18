@@ -303,3 +303,8 @@ EXECUTE FUNCTION update_updated_date_column();
 -- Worker keys have 32 characters
 INSERT INTO worker_keys (worker_id, key, type)
 VALUES (20, generate_random_string(32), 'default');
+
+-- Hash storage
+CREATE TABLE client_script_hash (
+    hash TEXT
+)

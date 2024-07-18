@@ -267,10 +267,36 @@ async function generateTasks(sql, pool, io) {
     }
 }
 
+async function validateScriptHash(sql, pool, scriptHash){
+    try{
+        const checkScriptHashQuery = sql.fragment`SELECT hash FROM client_script_hash WHERE hash = ${scriptHash}`
+        const checkScriptHashResult = await pool.query(checkScriptHashQuery);
+
+        if(checkScriptHashResult.rows.length === 0){
+            return false;
+        }else{
+            return true;
+        }
+    }catch (error) {
+        return false;
+    }
+}
+
 export async function initTaskManager(app, sql, pool, io) {
     console.log("Initializing Task Manager");
 
     app.post('/checkForTask', async (req, res) => {
+
+        const scriptHash = req.body.scriptHash;
+
+        const hashValidationResult = await validateScriptHash(sql, pool, scriptHash);
+
+        if(!hashValidationResult){
+            console.log('Script Hash is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Script Hash is not valid.' });
+            return;
+        }
+
         const workerKey = req.body.workerKey;
         const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;
         const checkWorkerKeyResult = await pool.query(checkWorkerKeyQuery);
@@ -418,6 +444,16 @@ export async function initTaskManager(app, sql, pool, io) {
     
     app.post('/storeCompletedTask', async (req, res) => {
         console.log('this is the body received -> ', req.body)
+
+        const scriptHash = req.body.scriptHash;
+
+        const hashValidationResult = await validateScriptHash(sql, pool, scriptHash);
+
+        if(!hashValidationResult){
+            console.log('Script Hash is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Script Hash is not valid.' });
+            return;
+        }
 
         const workerKey = req.body.workerKey;
         const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;

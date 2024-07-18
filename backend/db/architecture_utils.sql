@@ -42,3 +42,8 @@ UPDATE usage_keys set type = 'master' where id = 2;
 -- ADDS A COLUMN
 ALTER TABLE tasks
 ADD COLUMN user_input_id INTEGER REFERENCES user_inputs(id);
+
+-- INSERT THE CLIENT SCRIPT HASH
+insert into client_script_hash(hash) values ('1f8cf7e99493917803abd1bae070862f3b14e6e75df0da0c4a981e25546da12a');
+-- UPDATE THE HASH
+update client_script_hash set hash = 'a099390adf734931b4a4897ecb4e999e9f95b2909388a8abf0399af795cf2a95'
