@@ -38,6 +38,7 @@ export async function retrieveAndEmitTasks(sql, pool, io) {
         const tasksQuery = sql.fragment`
         SELECT 
             a.id as task_id,
+            b.role as task_role,
             b.name as task_type_name,
             a.status as task_status,
             a.created_date as task_created_date,

@@ -7,12 +7,53 @@ import { Box, Collapse, IconButton, Table, TableBody, TableCell, TableContainer,
 import { KeyboardArrowDown as KeyboardArrowDownIcon, KeyboardArrowUp as KeyboardArrowUpIcon } from '@mui/icons-material';
 import CycloneIcon from '@mui/icons-material/Cyclone';
 import BackupIcon from '@mui/icons-material/Backup';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import Tippy from '@tippyjs/react';
+import 'tippy.js/dist/tippy.css';
+import './TaskViewerPage.css';
 
 const isProduction = import.meta.env.MODE === 'production';
 
 const formattedDate = (date) => {
   const formattedText = new Date(date).toLocaleDateString()
   return formattedText;
+}
+
+function capitalizeFirstLetter(string) {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+const statusIcon = (status) => {
+  switch(status){
+    case 'pending':
+      return (
+        <>
+          <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>Pending</span>}>
+            <AssignmentIcon sx={{ color: 'red' }}/>
+          </Tippy>
+        </>
+      );
+    case 'active':
+      return (
+        <>
+          <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>Active</span>}>
+          <BackupIcon sx={{ color: 'orange' }}/>
+          </Tippy>
+        </>
+      );
+    case 'completed':
+      return (
+        <>
+          <Tippy content={<span style={{ fontFamily: 'Orbitron' }}>Completed</span>}>
+            <CheckCircleIcon sx={{ color: 'green' }}/>
+          </Tippy>
+        </>
+      );
+    default:
+      return status;
+  }
 }
 
 function Row({ task }) {
@@ -30,34 +71,35 @@ function Row({ task }) {
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell component="th" scope="row">
+        <TableCell component="th" scope="row" align="center" sx={{ fontFamily: 'monospace' }}>
           {task.task_id}
         </TableCell>
-        <TableCell align="right">{task.task_type_name}</TableCell>
-        <TableCell align="right">{task.task_status}</TableCell>
-        <TableCell align="right">{formattedDate(task.task_created_date)}</TableCell>
-        <TableCell align="right">{formattedDate(task.task_updated_date)}</TableCell>
+        <TableCell align="center">{capitalizeFirstLetter(task.task_type_name)}</TableCell>
+        <TableCell align="center">{capitalizeFirstLetter(task.task_role)}</TableCell>
+        <TableCell align="center">{statusIcon(task.task_status)}</TableCell>
+        <TableCell align="center">{formattedDate(task.task_created_date)}</TableCell>
+        <TableCell align="center">{formattedDate(task.task_updated_date)}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6} align='right'>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 0, paddingRight: 0 }} colSpan={12} align='right'>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
+            <Box sx={{ margin: 0 }}>
               {/* Task is related to a user_input */}
               { task.task_user_input_id && (
                 <>
                   <Table size="small" aria-label="user_inputs">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Issue Title</TableCell>
-                        <TableCell>Issue Context</TableCell>
+                        <TableCell align="center" width="20%">Issue Title</TableCell>
+                        <TableCell align="left" width="80%">Issue Context</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       <TableRow key={task.task_user_input_id}>
-                        <TableCell component="th" scope="row">
+                        <TableCell component="th" scope="row" align='center'>
                           {task.task_user_input_issue_title}
                         </TableCell>
-                        <TableCell>{task.task_user_input_issue_context}</TableCell>
+                        <TableCell component="th" align='left'>{task.task_user_input_issue_context}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -69,18 +111,18 @@ function Row({ task }) {
                   <Table size="small" aria-label="issues">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Issue Name</TableCell>
-                        <TableCell>Issue Description</TableCell>
-                        <TableCell>Issue Field</TableCell>
+                        <TableCell align="center" width="20%">Issue Name</TableCell>
+                        <TableCell align="left" width="80%">Issue Description</TableCell>
+                        {/* <TableCell>Issue Field</TableCell> */}
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       <TableRow key={task.task_issue_id}>
-                        <TableCell component="th" scope="row">
+                        <TableCell component="th" scope="row" align="center">
                           {task.task_issue_name}
                         </TableCell>
-                        <TableCell>{task.task_issue_description}</TableCell>
-                        <TableCell>{task.task_issue_field}</TableCell>
+                        <TableCell component="th" align="left">{task.task_issue_description}</TableCell>
+                        {/* <TableCell component="th">{task.task_issue_field}</TableCell> */}
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -125,18 +167,19 @@ function TaskViewerPage({ workers, workerOptions, setWorkers, tasks }) {
         width: '100%',
         zIndex: 2,
       }}>
-        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'white' }}>
+        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'black', border: '2px solid turquoise' }}>
         
-          <TableContainer component={Paper} sx={{ zIndex: 2 }}>
+          <TableContainer component={Paper} sx={{ zIndex: 2 }} className='no-scrollbar task-viewer-table'>
             <Table stickyHeader aria-label="collapsible table">
               <TableHead>
-                <TableRow>
-                  <TableCell />
-                  <TableCell>Task ID</TableCell>
-                  <TableCell align="right">Task Type</TableCell>
-                  <TableCell align="right">Task Status</TableCell>
-                  <TableCell align="right">Created on</TableCell>
-                  <TableCell align="right">Updated on</TableCell>
+                <TableRow className="tasks-header-row">
+                  <TableCell style={{ width: '5%' }} align="center"/>
+                  <TableCell style={{ width: '15%' }} align="center">Task ID</TableCell>
+                  <TableCell style={{ width: '10%' }} align="center">Task Type</TableCell>
+                  <TableCell style={{ width: '15%' }} align="center">Role</TableCell>
+                  <TableCell style={{ width: '20%' }} align="center">Task Status</TableCell>
+                  <TableCell style={{ width: '15%' }} align="center">Created on</TableCell>
+                  <TableCell style={{ width: '20%' }} align="center">Updated on</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

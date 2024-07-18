@@ -1,0 +1,13 @@
+.task-viewer-table td.MuiTableCell-root {
+  font-family: monospace !important;
+}
+
+.task-viewer-table thead.MuiTableHead-root {
+    & > tr {
+        & > th {
+            min-height: 60px !important;
+            max-height: 60px !important;
+            height: 60px !important;
+        }
+    }
+}

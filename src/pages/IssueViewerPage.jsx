@@ -33,11 +33,11 @@ function Row({ issue }) {
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell component="th" scope="row">
+        <TableCell component="th" scope="row" align="center">
           {issue.name}
         </TableCell>
-        <TableCell align="right">{issue.description}</TableCell>
-        <TableCell align="right">{issue.field}</TableCell>
+        <TableCell align="left">{issue.description}</TableCell>
+        <TableCell align="left">{issue.field}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
@@ -48,8 +48,8 @@ function Row({ issue }) {
 
                   { issue.proposals.length > 0 && (
                     <TableRow>
-                      <TableCell colSpan={4}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
                           <IconButton
                             aria-label="expand row"
                             size="small"
@@ -57,15 +57,15 @@ function Row({ issue }) {
                           >
                             {proposalsOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                           </IconButton>
-                          <Typography variant="h6">Proposals</Typography>
+                          <Typography variant="h6" sx={{ marginLeft: '.5rem' }}>Proposals</Typography>
                         </Box>
                         <Collapse in={proposalsOpen} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: 1, paddingLeft: 2 }}>
+                          <Box sx={{ margin: 0 }}>
                             <>
-                              <Table size="small" aria-label="user_inputs">
+                              <Table size="small" aria-label="proposals">
                                 <TableHead>
                                   <TableRow>
-                                    <TableCell>Proposal Name</TableCell>
+                                    <TableCell align="center">Proposal Name</TableCell>
                                     <TableCell>Proposal Description</TableCell>
                                     <TableCell>Proposal Field</TableCell>
                                   </TableRow>
@@ -73,7 +73,7 @@ function Row({ issue }) {
                                 <TableBody>
                                   {issue.proposals.map((proposal) => (
                                     <TableRow key={proposal.id}>
-                                      <TableCell component="th" scope="row">{proposal.name}</TableCell>
+                                      <TableCell component="th" scope="row" align="center">{proposal.name}</TableCell>
                                       <TableCell>{proposal.description}</TableCell>
                                       <TableCell>{proposal.field}</TableCell>
                                     </TableRow>
@@ -89,8 +89,8 @@ function Row({ issue }) {
 
                   { issue.extrapolations.length > 0 && (
                     <TableRow>
-                      <TableCell colSpan={4}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
                           <IconButton
                             aria-label="expand row"
                             size="small"
@@ -98,15 +98,15 @@ function Row({ issue }) {
                           >
                             {extrapolationsOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                           </IconButton>
-                          <Typography variant="h6">Extrapolations</Typography>
+                          <Typography variant="h6" sx={{ marginLeft: '.5rem' }}>Extrapolations</Typography>
                         </Box>
                         <Collapse in={extrapolationsOpen} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: 1, paddingLeft: 2 }}>
+                          <Box sx={{ margin: 0 }}>
                             <>
                               <Table size="small" aria-label="user_inputs">
                                 <TableHead>
                                   <TableRow>
-                                    <TableCell>Extrapolation Name</TableCell>
+                                    <TableCell align="center">Extrapolation Name</TableCell>
                                     <TableCell>Extrapolation Description</TableCell>
                                     <TableCell>Extrapolation Field</TableCell>
                                   </TableRow>
@@ -114,7 +114,7 @@ function Row({ issue }) {
                                 <TableBody>
                                   {issue.extrapolations.map((extrapolation) => (
                                     <TableRow key={extrapolation.id}>
-                                      <TableCell component="th" scope="row">{extrapolation.name}</TableCell>
+                                      <TableCell component="th" scope="row" align="center">{extrapolation.name}</TableCell>
                                       <TableCell>{extrapolation.description}</TableCell>
                                       <TableCell>{extrapolation.field}</TableCell>
                                     </TableRow>
@@ -130,8 +130,8 @@ function Row({ issue }) {
 
                   { issue.children.length > 0 && (
                     <TableRow>
-                      <TableCell colSpan={4}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
                           <IconButton
                             aria-label="expand row"
                             size="small"
@@ -139,16 +139,16 @@ function Row({ issue }) {
                           >
                             {subdivisionsOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                           </IconButton>
-                          <Typography variant="h6">Subdivisions</Typography>
+                          <Typography variant="h6" sx={{ marginLeft: '.5rem' }}>Subdivisions</Typography>
                         </Box>
                         <Collapse in={subdivisionsOpen} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: 1, paddingLeft: 2 }}>
+                          <Box sx={{ margin: 0 }}>
                             <>
                               <Table size="small" aria-label="user_inputs">
                                 <TableHead>
                                   <TableRow>
                                     <TableCell />
-                                    <TableCell>Subdivision Name</TableCell>
+                                    <TableCell align="center">Subdivision Name</TableCell>
                                     <TableCell>Subdivision Description</TableCell>
                                     <TableCell>Subdivision Field</TableCell>
                                   </TableRow>
@@ -207,16 +207,16 @@ function IssueViewerPage({ workers, workerOptions, setWorkers, issues }) {
         width: '100%',
         zIndex: 2,
       }}>
-        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'white' }}>
+        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'black', border: '2px solid turquoise' }}>
         
-          <TableContainer component={Paper} sx={{ zIndex: 2 }}>
+          <TableContainer component={Paper} sx={{ zIndex: 2 }} className='no-scrollbar issue-viewer-table'>
             <Table stickyHeader aria-label="collapsible table">
               <TableHead>
                 <TableRow>
                   <TableCell />
-                  <TableCell>Name</TableCell>
-                  <TableCell align="right">Description</TableCell>
-                  <TableCell align="right">Field</TableCell>
+                  <TableCell align="center">Name</TableCell>
+                  <TableCell align="center">Description</TableCell>
+                  <TableCell align="center">Field</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
