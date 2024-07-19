@@ -328,6 +328,12 @@
 
   .homepage-info-container {
     margin-bottom: 6rem !important;
+    height: 50% !important;
+  }
+
+  .homepage-visualization-container {
+    height: 50% !important;
+    padding-top: 4.5rem !important;
   }
 }
 
@@ -369,13 +375,11 @@
   .homepage-visualization-container, .homepage-info-container {
     flex: none;
     width: 100%;
-    height: 50%;
     align-items: flex-start;
     flex-flow: column nowrap;
     word-wrap: break-word; 
     justify-content: flex-start;
     overflow: auto;
-    margin-bottom: 2rem;
     
     h1 {
       font-size: 20px;
@@ -386,8 +390,14 @@
     }
   }
 
+  .homepage-info-container {
+    height: 50%;
+  }
+
   .homepage-visualization-container {
     margin-top: 0;
+    padding-bottom: 0 !important;
+    height: 50%;
   }
 
   .homepage-info-container h1, .homepage-info-container p {

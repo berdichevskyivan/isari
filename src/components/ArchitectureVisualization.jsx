@@ -384,20 +384,26 @@ const CubeGrid = () => {
 
 const ArchitectureVisualization = () => {
 
-  const [cameraPosition, setCameraPosition] = useState([50, 50, 50]);
+  const [cameraPosition, setCameraPosition] = useState([0, 0, 50]);
 
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-  
+
       if (width < 1415) {
         setCameraPosition([30, 30, 45]);
       } else {
         setCameraPosition([40, 40, 40]);
       }
     };
-  
-    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial call to set the camera position
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   return (
