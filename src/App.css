@@ -435,7 +435,7 @@
   max-height: 100px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
+  gap: 40px;
   overflow: auto;
   justify-items: center;
   padding: 10px;

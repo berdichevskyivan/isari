@@ -16,7 +16,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
-import { initTaskManager, retrieveAndEmitTasks } from './taskManager.js'
+import { initTaskManager, retrieveAndEmitTasks, generateTasks } from './taskManager.js'
 
 dotenv.config();
 
@@ -646,6 +646,9 @@ app.post('/submitIssue', async (req, res) => {
                 );
                 `;
                 await pool.query(insertUserInputQuery);
+
+                // We generate tasks after inserting user input
+                await generateTasks(sql, pool, io);
     
                 // After we do this, remember to update the used field on the key
                 const updateKeyQuery = sql.fragment`
@@ -691,6 +694,9 @@ app.post('/submitIssue', async (req, res) => {
             );
             `;
             await pool.query(insertUserInputQuery);
+
+            // We generate tasks after inserting user input
+            await generateTasks(sql, pool, io);
 
             // After we do this, remember to update the used field on the key
             const updateKeyQuery = sql.fragment`

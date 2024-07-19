@@ -46,7 +46,7 @@ ADD COLUMN user_input_id INTEGER REFERENCES user_inputs(id);
 -- INSERT THE CLIENT SCRIPT HASH
 insert into client_script_hash(hash) values ('1f8cf7e99493917803abd1bae070862f3b14e6e75df0da0c4a981e25546da12a');
 -- UPDATE THE HASH
-update client_script_hash set hash = 'a099390adf734931b4a4897ecb4e999e9f95b2909388a8abf0399af795cf2a95'
+update client_script_hash set hash = '1f8cf7e99493917803abd1bae070862f3b14e6e75df0da0c4a981e25546da12a'
 
 -- Add column anonymize to workers table
 ALTER TABLE workers
@@ -62,3 +62,64 @@ delete from workers where id != 20;
 -- Insert new icons of fields like this, order them in the frontend
 INSERT INTO specialized_ai_applications (name, icon_url)
 VALUES ('Artificial Intelligence', '/icons/artificial-intelligence.png');
+
+-- Insert into negative_prompt
+INSERT INTO negative_prompt(negative_prompt)
+VALUES ('Everything outside of STEM fields, Blockchain, Cryptocurrency, Therapy, Impractical Solutions, Pseudoscience, Alternative Medicine, Psychology, TRT, CBT, Palliative Solutions, '
+'Homeopathy, Multi-Level Marketing, Unverified Supplements, Spiritual Healing, Conspiracy Theories, Self-Help Gurus, Motivational Speakers, Mindfulness Apps, '
+'Wellness Industry, Personal Development Courses, Manifestation Techniques, Life Coaching, Symptomatic treatments, Temporary relief measures, Short-term fixes, Band-aid solutions, '
+'Superficial remedies, Alleviative approaches, Comfort measures, Interim solutions, Symptom management strategies, Mitigative actions.'
+)
+
+-- Update instructions like such
+-- Update 1 (generation)
+UPDATE instructions SET instruction = 
+ 'The output must be formatted as a JSON object containing the following fields: name, description, field and context. '
+ 'The |name| field must contain a descriptive and summarized name that appropriately encapsulates the root cause of the analyzed |Issue Title|.'
+ 'The |description| field must contain a descriptive and informative text related to the |name| field. '
+ 'The |field| field must contain a categorization of the |name| and |description| within the range of STEM-based fields. '
+ 'The |context| field must contain the summarized and cleaned up version of the |Issue Context| provided, but without taking out potentially essential data. '
+ 'ONLY if the |Issue Context| is non-sensical and does not provide enough information, generate a |context| based on your reasoning derived from both the |Issue Title| and |Issue Context|.'
+ WHERE id = 1;
+-- Update 2 (subdivision)
+UPDATE instructions SET instruction = 
+ 'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, field and context. '
+ 'These subdivisions need to be practical and their analysis and evaluation should lead to better proposals, actions, or solutions. ' -- changed
+ 'The focus must be on diagnosing and understanding the root causes. If these causes are not understood, identify the areas where this is the case and subdivide the root issue into these.' -- changed
+ 'The |name| must be the title for the sub-issue, the |description| must provide descriptive and practical information about the sub-issue, '
+ 'and the |field| must be at most two words long and is defined as the field under which the sub-issue is categorized, '
+ 'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples. STEM fields are preferred. '
+ 'The descriptions must describe the name field, and not propose a solution or actions. '
+ 'The |context| field must contain a aggregated context that connects the current context provided with additional context based on the current |name|, |description| and |field| generated. '
+ 'The output must consist only of the JSON array and nothing else. '
+ 'Ensure the JSON array contains ONLY up to four JSON objects.'
+ WHERE id = 2;
+-- Update 5 (proposition)
+UPDATE instructions SET instruction = 
+ 'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
+ 'The |name| must be the title for the proposed action or solution, the |description| must provide detailed information about the proposed action or solution, '
+ 'and the |field| must be at most two words long and is defined as the field under which the proposed action is categorized, '
+ 'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples. '
+ 'The descriptions must describe the |name| field, focusing on the proposed action or solution without evaluating or implementing it. '
+ 'Exclude proposals that offer palliative or symptom-masking solutions, and instead focus on identifying, addressing or exploring long-term or short-term, fundamental solutions. '
+ 'Please use the context provided to establish relationships between it and the proposed action or solution and base your response on these insights. '
+ 'The output must consist only of the JSON array and nothing else.'
+ WHERE id = 5;
+-- Update 6 (extrapolation)
+UPDATE instructions SET instruction = 
+'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
+ 'The |name| is the title of the proposed action or solution. The |description| provides detailed information about the proposal, staying brief but informative. '
+ 'The |field| indicates the category of the originating idea and must be at most two words long, such as Neuroscience, Economics, Technology, or Physics. '
+ 'The solutions should be derived by applying concepts, methods, or ideas from one field to another, focusing on innovative, cross-disciplinary approaches from STEM fields. '
+ 'Exclude proposals that offer palliative or symptom-masking solutions, and instead focus on identifying, addressing or exploring long-term or short-term, fundamental solutions. '
+ 'Please use the context provided to establish relationships between it and the proposed action or solution and base your response on these insights. '
+ 'Avoid phrases like "Taking cues from" or "Inspired by the principles of" or "Borrowing from" or "Drawing from" and directly state the concept. '
+ 'The output must consist only of the JSON array and nothing else.'
+ WHERE id = 6;
+
+ -- Make a new run
+delete from proposals;
+delete from extrapolations;
+delete from tasks;
+delete from user_inputs;
+delete from issues;

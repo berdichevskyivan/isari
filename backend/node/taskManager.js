@@ -21,6 +21,7 @@ async function validateScriptHash(sql, pool, scriptHash){
 async function hashAndValidateScript(sql, pool, scriptText){
     try{
         const hash = crypto.createHash('sha384').update(scriptText).digest('hex');
+        console.log('this is hash -> ', hash)
         const validationResult = await validateScriptHash(sql, pool, hash);
 
         if(validationResult === true){
@@ -226,7 +227,7 @@ async function handleTaskType(sql, pool, taskTypeId, taskTypeName) {
     
 }
 
-async function generateTasks(sql, pool, io) {
+export async function generateTasks(sql, pool, io) {
     
     try {
         // We check first if user_inputs have ANY data
@@ -286,7 +287,7 @@ async function generateTasks(sql, pool, io) {
                 const { id, name } = taskTypes[i];
                 taskCreated = await handleTaskType(sql, pool, id, name);
                 if (taskCreated) {
-                    retrieveAndEmitTasks(sql, pool, io);
+                    await retrieveAndEmitTasks(sql, pool, io);
                     break; // Stop execution after creating a task
                 }
             }
@@ -415,9 +416,19 @@ export async function initTaskManager(app, sql, pool, io) {
         }
 
         // We updated a task so we emit this information
-        retrieveAndEmitTasks(sql, pool, io);
+        await retrieveAndEmitTasks(sql, pool, io);
 
         const taskTypeId = nextTask.task_type_id;
+
+        // Regardless of task type, we need to get the negative promp
+        const negativePromptQuery = sql.fragment`SELECT negative_prompt FROM negative_prompt`;
+        const negativePromptResult = await pool.query(negativePromptQuery);
+
+        let negativePrompt = '';
+
+        if(negativePromptResult.rows.length > 0){
+            negativePrompt = negativePromptResult.rows[0].negative_prompt;
+        }
 
         // GENERATION of a root issue from a user input
         if(taskTypeId === 1){
@@ -435,7 +446,8 @@ export async function initTaskManager(app, sql, pool, io) {
                 task: nextTask,
                 userInput: userInput.rows[0],
                 taskType: taskType.rows[0],
-                instructions: instructions.rows
+                instructions: instructions.rows,
+                negativePrompt: negativePrompt
             }
     
             console.log(response);
@@ -482,6 +494,7 @@ export async function initTaskManager(app, sql, pool, io) {
                 issue: issue.rows[0],
                 taskType: taskType.rows[0],
                 instructions: instructions.rows,
+                negativePrompt: negativePrompt,
                 metrics: metrics, // EVALUATION
             }
     
@@ -573,8 +586,8 @@ export async function initTaskManager(app, sql, pool, io) {
                     // If everything was inserted successfully
                     // We generate the first task related to this newly created issue
                     await generateTasks(sql, pool, io);
-                    retrieveAndEmitIssues(sql, pool, io);
-                    increaseTaskCounter(sql, pool, workerId);
+                    await retrieveAndEmitIssues(sql, pool, io);
+                    await increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -596,13 +609,14 @@ export async function initTaskManager(app, sql, pool, io) {
     
                     for (const item of outputJson) {
                         const insertIssueQuery = sql.fragment`
-                            INSERT INTO issues (parent_id, granularity, name, description, field, complexity_score, scope_score, analysis_done)
+                            INSERT INTO issues (parent_id, granularity, name, description, field, context, complexity_score, scope_score, analysis_done)
                             VALUES (
                                 ${taskInfo.issue_id},
                                 (SELECT granularity + 1 FROM issues WHERE id = ${taskInfo.issue_id}),
                                 ${item.name},
                                 ${item.description},
                                 ${item.field},
+                                ${item.context},
                                 0, 0, false
                             );
                         `;
@@ -618,8 +632,8 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     console.log("Inserted output successfully")
-                    retrieveAndEmitIssues(sql, pool, io);
-                    increaseTaskCounter(sql, pool, workerId);
+                    await retrieveAndEmitIssues(sql, pool, io);
+                    await increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -668,8 +682,8 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateIssueQuery);
                     
                     console.log("Inserted insights successfully")
-                    retrieveAndEmitIssues(sql, pool, io);
-                    increaseTaskCounter(sql, pool, workerId);
+                    await retrieveAndEmitIssues(sql, pool, io);
+                    await increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
@@ -705,8 +719,8 @@ export async function initTaskManager(app, sql, pool, io) {
                     `;
                     await pool.query(updateTaskQuery);
                     
-                    retrieveAndEmitIssues(sql, pool, io);
-                    increaseTaskCounter(sql, pool, workerId);
+                    await retrieveAndEmitIssues(sql, pool, io);
+                    await increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting insights:', error);
@@ -748,8 +762,8 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     console.log("Inserted output successfully")
-                    retrieveAndEmitIssues(sql, pool, io);
-                    increaseTaskCounter(sql, pool, workerId);
+                    await retrieveAndEmitIssues(sql, pool, io);
+                    await increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -791,8 +805,8 @@ export async function initTaskManager(app, sql, pool, io) {
                     await pool.query(updateTaskQuery);
                     
                     console.log("Inserted output successfully")
-                    retrieveAndEmitIssues(sql, pool, io);
-                    increaseTaskCounter(sql, pool, workerId);
+                    await retrieveAndEmitIssues(sql, pool, io);
+                    await increaseTaskCounter(sql, pool, workerId);
                     res.json({ success: true });
                 } catch (error) {
                     console.error('Error parsing output JSON or inserting issues:', error);
@@ -815,15 +829,13 @@ export async function initTaskManager(app, sql, pool, io) {
 
     // Run the task assignment function immediately
     await generateTasks(sql, pool, io);
-
-    // Run the tasks retrieval function immediately
-    retrieveAndEmitTasks(sql, pool, io);
-    retrieveAndEmitIssues(sql, pool, io);
+    await retrieveAndEmitTasks(sql, pool, io);
+    await retrieveAndEmitIssues(sql, pool, io);
 
     // Schedule the task assignment function to run every 10 seconds
     setInterval(async () => {
         await generateTasks(sql, pool, io);
-        retrieveAndEmitTasks(sql, pool, io);
-        retrieveAndEmitIssues(sql, pool, io);
+        await retrieveAndEmitTasks(sql, pool, io);
+        await retrieveAndEmitIssues(sql, pool, io);
     }, 10000);
 }

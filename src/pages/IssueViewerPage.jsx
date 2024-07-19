@@ -10,11 +10,6 @@ import PendingActionsIcon from '@mui/icons-material/PendingActions';
 
 const isProduction = import.meta.env.MODE === 'production';
 
-const formattedDate = (date) => {
-  const formattedText = new Date(date).toLocaleDateString()
-  return formattedText;
-}
-
 function Row({ issue }) {
   const [open, setOpen] = React.useState(false);
   const [proposalsOpen, setProposalsOpen] = React.useState(false);
@@ -213,10 +208,10 @@ function IssueViewerPage({ workers, workerOptions, setWorkers, issues }) {
             <Table stickyHeader aria-label="collapsible table">
               <TableHead>
                 <TableRow>
-                  <TableCell />
-                  <TableCell align="center">Name</TableCell>
-                  <TableCell align="center">Description</TableCell>
-                  <TableCell align="center">Field</TableCell>
+                  <TableCell style={{ width: '5%' }}/>
+                  <TableCell align="center" style={{ width: '20%' }}>Name</TableCell>
+                  <TableCell align="center" style={{ width: '55%' }}>Description</TableCell>
+                  <TableCell align="center" style={{ width: '20%' }}>Field</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

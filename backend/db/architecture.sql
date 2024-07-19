@@ -10,8 +10,8 @@ CREATE TABLE task_types (
 
 -- Insert data into the task_types table
 INSERT INTO task_types (id, name, description, role, temperature) VALUES
-    (1, 'generation', 'Generates an issue from user-provided inputs, ensuring comprehensive and contextually appropriate issue creation.', 'generator', 0.1),
-    (2, 'subdivision', 'Generates sub-issues with increased granularity relative to the parent, if there is one.', 'divider', 0.1),
+    (1, 'generation', 'Generates an issue from user-provided inputs, ensuring comprehensive and contextually appropriate issue creation. The focus should be on identifying and understanding the root cause of the issue, rather than creating specific or narrowed-down variants.', 'generator', 0.1);
+    (2, 'subdivision', 'Subdivides the issue into sub-issues or subdivisions that can be worked upon using science, engineering, technology and/or math.', 'divider', 0.1);
     (3, 'analysis', 'Performs a detailed analysis of the issue. Extract relevant data points (insights) related to the issue from various fields.', 'analyzer', 0.1),
     (4, 'evaluation', 'Applies scores based on metrics and contextual information to assess the issue.', 'evaluator', 0.1),
     (5, 'proposition', 'Generates proposed actions or solutions to address the issue.', 'proposer', 0.1),
@@ -59,18 +59,22 @@ INSERT INTO instructions (task_type_id, instruction, instruction_type)
 VALUES
 (1,
  'The output must be formatted as a JSON object containing the following fields: name, description, field and context. '
- 'The |name| field must contain a descriptive and summarized name that appropiately encapsulates the |Issue Title| provided. '
+ 'The |name| field must contain a descriptive and summarized name that appropriately encapsulates the root cause of the analyzed |Issue Title|.'
  'The |description| field must contain a descriptive and informative text related to the |name| field. '
  'The |field| field must contain a categorization of the |name| and |description| within the range of STEM-based fields. '
- 'The |context| field must contain the summarized and cleaned up version of the |Issue Context| provided, but without taking out potentially essential data. ',
+ 'The |context| field must contain the summarized and cleaned up version of the |Issue Context| provided, but without taking out potentially essential data. '
+ 'ONLY if the |Issue Context| is non-sensical and does not provide enough information, generate a |context| based on your reasoning derived from both the |Issue Title| and |Issue Context|.',
  'output'), 
 (2, 
- 'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
- 'The name must be the title for the sub-issue, the description must provide descriptive information about the sub-issue, '
- 'and the field must be at most two words long and is defined as the field under which the sub-issue is categorized, '
- 'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples.'
- 'The descriptions must describe the name field, and not propose a solution or actions.'
- 'The output must consist only of the JSON array and nothing else.'
+ 'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, field and context. '
+ 'These subdivisions need to be practical and their analysis and evaluation should lead to better proposals, actions, or solutions. '
+ 'The focus must be on diagnosing and understanding the root causes. If these causes are not understood, identify the areas where this is the case and subdivide the root issue into these.'
+ 'The |name| must be the title for the sub-issue, the |description| must provide descriptive and practical information about the sub-issue, '
+ 'and the |field| must be at most two words long and is defined as the field under which the sub-issue is categorized, '
+ 'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples. STEM fields are preferred. '
+ 'The descriptions must describe the name field, and not propose a solution or actions. '
+ 'The |context| field must contain a aggregated context that connects the current context provided with additional context based on the current |name|, |description| and |field| generated. '
+ 'The output must consist only of the JSON array and nothing else. '
  'Ensure the JSON array contains ONLY up to four JSON objects.',
  'output'),
 (3,
@@ -86,17 +90,21 @@ VALUES
  'output'),
  (5, 
  'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
- 'The name must be the title for the proposed action or solution, the description must provide detailed information about the proposed action or solution, '
- 'and the field must be at most two words long and is defined as the field under which the proposed action is categorized, '
+ 'The |name| must be the title for the proposed action or solution, the |description| must provide detailed information about the proposed action or solution, '
+ 'and the |field| must be at most two words long and is defined as the field under which the proposed action is categorized, '
  'like Healthcare, Economics, Technology, Artificial Intelligence, Physics and Mathematics among other examples. '
- 'The descriptions must describe the name field, focusing on the proposed action or solution without evaluating or implementing it. '
+ 'The descriptions must describe the |name| field, focusing on the proposed action or solution without evaluating or implementing it. '
+ 'Exclude proposals that offer palliative or symptom-masking solutions, and instead focus on identifying, addressing or exploring long-term or short-term, fundamental solutions. '
+ 'Please use the context provided to establish relationships between it and the proposed action or solution and base your response on these insights. '
  'The output must consist only of the JSON array and nothing else.',
  'output'),
   (6, 
  'The output must be formatted as a JSON array containing up to four objects with the following fields: name, description, and field. '
- 'The name is the title of the proposed action or solution. The description provides detailed information about the proposal, staying brief but informative. '
- 'The field indicates the category of the originating idea and must be at most two words long, such as Neuroscience, Economics, Technology, or Physics. '
+ 'The |name| is the title of the proposed action or solution. The |description| provides detailed information about the proposal, staying brief but informative. '
+ 'The |field| indicates the category of the originating idea and must be at most two words long, such as Neuroscience, Economics, Technology, or Physics. '
  'The solutions should be derived by applying concepts, methods, or ideas from one field to another, focusing on innovative, cross-disciplinary approaches from STEM fields. '
+ 'Exclude proposals that offer palliative or symptom-masking solutions, and instead focus on identifying, addressing or exploring long-term or short-term, fundamental solutions. '
+ 'Please use the context provided to establish relationships between it and the proposed action or solution and base your response on these insights. '
  'Avoid phrases like "Taking cues from" or "Inspired by the principles of" or "Borrowing from" or "Drawing from" and directly state the concept. '
  'The output must consist only of the JSON array and nothing else.',
  'output');
@@ -307,4 +315,9 @@ VALUES (20, generate_random_string(32), 'default');
 -- Hash storage
 CREATE TABLE client_script_hash (
     hash TEXT
+)
+
+-- Negative prompt
+CREATE TABLE negative_prompt (
+    negative_prompt TEXT
 )

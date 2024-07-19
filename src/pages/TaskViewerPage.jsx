@@ -175,8 +175,8 @@ function TaskViewerPage({ workers, workerOptions, setWorkers, tasks }) {
                 <TableRow className="tasks-header-row">
                   <TableCell style={{ width: '5%' }} align="center"/>
                   <TableCell style={{ width: '15%' }} align="center">Task ID</TableCell>
-                  <TableCell style={{ width: '10%' }} align="center">Task Type</TableCell>
-                  <TableCell style={{ width: '15%' }} align="center">Role</TableCell>
+                  <TableCell style={{ width: '15%' }} align="center">Task Type</TableCell>
+                  <TableCell style={{ width: '10%' }} align="center">Role</TableCell>
                   <TableCell style={{ width: '20%' }} align="center">Task Status</TableCell>
                   <TableCell style={{ width: '15%' }} align="center">Created on</TableCell>
                   <TableCell style={{ width: '20%' }} align="center">Updated on</TableCell>

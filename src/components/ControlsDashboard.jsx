@@ -12,7 +12,7 @@ import { useGlitch } from 'react-powerglitch';
 import { useLocation } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ConstructionIcon from '@mui/icons-material/Construction';
-import FeedbackIcon from '@mui/icons-material/Feedback';
+import BackupIcon from '@mui/icons-material/Backup';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -129,14 +129,14 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                     <Button variant="contained" href="/work" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
                       <ConstructionIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Work</span>
                     </Button>
-                    <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleFeedbackModal}>
-                      <FeedbackIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Feedback</span>
-                    </Button>
                     <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={toggleDonationModal}>
                       <FavoriteIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Donate</span>
                     </Button>
                     <Button variant="contained" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }} onClick={logout}>
                       <LogoutIcon sx={{ marginRight: '0.5rem' }} /> <span className="hide-on-small">Logout</span>
+                    </Button>
+                    <Button variant="contained" href="/submit-issue" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+                      <BackupIcon sx={{ marginRight: '0.5rem' }} /><span className="hide-on-small">Submit Issue</span>
                     </Button>
                   </>
                 )}
