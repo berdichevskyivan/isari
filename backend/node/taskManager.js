@@ -1,5 +1,38 @@
+import crypto from 'crypto';
+
 const GLOBAL_GRANULARITY = 3;
 const TASKS_FOR_SINGLE_USE_KEY = 5;
+
+async function validateScriptHash(sql, pool, scriptHash){
+    try{
+        const checkScriptHashQuery = sql.fragment`SELECT hash FROM client_script_hash WHERE hash = ${scriptHash}`
+        const checkScriptHashResult = await pool.query(checkScriptHashQuery);
+
+        if(checkScriptHashResult.rows.length === 0){
+            return false;
+        }else{
+            return true;
+        }
+    }catch (error) {
+        return false;
+    }
+}
+
+async function hashAndValidateScript(sql, pool, scriptText){
+    try{
+        const hash = crypto.createHash('sha384').update(scriptText).digest('hex');
+        const validationResult = await validateScriptHash(sql, pool, hash);
+
+        if(validationResult === true){
+            return hash;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error executing query:', error);
+        return null;
+    }
+}
 
 async function increaseTaskCounter(sql, pool, workerId){
     console.log(`Task completed by worker ID ${workerId}. Increasing his task counter by one...`)
@@ -268,23 +301,38 @@ async function generateTasks(sql, pool, io) {
     }
 }
 
-async function validateScriptHash(sql, pool, scriptHash){
-    try{
-        const checkScriptHashQuery = sql.fragment`SELECT hash FROM client_script_hash WHERE hash = ${scriptHash}`
-        const checkScriptHashResult = await pool.query(checkScriptHashQuery);
-
-        if(checkScriptHashResult.rows.length === 0){
-            return false;
-        }else{
-            return true;
-        }
-    }catch (error) {
-        return false;
-    }
-}
-
 export async function initTaskManager(app, sql, pool, io) {
     console.log("Initializing Task Manager");
+
+    app.post('/validateScript', async (req, res) => {
+        const scriptText = req.body.script;
+        const workerKey = req.body.workerKey;
+        const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;
+        const checkWorkerKeyResult = await pool.query(checkWorkerKeyQuery);
+        
+        // We first validate the worker key!
+        if(checkWorkerKeyResult.rows.length === 0){
+            // We did not find a key, thus, we send an error message to the user.
+            console.log('Worker key is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Worker Key is not valid.' });
+            return;
+        }else{
+            const updateWorkerKeyQuery = sql.fragment`UPDATE worker_keys SET used = true WHERE key = ${workerKey}`;
+            pool.query(updateWorkerKeyQuery);
+        }
+
+        const hashingAndCheckingResult = await hashAndValidateScript(sql, pool, scriptText);
+
+        if(hashingAndCheckingResult !== null){
+            // Success! We return the hash to the worker
+            console.log('Hash is valid! Sending back hash to worker...')
+            res.json({ success: true, hash: hashingAndCheckingResult });
+        } else {
+            // Failure! We return an error message
+            console.log('Hash is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Hash is not valid.' });
+        }
+    })
 
     app.post('/checkForTask', async (req, res) => {
 
