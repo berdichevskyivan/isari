@@ -435,7 +435,7 @@
   max-height: 100px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 40px;
+  column-gap: 40px;
   overflow: auto;
   justify-items: center;
   padding: 10px;
@@ -444,5 +444,9 @@
     margin: 0;
     width: fit-content;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: fit-content;
   }
 }
