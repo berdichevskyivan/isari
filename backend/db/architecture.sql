@@ -10,14 +10,36 @@ CREATE TABLE task_types (
 
 -- Insert data into the task_types table
 INSERT INTO task_types (id, name, description, role, temperature) VALUES
-    (1, 'generation', 'Generates an issue from user-provided inputs, ensuring comprehensive and contextually appropriate issue creation. The focus should be on identifying and understanding the root cause of the issue, rather than creating specific or narrowed-down variants.', 'generator', 0.1);
-    (2, 'subdivision', 'Subdivides the issue into sub-issues or subdivisions that can be worked upon using science, engineering, technology and/or math.', 'divider', 0.1);
+    (1, 'generation', 'Generates an issue from user-provided inputs, ensuring comprehensive and contextually appropriate issue creation. The focus should be on identifying and understanding the root cause of the issue, rather than creating specific or narrowed-down variants.', 'generator', 0.1),
+    (2, 'subdivision', 'Subdivides the issue into sub-issues or subdivisions that can be worked upon using science, engineering, technology and/or math.', 'divider', 0.1),
     (3, 'analysis', 'Performs a detailed analysis of the issue. Extract relevant data points (insights) related to the issue from various fields.', 'analyzer', 0.1),
     (4, 'evaluation', 'Applies scores based on metrics and contextual information to assess the issue.', 'evaluator', 0.1),
-    (5, 'proposition', 'Generates proposed actions or solutions to address the issue.', 'proposer', 0.1),
+    (5, 'proposition', 'Generates innovative and practical proposed actions or solutions to address the issue.', 'proposer', 0.1),
     (6, 'extrapolation', 'Involves taking solutions or proposals that have been effective in one field and applying them to issues in a different field. '
     'This process relies on identifying parallels between the two fields, allowing insights or methods that work well in one context to address challenges in another. '
     'This cross-disciplinary approach aims to leverage successful strategies from various domains to find innovative solutions for problems that might not have been addressed using traditional methods within the specific field.', 'extrapolator', 0.7);
+
+-- Create the issues table
+CREATE TABLE issues (
+    id SERIAL PRIMARY KEY,
+    parent_id INTEGER,
+    granularity INTEGER,
+    name VARCHAR(255),
+    description TEXT,
+    field VARCHAR(255),
+    context TEXT,
+    complexity_score INTEGER,
+    scope_score INTEGER,
+    analysis_done BOOLEAN
+);
+
+-- Create the user_inputs table where we gather user input from the UI
+CREATE TABLE user_inputs (
+    id SERIAL PRIMARY KEY,
+    issue_title VARCHAR(255) NOT NULL,
+    issue_context TEXT NOT NULL,
+    generated BOOLEAN DEFAULT FALSE
+);
 
 -- Create the tasks table
 CREATE TABLE tasks (
@@ -108,20 +130,6 @@ VALUES
  'Avoid phrases like "Taking cues from" or "Inspired by the principles of" or "Borrowing from" or "Drawing from" and directly state the concept. '
  'The output must consist only of the JSON array and nothing else.',
  'output');
-
--- Create the issues table
-CREATE TABLE issues (
-    id SERIAL PRIMARY KEY,
-    parent_id INTEGER,
-    granularity INTEGER,
-    name VARCHAR(255),
-    description TEXT,
-    field VARCHAR(255),
-    context TEXT,
-    complexity_score INTEGER,
-    scope_score INTEGER,
-    analysis_done BOOLEAN
-);
 
 -- Insert data into the issues table
 -- Insert issues into the issues table
@@ -239,14 +247,6 @@ CREATE TABLE extrapolations (
     scalability_score INTEGER DEFAULT 0
 );
 
--- Create the user_inputs table where we gather user input from the UI
-CREATE TABLE user_inputs (
-    id SERIAL PRIMARY KEY,
-    issue_title VARCHAR(255) NOT NULL,
-    issue_context TEXT NOT NULL,
-    generated BOOLEAN DEFAULT FALSE
-);
-
 -- Create the usage_keys where we store the keys for using the architecture
 -- We have 'master' keys and 'single-use' keys
 CREATE TABLE usage_keys (
@@ -284,7 +284,7 @@ $$ LANGUAGE plpgsql;
 
 -- Insert them as single_use keys, and change to master as needed
 INSERT INTO usage_keys (key, type)
-VALUES (generate_random_string(16), 'single_use'),
+VALUES (generate_random_string(16), 'master'),
 (generate_random_string(16), 'single_use');
 
 -- Create the table worker_keys
@@ -310,7 +310,7 @@ EXECUTE FUNCTION update_updated_date_column();
 -- The worker must exist in the workers table
 -- Worker keys have 32 characters
 INSERT INTO worker_keys (worker_id, key, type)
-VALUES (20, generate_random_string(32), 'default');
+VALUES (1, generate_random_string(32), 'default');
 
 -- Hash storage
 CREATE TABLE client_script_hash (

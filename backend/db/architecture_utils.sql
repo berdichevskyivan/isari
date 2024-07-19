@@ -44,7 +44,7 @@ ALTER TABLE tasks
 ADD COLUMN user_input_id INTEGER REFERENCES user_inputs(id);
 
 -- INSERT THE CLIENT SCRIPT HASH
-insert into client_script_hash(hash) values ('1f8cf7e99493917803abd1bae070862f3b14e6e75df0da0c4a981e25546da12a');
+insert into client_script_hash(hash) values ('d54efdff896194772b49ec4b477aa42120afc0c74db8187ed8a1196c314736cd79e9bcb2e36f6659adad166f63847f59');
 -- UPDATE THE HASH
 update client_script_hash set hash = '1f8cf7e99493917803abd1bae070862f3b14e6e75df0da0c4a981e25546da12a'
 
