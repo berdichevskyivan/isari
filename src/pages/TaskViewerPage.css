@@ -11,3 +11,39 @@
         }
     }
 }
+
+.task-viewer-container, .issue-viewer-container {
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    height: 800px;
+    min-height: 800px;
+    width: 800px;
+    padding: 2rem;
+    border-radius: 14px;
+    z-index: 2;
+    background: black;
+    border: 2px solid turquoise;
+}
+
+@media (max-width: 600px) {
+    .task-viewer-container, .issue-viewer-container {
+        height: 600px;
+        min-height: 600px;
+        width: 300px;
+    }
+}
+
+@media (max-width: 1415px) {
+    .task-viewer-container, .issue-viewer-container {
+        height: 600px;
+        min-height: 600px;
+    }
+}
+
+@media (max-height: 700px){
+    .task-viewer-container, .issue-viewer-container {
+        height: 600px;
+        min-height: 600px;
+    }
+}

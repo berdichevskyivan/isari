@@ -201,8 +201,9 @@ function IssueViewerPage({ workers, workerOptions, setWorkers, issues }) {
         height: '100%',
         width: '100%',
         zIndex: 2,
+        marginBottom: '6rem',
       }}>
-        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'black', border: '2px solid turquoise' }}>
+        <div className="issue-viewer-container">
         
           <TableContainer component={Paper} sx={{ zIndex: 2 }} className='no-scrollbar issue-viewer-table'>
             <Table stickyHeader aria-label="collapsible table">

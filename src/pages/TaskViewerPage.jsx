@@ -166,8 +166,9 @@ function TaskViewerPage({ workers, workerOptions, setWorkers, tasks }) {
         height: '100%',
         width: '100%',
         zIndex: 2,
+        marginBottom: '6rem',
       }}>
-        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between', height: '800px', minHeight: '800px', width: '800px', padding: '2rem', borderRadius: '14px', zIndex: 2, background: 'black', border: '2px solid turquoise' }}>
+        <div className="task-viewer-container">
         
           <TableContainer component={Paper} sx={{ zIndex: 2 }} className='no-scrollbar task-viewer-table'>
             <Table stickyHeader aria-label="collapsible table">
