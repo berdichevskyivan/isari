@@ -123,7 +123,7 @@ function Row({ issue }) {
                     </TableRow>
                   ) }
 
-                  { issue.children.length > 0 && (
+                  { (issue.children && issue.children.length > 0) && (
                     <TableRow>
                       <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
                         <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
