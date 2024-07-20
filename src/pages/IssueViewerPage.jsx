@@ -41,7 +41,7 @@ function Row({ issue }) {
               <Table>
                 <TableBody>
 
-                  { issue.proposals.length > 0 && (
+                  { issue.proposals && issue.proposals.length > 0 && (
                     <TableRow>
                       <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
                         <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
@@ -82,7 +82,7 @@ function Row({ issue }) {
                     </TableRow>
                   )}
 
-                  { issue.extrapolations.length > 0 && (
+                  { issue.extrapolations && issue.extrapolations.length > 0 && (
                     <TableRow>
                       <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
                         <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
@@ -123,7 +123,7 @@ function Row({ issue }) {
                     </TableRow>
                   ) }
 
-                  { (issue.children && issue.children.length > 0) && (
+                  { issue.children && issue.children.length > 0 && (
                     <TableRow>
                       <TableCell style={{ paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
                         <Box sx={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem' }}>
@@ -149,7 +149,7 @@ function Row({ issue }) {
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                  {issue.children.length > 0 && issue.children.map((child) => (
+                                  {(issue.children && issue.children.length > 0) && issue.children.map((child) => (
                                     <Row key={child.id} issue={child} />
                                   ))}
                                 </TableBody>
