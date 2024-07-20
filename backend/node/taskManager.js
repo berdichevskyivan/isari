@@ -2,6 +2,48 @@ import crypto from 'crypto';
 
 const GLOBAL_GRANULARITY = 3;
 const TASKS_FOR_SINGLE_USE_KEY = 5;
+const MAX_MINUTES_FOR_ACTIVE_TASK = 5;
+
+async function checkForStuckTasks(sql, pool){
+    try{
+        const getActiveTasksQuery = sql.fragment`
+            SELECT *, 
+                   NOW()::timestamp AS current_time 
+            FROM tasks 
+            WHERE status = 'active'
+        `;
+        const getActiveTasksResult = await pool.query(getActiveTasksQuery);
+
+        if(getActiveTasksResult.rows.length > 0){
+
+            const activeTasks = getActiveTasksResult.rows;
+
+            for(const activeTask of activeTasks){
+                const updatedDate = activeTask.updated_date
+                const currentTime = activeTask.current_time
+
+                const millisecondsPassed = currentTime - updatedDate;
+                const minutesPassed = millisecondsPassed / 60000;
+
+                console.log(`Minutes passed for Task ID ${activeTask.id}: ${minutesPassed}`);
+
+                // If the task has been active for more than max minutes
+                // We update it back to pending, and worker_id to null
+                if(minutesPassed > MAX_MINUTES_FOR_ACTIVE_TASK){
+                    console.log(`Task ID ${activeTask.id} has been active for more than ${MAX_MINUTES_FOR_ACTIVE_TASK} minutes. Changing status to pending...`)
+                    const updateTaskQuery = sql.fragment`UPDATE tasks SET worker_id = null, status = 'pending' WHERE id = ${activeTask.id}`;
+                    await pool.query(updateTaskQuery);
+                }
+            }          
+
+        }else{
+            console.log('No active tasks currently');
+        }
+
+    }catch (error) {
+        console.log('Error checking for stuck tasks: ', error)
+    }
+}
 
 async function validateScriptHash(sql, pool, scriptHash){
     try{
@@ -367,21 +409,19 @@ export async function initTaskManager(app, sql, pool, io) {
 
         const worker = checkWorkerKeyResult.rows[0]
         console.log(`Worker checking for tasks: ${worker.id} | ${worker.name}`)
-        // Right now we won't do any auth, but it IS a must before the release.
-        // This is the worker to be added to the worker_id column in tasks table
-        // We assume the worker was approved. We need to now look for pending tasks
 
-        // First, we check if the worker requesting the task already has an ACTIVE task assigned to him.
-        // If it has a COMPLETED task assigned to him. We let him get another task
-        const checkWorkerQuery = sql.fragment`SELECT id FROM tasks WHERE status = 'active' and worker_id = ${workerId}`;
+        // We used to check for this, but now we have a freeing task mechanism for stuck tasks
+        // So we can increase the amount of devices used per worker
+        // We still keep this here, just in case.
+        // const checkWorkerQuery = sql.fragment`SELECT id FROM tasks WHERE status = 'active' and worker_id = ${workerId}`;
 
-        const checkWorkerResult = await pool.query(checkWorkerQuery);
+        // const checkWorkerResult = await pool.query(checkWorkerQuery);
 
-        if(checkWorkerResult.rows.length > 0){
-            console.log(`Worker ${workerId} already has a task assigned`);
-            res.json({ success: false, message: `Worker ${workerId} already has a task assigned`, error_code: 'ACTIVE_TASK', task_id: checkWorkerResult.rows[0].id });
-            return;
-        }
+        // if(checkWorkerResult.rows.length > 0){
+        //     console.log(`Worker ${workerId} already has a task assigned`);
+        //     res.json({ success: false, message: `Worker ${workerId} already has a task assigned`, error_code: 'ACTIVE_TASK', task_id: checkWorkerResult.rows[0].id });
+        //     return;
+        // }
 
         // We check for 'pending' tasks.
         // If a task is found, we immediatly update the status (to active) and the worker_id
@@ -546,7 +586,7 @@ export async function initTaskManager(app, sql, pool, io) {
         const taskInfo = taskInfoResult.rows[0];
 
         if (!taskInfo) {
-            res.status(404).json({ success: false, message: 'Task not found' });
+            res.status(404).json({ success: false, message: 'Task not found or was unassigned from worker. Try running the client script again.' });
             return;
         }
     
@@ -829,12 +869,14 @@ export async function initTaskManager(app, sql, pool, io) {
 
     // Run the task assignment function immediately
     await generateTasks(sql, pool, io);
+    await checkForStuckTasks(sql, pool);
     await retrieveAndEmitTasks(sql, pool, io);
     await retrieveAndEmitIssues(sql, pool, io);
 
     // Schedule the task assignment function to run every 10 seconds
     setInterval(async () => {
         await generateTasks(sql, pool, io);
+        await checkForStuckTasks(sql, pool);
         await retrieveAndEmitTasks(sql, pool, io);
         await retrieveAndEmitIssues(sql, pool, io);
     }, 10000);
