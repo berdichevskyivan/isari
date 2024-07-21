@@ -10,7 +10,7 @@ import PendingActionsIcon from '@mui/icons-material/PendingActions';
 
 const isProduction = import.meta.env.MODE === 'production';
 
-function Row({ issue }) {
+function Row({ issue, subdivision = false }) {
   const [open, setOpen] = React.useState(false);
   const [proposalsOpen, setProposalsOpen] = React.useState(false);
   const [extrapolationsOpen, setExtrapolationsOpen] = React.useState(false);
@@ -32,10 +32,13 @@ function Row({ issue }) {
           {issue.name}
         </TableCell>
         <TableCell align="left">{issue.description}</TableCell>
-        <TableCell align="left">{issue.field}</TableCell>
+        <TableCell align="center">{issue.field}</TableCell>
+        { subdivision === true && (
+          <TableCell align="center">{issue.context}</TableCell>
+        ) }
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 0, paddingRight: 0 }} colSpan={4}>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 0, paddingRight: 0 }} colSpan={subdivision === true ? 12 : 4}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 0 }}>
               <Table>
@@ -144,13 +147,14 @@ function Row({ issue }) {
                                   <TableRow>
                                     <TableCell />
                                     <TableCell align="center">Subdivision Name</TableCell>
-                                    <TableCell>Subdivision Description</TableCell>
-                                    <TableCell>Subdivision Field</TableCell>
+                                    <TableCell align="center">Subdivision Description</TableCell>
+                                    <TableCell align="center">Subdivision Field</TableCell>
+                                    <TableCell align="center">Subdivision Context</TableCell>
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
                                   {(issue.children && issue.children.length > 0) && issue.children.map((child) => (
-                                    <Row key={child.id} issue={child} />
+                                    <Row key={child.id} issue={child} subdivision={true} />
                                   ))}
                                 </TableBody>
                               </Table>

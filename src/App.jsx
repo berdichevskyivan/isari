@@ -50,13 +50,11 @@ function App() {
     })
 
     socket.on('updateTasks', (data) => {
-      console.log('Receiving tasks: ', data);
       localStorage.setItem('tasks', JSON.stringify(data));
       setTasks(data);
     })
 
     socket.on('updateIssues', (data) => {
-      console.log('Receiving issues: ', data);
       localStorage.setItem('issues', JSON.stringify(data));
       setIssues(data);
     })
@@ -84,16 +82,12 @@ function App() {
 
           // Compare fetched data with stored data
           if (JSON.stringify(fetchedData) !== JSON.stringify(parsedStoredWorkerOptions)) {
-            console.log('Data has changed, updating localStorage and state.');
             setWorkerOptions(fetchedData);
             localStorage.setItem('workerOptions', JSON.stringify(fetchedData));
           } else {
-            console.log('Data has not changed, using localStorage data.');
             setWorkerOptions(parsedStoredWorkerOptions);
           }
         } else {
-          // No stored data, save the fetched data
-          console.log('No localStorage data, saving fetched data.');
           setWorkerOptions(fetchedData);
           localStorage.setItem('workerOptions', JSON.stringify(fetchedData));
         }

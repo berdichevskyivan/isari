@@ -125,6 +125,7 @@ export async function retrieveAndEmitTasks(sql, pool, io) {
             c.granularity as task_issue_granularity,
             c.name as task_issue_name,
             c.description as task_issue_description,
+            c.context as task_issue_context,
             c.field as task_issue_field,
             d.issue_title as task_user_input_issue_title,
             d.issue_context as task_user_input_issue_context
@@ -471,52 +472,66 @@ export async function initTaskManager(app, sql, pool, io) {
         }
 
         // GENERATION of a root issue from a user input
-        if(taskTypeId === 1){
+        if (taskTypeId === 1) {
             const userInputQuery = sql.fragment`SELECT * FROM user_inputs WHERE id = ${nextTask.user_input_id}`
             const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${taskTypeId}`
             const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${taskTypeId}`
-    
+
             const [userInput, taskType, instructions] = await Promise.all([
                 pool.query(userInputQuery),
                 pool.query(taskTypeQuery),
                 pool.query(instructionsQuery),
             ]);
 
-            const response = {
+            const data = {
                 task: nextTask,
                 userInput: userInput.rows[0],
                 taskType: taskType.rows[0],
                 instructions: instructions.rows,
                 negativePrompt: negativePrompt
             }
-    
-            console.log(response);
-            res.json({ success: true, result: response });
 
+            const input_text = `Assume this role: ${data.taskType.role}\n`
+                + `You must perform this task: ${data.taskType.name}\n`
+                + `This task consists of: ${data.taskType.description}\n`
+                + `This is the |Issue Title|: ${data.userInput.issue_title}\n`
+                + `This is the |Issue Context|: ${data.userInput.issue_context}\n`
+                + `These are your output instructions: ${data.instructions.filter(inst => inst.instruction_type === 'output')[0].instruction}\n\n`
+                + `|| Exclude this from your output: ${data.negativePrompt}\n`;
+
+            const response = {
+                task_id: data.task.id,
+                temperature: data.taskType.temperature,
+                input_text: input_text
+            };
+
+            console.log('Sending task to the client: ', response);
+
+            res.json({ success: true, response: response });
             return;
         } else {
             const issueQuery = sql.fragment`SELECT * FROM issues WHERE id = ${nextTask.issue_id}`
             const taskTypeQuery = sql.fragment`SELECT * FROM task_types WHERE id = ${taskTypeId}`
             const instructionsQuery = sql.fragment`SELECT * FROM instructions WHERE task_type_id = ${taskTypeId}`
-    
+
             const [issue, taskType, instructions] = await Promise.all([
                 pool.query(issueQuery),
                 pool.query(taskTypeQuery),
                 pool.query(instructionsQuery),
             ]);
-    
+
             let metrics = [];
-    
-            if(taskTypeId === 3){
+
+            if (taskTypeId === 3) {
                 const issueMetricsQuery = sql.fragment`SELECT * FROM issue_metrics`
                 const issueMetricsCriteriaQuery = sql.fragment`SELECT * FROM issue_metrics_criteria`
-    
+
                 const [issueMetrics, issueMetricsCriteria] = await Promise.all([
                     pool.query(issueMetricsQuery),
                     pool.query(issueMetricsCriteriaQuery),
                 ]);
-    
-                for(const row of issueMetrics.rows){
+
+                for (const row of issueMetrics.rows) {
                     const metric = {
                         id: row.id,
                         name: row.name,
@@ -528,8 +543,8 @@ export async function initTaskManager(app, sql, pool, io) {
 
                 console.log('these are the metrics: ', JSON.stringify(metrics, null, 2));
             }
-    
-            const response = {
+
+            const data = {
                 task: nextTask,
                 issue: issue.rows[0],
                 taskType: taskType.rows[0],
@@ -537,9 +552,41 @@ export async function initTaskManager(app, sql, pool, io) {
                 negativePrompt: negativePrompt,
                 metrics: metrics, // EVALUATION
             }
-    
-            console.log(response);
-            res.json({ success: true, result: response });
+
+            let input_text = `Assume this role: ${data.taskType.role}\n`
+                + `You must perform this task: ${data.taskType.name}\n`
+                + `This task consists of: ${data.taskType.description}\n`
+                + `This is the subject: ${data.issue.name}\n`
+                + `This is a brief description of the subject: ${data.issue.description}\n`
+                + `This is a brief context of the subject: ${data.issue.context}\n`
+                + `These are your output instructions: ${data.instructions.filter(inst => inst.instruction_type === 'output')[0].instruction}\n\n`
+                + `### Exclude this from your output: ${data.negativePrompt}\n`;
+
+            if (data.metrics && data.metrics.length > 0) {
+                input_text += "These are the metrics:\n";
+                for (const metric of data.metrics) {
+                    input_text += `Metric name: ${metric.name}\n`
+                        + `This is a description of the metric: ${metric.description}\n`
+                        + `These are the criteria for this metric, to be used ONLY as context:\n`;
+                    for (const criterion of metric.criteria) {
+                        input_text += `This is the name for this criteria: ${criterion.name}\n`
+                            + `This is the description for this criteria: ${criterion.description}\n`;
+                    }
+                }
+                input_text += "Do NOT provide a value for the criteria. ONLY provide a value to the metrics.\n"
+                    + "This is an example output, for guidance: { complexity: 99, scope: 99 }\n"
+                    + "Each metric should NOT contain a JSON but rather, a single integer.\n";
+            }
+
+            const response = {
+                task_id: data.task.id,
+                temperature: data.taskType.temperature,
+                input_text: input_text
+            };
+
+            console.log('Sending task to the client: ', response);
+
+            res.json({ success: true, response: response });
         }
 
     });

@@ -91,7 +91,7 @@ function Row({ task }) {
                     <TableHead>
                       <TableRow>
                         <TableCell align="center" width="20%">Issue Title</TableCell>
-                        <TableCell align="left" width="80%">Issue Context</TableCell>
+                        <TableCell align="center" width="80%">Issue Context</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -99,7 +99,7 @@ function Row({ task }) {
                         <TableCell component="th" scope="row" align='center'>
                           {task.task_user_input_issue_title}
                         </TableCell>
-                        <TableCell component="th" align='left'>{task.task_user_input_issue_context}</TableCell>
+                        <TableCell component="th" align='center'>{task.task_user_input_issue_context}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -112,8 +112,8 @@ function Row({ task }) {
                     <TableHead>
                       <TableRow>
                         <TableCell align="center" width="20%">Issue Name</TableCell>
-                        <TableCell align="left" width="80%">Issue Description</TableCell>
-                        {/* <TableCell>Issue Field</TableCell> */}
+                        <TableCell align="center" width="40%">Issue Description</TableCell>
+                        <TableCell align="center" width="40%">Issue Context</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -121,8 +121,8 @@ function Row({ task }) {
                         <TableCell component="th" scope="row" align="center">
                           {task.task_issue_name}
                         </TableCell>
-                        <TableCell component="th" align="left">{task.task_issue_description}</TableCell>
-                        {/* <TableCell component="th">{task.task_issue_field}</TableCell> */}
+                        <TableCell component="th" align="center">{task.task_issue_description}</TableCell>
+                        <TableCell component="th" align="center">{task.task_issue_context}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
