@@ -168,7 +168,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                   <span className="dashboard-text-jp" ref={glitch.ref}>イサリ</span>
               </Link>
 
-              <a href="https://discord.gg/TyMNmCGb" target="_blank" rel="noopener noreferrer">
+              <a href="https://discord.gg/5fgJkHVR4A" target="_blank" rel="noopener noreferrer">
                 <img src="/discord-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
               </a>
               <a href="mailto:isari.project@gmail.com" target="_blank" rel="noopener noreferrer">
