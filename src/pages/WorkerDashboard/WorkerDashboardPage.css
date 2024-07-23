@@ -1,3 +1,14 @@
+.default-button {
+    background: black !important;
+    color: white !important;
+    border: 1px solid blue !important;
+    font-family: 'Orbitron' !important;
+}
+
+.default-button:hover {
+    background: blue !important;
+}
+
 .profile-container {
     width: 710px;
     height: 740px;
@@ -8,10 +19,27 @@
     width: 710px;
     height: 740px;
     overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* DEVELOPMENT */
+    border: 1px dashed white;
+}
+
+.no-datasets-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-flow: column;
 }
 
 .workflows-container {
     width: 710px;
     height: 740px;
     overflow: auto;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
 }

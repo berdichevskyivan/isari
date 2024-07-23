@@ -1,0 +1,27 @@
+.create-dataset-container {
+    height: 100%;
+    width: 100%;
+    color: white;
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.create-dataset-main-section {
+    height: 90%;
+    width: 100%;
+    border: 1px solid turquoise;
+    box-sizing: border-box;
+}
+
+.create-dataset-buttons {
+    height: 10%;
+    width: 100%;
+    border: 1px solid magenta;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: space-between;
+}

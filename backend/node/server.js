@@ -721,6 +721,21 @@ app.post('/submitIssue', async (req, res) => {
 
 });
 
+app.post('/getDatasets', async (req, res) => {
+    try{
+        const { workerId } = req.body;
+
+        const getDatasetsQuery = sql.fragment`SELECT * FROM datasets WHERE worker_id = ${workerId}`;
+        const getDatasetsResult = await pool.query(getDatasetsQuery);
+    
+        res.json({ success: true, result: getDatasetsResult.rows });
+    } catch (error) {
+        const message = 'Error in Endpoint';
+        console.log(`${message} /getDatasets: `, error);
+        res.json({ success: false, message });
+    }
+});
+
 io.on('connection', (socket) => {
     console.log('a user connected');
 

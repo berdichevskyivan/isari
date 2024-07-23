@@ -1,3 +1,27 @@
+CREATE TABLE datasets (
+    id SERIAL PRIMARY KEY,
+    worker_id INTEGER REFERENCES workers(id),
+    name VARCHAR(255),
+    description TEXT,
+    table_name VARCHAR(255),
+    created_date TIMESTAMP DEFAULT clock_timestamp(),
+    updated_date TIMESTAMP DEFAULT clock_timestamp()
+);
+
+CREATE TRIGGER update_datasets_updated_date
+BEFORE UPDATE ON datasets
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_date_column();
+
+CREATE TABLE dataset_fields (
+    id SERIAL PRIMARY KEY,
+    dataset_id INTEGER REFERENCES datasets(id),
+    name TEXT,
+    description TEXT,
+    data_type TEXT -- TEXT, INTEGER, BOOLEAN
+);
+
+-- ABOVE IS CONFIRMED --
 
 CREATE TABLE workflows (
     id SERIAL PRIMARY KEY,
@@ -8,22 +32,6 @@ CREATE TABLE workflows (
 
 -- Establish a maximum amount of datasets and records for the datasets
 -- In the logic of the code
-CREATE TABLE datasets (
-    id SERIAL PRIMARY KEY,
-    worker_id INTEGER REFERENCES workers(id),
-    name VARCHAR(255), -- e.g. issues
-    description TEXT, -- e.g. Problems users can have
-    table_name VARCHAR(255) -- Name of the table in the database , e.g. workflow_dataset_issues_[worker_id]
-);
-
-CREATE TABLE dataset_fields (
-    id SERIAL PRIMARY KEY,
-    dataset_id INTEGER REFERENCES datasets(id),
-    name TEXT,
-    description TEXT,
-    data_type TEXT, -- TEXT, INTEGER, BOOLEAN
-);
-
 CREATE TABLE workflow_tasks (
     id SERIAL PRIMARY KEY,
     role VARCHAR(255), -- What role to take when performing this task

@@ -12,6 +12,8 @@ import DeleteConfirmModal from '../../components/modals/DeleteConfirmModal';
 import { useNotification } from '../../context/NotificationContext';
 import CustomCard from './components/CustomCard';
 import WorkerFeed from './components/WorkerFeed';
+import Datasets from './components/Datasets';
+import Workflows from './components/Workflows';
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -33,12 +35,25 @@ function WorkerDashboardPage({ workerOptions }) {
   const [tabs, setTabs] = useState({
     profile: {
       open: true,
+      sections: {},
     },
     datasets: {
       open: false,
+      sections: {
+        datasetsList: {
+          open: true,
+        },
+        datasetViewer: {
+            open: false,
+        },
+        createDataset: {
+            open: false,
+        },
+      },
     },
     workflows: {
       open: false,
+      sections: {},
     }
   });
 
@@ -52,6 +67,12 @@ function WorkerDashboardPage({ workerOptions }) {
       setWorkerGithubUrl(loggedInUser.github_url || '');
       setAnonymize(loggedInUser.anonymize || false)
       setWorkerUsageKeys(loggedInUser.usage_keys || []);
+
+      setTimeout(()=>{
+        if(!loggedInUser){
+          navigate('/')
+        }
+      },5000)
     }
   }, [loggedInUser]);
 
@@ -112,11 +133,6 @@ function WorkerDashboardPage({ workerOptions }) {
       formData.append('workerGithubUrl', cleansedGithubUrl);
       formData.append('anonymize', anonymize);
 
-      // Log each entry in the FormData
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-
       // Send data to the backend for updating the worker profile
       const updateResponse = await axios.post(`${isProduction ? '' : 'http://localhost'}/updateWorker`, formData, {
         headers: {
@@ -164,7 +180,20 @@ function WorkerDashboardPage({ workerOptions }) {
     for(const tab in newTabs){
       newTabs[tab].open = tab === tabName ? true : false;
     }
-    console.log('these are the newTabs -> ', newTabs);
+    setTabs(newTabs);
+  }
+
+  const openSection = (tabName, sectionName) => {
+    const newTabs = {...tabs}
+    for(const tab in newTabs){
+      for(const section in newTabs[tab].sections){
+        if(tab === tabName && section === sectionName){
+          newTabs[tab].sections[section].open = true;
+        } else {
+          newTabs[tab].sections[section].open = false;
+        }
+      }
+    }
     setTabs(newTabs);
   }
 
@@ -240,11 +269,11 @@ function WorkerDashboardPage({ workerOptions }) {
         ) }
 
         { tabs.datasets.open && (
-          <p>Hello Datasets!</p>
+          <Datasets user={loggedInUser} tabs={tabs} openSection={openSection}/>
         ) }
 
         { tabs.workflows.open && (
-          <p>Hello Workflows!</p>
+          <Workflows user={loggedInUser} tabs={tabs} openSection={openSection}/>
         ) }
 
 

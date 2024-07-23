@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 import WorkersPage from './pages/WorkersPage'
 import CreateWorkerPage from './pages/CreateWorkerPage';
 import WorkerDashboardPage from './pages/WorkerDashboard/WorkerDashboardPage';
-import { socket, python_socket } from './socket';
+import { socket } from './socket';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import TaskViewerPage from './pages/TaskViewerPage';
@@ -16,7 +16,6 @@ const isProduction = import.meta.env.MODE === 'production';
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [isPythonSocketConnected, setIsPythonSocketConnected] = useState(python_socket.connected)
   const [workers, setWorkers] = useState([]);
   const [workerOptions, setWorkerOptions] = useState(null);
 
@@ -30,14 +29,6 @@ function App() {
 
     function onDisconnect() {
       setIsConnected(false);
-    }
-
-    function onPythonSocketConnect() {
-      setIsPythonSocketConnected(true);
-    }
-
-    function onPythonSocketDisconnect() {
-      setIsPythonSocketConnected(false);
     }
 
     socket.on('connect', onConnect);
@@ -57,14 +48,9 @@ function App() {
       setIssues(data);
     })
 
-    python_socket.on('connect', onPythonSocketConnect);
-    python_socket.on('disconnect', onPythonSocketDisconnect);
-
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
-      python_socket.off('connect', onPythonSocketConnect);
-      python_socket.off('disconnect', onPythonSocketDisconnect);
     };
   }, []);
 
