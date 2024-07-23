@@ -3,10 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import HomePage from './pages/HomePage';
 import WorkersPage from './pages/WorkersPage'
-import LearningPage from './pages/LearningPage';
-import WorkPage from './pages/WorkPage';
 import CreateWorkerPage from './pages/CreateWorkerPage';
-import WorkerDashboardPage from './pages/WorkerDashboardPage';
+import WorkerDashboardPage from './pages/WorkerDashboard/WorkerDashboardPage';
 import { socket, python_socket } from './socket';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -109,8 +107,6 @@ function App() {
               <Route path="/issue-viewer" element={<IssueViewerPage issues={issues} />} />
               <Route path="/submit-issue" element={<SubmitIssuePage />} />
               <Route path="/workers" element={<WorkersPage workers={workers} workerOptions={workerOptions} setWorkers={setWorkers}/>} />
-              <Route path="/learning" element={<LearningPage />} />
-              <Route path="/work" element={<WorkPage />} />
               <Route path="/create-worker" element={<CreateWorkerPage workerOptions={workerOptions} />} />
               <Route path="/worker-dashboard" element={<WorkerDashboardPage workerOptions={workerOptions} />} />
             </Routes>

@@ -142,7 +142,7 @@
   position: absolute !important;
 }
 
-.work-page-in-progress-container, .dashboard-page-in-progress-container {
+.dashboard-container {
   height: fit-content;
   width: 400px;
   background: black;
@@ -174,7 +174,7 @@
   display: none;
 }
 
-.dashboard-page-in-progress-container {
+.dashboard-container {
   width: fit-content;
   padding: 1.5rem;
   background-color: #161918a1;
@@ -194,6 +194,7 @@
 .worker-dashboard-header {
   display: flex;
   flex-flow: row;
+  justify-content: space-between;
 }
 
 .in-progress-text {
@@ -229,7 +230,7 @@
   z-index: 2;
 }
 
-.feedback-modal-container, .login-modal-container {
+.login-modal-container {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -364,7 +365,7 @@
     margin-top: 1rem;
   }
 
-  .dashboard-page-in-progress-container {
+  .dashboard-container {
     margin-bottom: 8rem;
   }
 
@@ -410,12 +411,12 @@
   
 }
 
-@media (min-height: 700px){
+@media (min-height: 800px){
   .worker-dashboard-container {
     justify-content: center;
   }
 
-  .dashboard-page-in-progress-container {
+  .dashboard-container {
     margin-top: 0;
   }
 }
@@ -453,15 +454,43 @@
   column-gap: 40px;
   overflow: auto;
   justify-items: center;
-  padding: 10px;
+  padding: 16px;
 
   p {
     margin: 0;
-    width: fit-content;
+    width: max-content;
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
     height: fit-content;
   }
+}
+
+.header-buttons-container {
+  display: flex;
+  flex-flow: row;
+  margin-bottom: 1.5rem;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.header-button {
+  font-family: 'Orbitron' !important;
+  background: black !important;
+  color: white !important;
+  border: 1px solid blue !important;
+  margin-right: 1.5rem !important;
+}
+
+.header-button-open {
+  font-family: 'Orbitron' !important;
+  background: blue !important;
+  color: white !important;
+  border: 1px solid blue !important;
+  margin-right: 1.5rem !important;
+}
+
+.header-button:hover {
+  background: blue !important;
 }

@@ -1,0 +1,17 @@
+.profile-container {
+    width: 710px;
+    height: 740px;
+    overflow: auto;
+}
+
+.datasets-container {
+    width: 710px;
+    height: 740px;
+    overflow: auto;
+}
+
+.workflows-container {
+    width: 710px;
+    height: 740px;
+    overflow: auto;
+}

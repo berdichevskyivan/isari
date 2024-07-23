@@ -8,14 +8,14 @@ const modalStyle = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: 400,
-  bgcolor: 'rgba(0, 0, 0, 0.8)', // Background color similar to the Feedback modal
-  border: '2px solid #00B2AA', // Border color from the Feedback modal
+  bgcolor: 'rgba(0, 0, 0, 0.8)',
+  border: '2px solid #00B2AA',
   boxShadow: 24,
   p: 4,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  borderRadius: '8px', // Rounded corners
+  borderRadius: '8px',
 };
 
 const buttonStyle = {
