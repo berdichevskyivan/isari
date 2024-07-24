@@ -6,7 +6,10 @@ import InfoIcon from '@mui/icons-material/Info';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNotification } from '../../../../context/NotificationContext';
+
+const isProduction = import.meta.env.MODE === 'production';
 
 const StyledTextField = styled(TextField)({
   '& input': {
@@ -50,12 +53,93 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateDataset({ openSection }){
+function CreateDataset({ openSection, axios, user }){
     const { openSnackbar } = useNotification();
 
     const [datasetName, setDatasetName] = useState('');
     const [datasetDescription, setDatasetDescription] = useState('');
     const [datasetFields, setDatasetFields] = useState([]);
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        // Start validating!
+        // First you need some fields!
+        if (datasetFields.length < 1){
+            openSnackbar('You need at least one field.', 'error');
+            return;
+        }
+
+        // Dataset Name Validation
+        if (datasetName.length < 3 || datasetName.length > 20) {
+            openSnackbar('The dataset name must be between 3 and 20 characters long', 'error');
+            return;
+        } else if (!/^[a-z]+$/.test(datasetName)) {
+            openSnackbar('The dataset name can only contain lowercase letters (a-z)', 'error');
+            return;
+        }
+
+        // Dataset Description Validation
+        if (datasetDescription.length < 15 || datasetDescription.length > 200) {
+            openSnackbar('The dataset description must be between 15 and 200 characters long', 'error');
+            return;
+        } else if (!/^[a-zA-Z\s]+$/.test(datasetDescription)) {
+            openSnackbar('The dataset description can only contain letters (a-z, A-Z) and spaces', 'error');
+            return;
+        }
+
+        for(const field of datasetFields){
+            // Field name validation
+            if (field.name.length < 3 || field.name.length > 20) {
+                openSnackbar('Every field name must be between 3 and 20 characters long', 'error');
+                return;
+            } else if (!/^[a-zA-Z_]+$/.test(field.name)) {
+                openSnackbar('Every field name can only contain letters (a-z, A-Z) and the underscore _ character', 'error');
+                return;
+            }
+    
+            // Field description validation
+            if (field.description.length < 15 || field.description.length > 200) {
+                openSnackbar('Every field description must be between 15 and 200 characters long', 'error');
+                return;
+            } else if (!/^[a-zA-Z\s]+$/.test(field.description)) {
+                openSnackbar('Every field description can only contain letters (a-z, A-Z) and spaces', 'error');
+                return;
+            }
+
+            // Field data type validation
+            if (field.data_type.length < 2){
+                openSnackbar('Every field must have a data type selected', 'error');
+                return;
+            }
+        }
+
+        const data = {
+            workerId: user.id,
+            name: datasetName,
+            description: datasetDescription,
+            fields: datasetFields,
+        }
+
+        // Its time to submit
+        try {
+            setIsSubmitting(true);
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/createDataset`, data, { withCredentials: true });
+
+            if(response.data.success === false){
+                setIsSubmitting(false);
+                openSnackbar(response.data.message, 'error');
+            } else {
+                setIsSubmitting(false);
+                openSnackbar('Dataset was created successfully!')
+            }
+        } catch (error) {
+          console.log(error);
+          setIsSubmitting(false);
+          openSnackbar('Error retrieving datasets', 'error');
+        }
+
+    }
 
     const addField = () => {
 
@@ -80,11 +164,6 @@ function CreateDataset({ openSection }){
         setDatasetFields(newDatasetFields);
     }
 
-    const handleFieldDataTypeChange = (e) => {
-        const value = e.target.value;
-        console.log(value);
-    }
-
     const deleteField = (id) => {
         let newDatasetFields = [...datasetFields].filter(field => field.id !== id);
         newDatasetFields = newDatasetFields.map((field, index) => {
@@ -93,6 +172,27 @@ function CreateDataset({ openSection }){
             return newField;
         })
         setDatasetFields(newDatasetFields)
+    }
+
+    const handleDatasetNameChange = (e) => {
+        const value = e.target.value;
+        setDatasetName(value);
+    }
+
+    const handleDatasetDescriptionChange = (e) => {
+        const value = e.target.value;
+        setDatasetDescription(value);
+    }
+
+    const handleDatasetFieldChange = (e, id, field) => {
+        const value = e.target.value;
+        const newDatasetFields = [...datasetFields].map(datasetField => {
+            if(datasetField.id === id){
+                datasetField[field] = value;
+            }
+            return datasetField;
+        })
+        setDatasetFields(newDatasetFields);
     }
 
     return (
@@ -106,7 +206,7 @@ function CreateDataset({ openSection }){
                                 <InfoIcon tabIndex="-1" />
                             </Tippy>
                         </div>
-                        <StyledTextField autoComplete='off' autoCorrect='off' />
+                        <StyledTextField value={datasetName} onChange={handleDatasetNameChange} autoComplete='off' autoCorrect='off' spellCheck={false}/>
                     </div>
                     <div className="input-with-label">
                         <div className="label-with-info">
@@ -115,7 +215,7 @@ function CreateDataset({ openSection }){
                                 <InfoIcon tabIndex="-1" />
                             </Tippy>
                         </div>
-                        <StyledTextField sx={{ width: '500px !important' }}autoComplete='off' autoCorrect='off' />
+                        <StyledTextField value={datasetDescription} onChange={handleDatasetDescriptionChange} sx={{ width: '500px !important' }} autoComplete='off' autoCorrect='off' spellCheck={false}/>
                     </div>
                 </div>
                 <div className="create-dataset-main-section-body no-scrollbar">
@@ -136,7 +236,10 @@ function CreateDataset({ openSection }){
                                         <InfoIcon tabIndex="-1" />
                                     </Tippy>
                                 </div>
-                                <StyledTextField sx={{ width: '100px !important' }} autoComplete='off' autoCorrect='off' />
+                                <StyledTextField 
+                                value={ datasetFields.find(f => f.id === field.id).name }
+                                onChange={(e)=>{ handleDatasetFieldChange(e, field.id, 'name') }}
+                                sx={{ width: '130px !important' }} autoComplete='off' autoCorrect='off' spellCheck={false} />
                             </div>
                             <div className="input-with-label">
                                 <div className="label-with-info">
@@ -145,7 +248,7 @@ function CreateDataset({ openSection }){
                                         <InfoIcon tabIndex="-1" />
                                     </Tippy>
                                 </div>
-                                <StyledTextField sx={{ width: '350px !important' }} autoComplete='off' autoCorrect='off' />
+                                <StyledTextField value={ datasetFields.find(f => f.id === field.id).description } onChange={(e)=>{ handleDatasetFieldChange(e, field.id, 'description') }}  sx={{ width: '350px !important' }} autoComplete='off' autoCorrect='off' spellCheck={false} />
                             </div>
                             <div className="input-with-label">
                                 <div className="label-with-info">
@@ -155,11 +258,10 @@ function CreateDataset({ openSection }){
                                     </Tippy>
                                 </div>
                                 <Select
-                                    labelId="demo-simple-select-label"
-                                    id="demo-simple-select"
-                                    value="TEXT"
-                                    onChange={handleFieldDataTypeChange}
+                                    value={ datasetFields.find(f => f.id === field.id).data_type }
+                                    onChange={(e)=>{ handleDatasetFieldChange(e, field.id, 'data_type') }}
                                     inputProps={{ style: { color: 'blue !important' } }}
+                                    className="fields-dropdown"
                                 >
                                     <MenuItem value={'TEXT'}>Text</MenuItem>
                                     <MenuItem value={'INTEGER'}>Number</MenuItem>
@@ -172,11 +274,16 @@ function CreateDataset({ openSection }){
                 </div>
             </div>
             <div className="create-dataset-buttons">
-                <Button variant="contained" className="default-button" onClick={() => {}}>
-                    Submit
-                </Button>
                 <Button variant="contained" className="default-button" onClick={() => { addField(); }}>
                     Add Field
+                </Button>
+                <Button variant="contained" className="default-button" onClick={() => { handleSubmit(); }}>
+                    { isSubmitting && (
+                        <><CircularProgress size={24}/></>
+                    ) }
+                    { !isSubmitting && (
+                        <>Submit</>
+                    ) }
                 </Button>
                 <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'datasetsList'); }}>
                     Back

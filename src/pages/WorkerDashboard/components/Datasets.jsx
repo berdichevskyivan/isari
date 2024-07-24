@@ -79,7 +79,7 @@ function Datasets({ user, tabs, openSection }){
             {/* Create Datasets */}
             { tabs['datasets'].sections.createDataset.open && (
                 <>
-                    <CreateDataset openSection={openSection} />
+                    <CreateDataset openSection={openSection} axios={axios} user={user}/>
                 </>
             ) }
 
