@@ -169,6 +169,7 @@ function WorkersPage({ workers, workerOptions, setWorkers }) {
         background: 'black'
     }}>
       <StarrySky />
+      <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
       <Grid container sx={{
         position: 'relative',
         zIndex: 1,  // Ensure the grid is above the StarrySky
@@ -177,7 +178,7 @@ function WorkersPage({ workers, workerOptions, setWorkers }) {
         justifyContent: 'center',  // center the items when fewer
         padding: 2,
         gap: '16px',  // Use gap for both row and column gaps
-        marginBottom: '80px'  // This extra margin accounts for the height of the dashboard
+        marginTop: '70px'  // This extra margin accounts for the height of the dashboard
       }}>
         {workers.length === 0 && 
           <h1>There are no workers</h1>
@@ -191,7 +192,6 @@ function WorkersPage({ workers, workerOptions, setWorkers }) {
           </Grid>
         ))}
       </Grid>
-      <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
     </div>
   );
 }

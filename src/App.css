@@ -60,7 +60,7 @@
 }
 
 .stickyBar {
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
   z-index: 1000;
@@ -72,10 +72,9 @@
   justify-content: space-between;  /* Adjust spacing between elements in the bar */
 }
 
-.stickyBar::before {
+.stickyBar::after {
   content: '';
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
   height: 2px;  /* Adjust height of the border as needed */
@@ -86,6 +85,10 @@
     var(--magic-rainbow-color-2)
   ) !important;
   animation: shift 12s infinite linear; /* We can vary this depending on some factors */
+}
+
+.stickyBar::after {
+  bottom: 0;
 }
 
 .bottomBar {
@@ -156,6 +159,7 @@
   padding: 1rem;
   border-radius: 15px;
   border: 1px solid #00e6da;
+  margin-top: 70px;
 }
 
 .worker-dashboard-container {
@@ -178,7 +182,7 @@
   width: fit-content;
   padding: 1.5rem;
   background-color: #161918a1;
-  margin-top: 1rem;
+  margin-top: 70px;
   display: flex;
   flex-flow: column;
 }
@@ -282,6 +286,7 @@
   align-items: center;
   justify-content: space-between;
   z-index: 2;
+  margin-top: 70px;
 }
 
 .homepage-visualization-container, .homepage-info-container {
@@ -304,10 +309,6 @@
   display: none;
 }
 
-.homepage-visualization-container {
-  margin-top: -52px;
-}
-
 .homepage-info-container {
 
   h1 {
@@ -326,22 +327,19 @@
     padding: 10px;
     justify-content: center;
   }
+}
 
-  .homepage-info-container {
-    margin-bottom: 6rem !important;
-    height: 50% !important;
+@media (max-width: 1040px) {
+  .button-text-on-small {
+    display: none !important;
   }
 
-  .homepage-visualization-container {
-    height: 50% !important;
-    padding-top: 4.5rem !important;
+  .button-text-small-on-small {
+    font-size: 10px;
   }
 }
 
 @media (max-width: 1415px) {
-  .hide-on-small {
-    display: none;
-  }
 
   .column-on-small {
     flex-flow: column;
@@ -363,10 +361,6 @@
 
   .worker-feed {
     margin-top: 1rem;
-  }
-
-  .dashboard-container {
-    margin-bottom: 8rem;
   }
 
   .homepage-main-container {
@@ -392,13 +386,12 @@
   }
 
   .homepage-info-container {
-    height: 50%;
+    height: 70%;
   }
 
   .homepage-visualization-container {
     margin-top: 0;
-    padding-bottom: 0 !important;
-    height: 50%;
+    height: 30%;
   }
 
   .homepage-info-container h1, .homepage-info-container p {

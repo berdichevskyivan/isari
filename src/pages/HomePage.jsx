@@ -35,7 +35,7 @@ function HomePage({ workers, workerOptions, setWorkers }) {
         background: 'black'
     }}>
       <StarrySky />
-
+      <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
       <div className="homepage-main-container">
         <div className="homepage-info-container">
           <h1 style={{ margin: 0 }}>Centralized Task Management and Distributed Processing</h1>
@@ -60,13 +60,13 @@ function HomePage({ workers, workerOptions, setWorkers }) {
           </p>
           <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem', width: '100%' }}>
             <Button variant="contained" href="/task-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <PendingActionsIcon sx={{ marginRight: '0.5rem' }} />Task Viewer
+              <PendingActionsIcon sx={{ marginRight: '0.5rem' }} /><span className="button-text-small-on-small">Task Viewer</span>
             </Button>
             <Button variant="contained" href="/issue-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <CycloneIcon sx={{ marginRight: '0.5rem' }} />Issue Viewer
+              <CycloneIcon sx={{ marginRight: '0.5rem' }} /><span className="button-text-small-on-small">Issue Viewer</span>
             </Button>
             <Button variant="contained" href="/submit-issue" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <BackupIcon sx={{ marginRight: '0.5rem' }} />Submit Issue
+              <BackupIcon sx={{ marginRight: '0.5rem' }} /><span className="button-text-small-on-small">Submit Issue</span>
             </Button>
           </div>
         </div>
@@ -75,7 +75,7 @@ function HomePage({ workers, workerOptions, setWorkers }) {
         </div>
       </div>
 
-      <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
+      
     </div>
   );
 }

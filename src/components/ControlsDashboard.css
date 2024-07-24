@@ -1,0 +1,26 @@
+.dashboard-icon {
+    width: 30px;
+    height: 30px;
+    margin-left: 1rem;
+    padding-top: 0.3rem;
+}
+
+.collapse-container {
+  position: absolute;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.9); /* Same background as navbar */
+  z-index: 1000; /* Ensure it's above other content */
+  top: 70px; /* Adjust this value based on the height of your navbar */
+}
+
+@media (min-width: 630px) {
+    .hide-on-big {
+        display: none !important;
+    }
+}
+
+@media (max-width: 630px) {
+    .hide-on-small {
+        display: none !important;
+    }
+}

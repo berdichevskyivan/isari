@@ -9,6 +9,62 @@ import tubeFragmentShader from './shaders/tubeFragmentShader.glsl?raw';
 import octaVertexShader from './shaders/octaVertexShader.glsl?raw';
 import octaFragmentShader from './shaders/octaFragmentShader.glsl?raw';
 
+const CameraController = () => {
+  const orbitControlsRef = useRef();
+
+  // Effect to set up event listener and handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (orbitControlsRef.current) {
+        const width = window.innerWidth;
+        if (width < 800) {
+          orbitControlsRef.current.object.position.set(30, 20, 35);
+        } else if (width < 1415) {
+          orbitControlsRef.current.object.position.set(30, 20, 35);
+        } else if (width < 2000) {
+          orbitControlsRef.current.object.position.set(50, 50, 50);
+        } else {
+          orbitControlsRef.current.object.position.set(40, 40, 40);
+        }
+        orbitControlsRef.current.target.set(0, -6, 0); // Ensure the target is the center
+        orbitControlsRef.current.update(); // Update the controls
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Initial call to set the camera position and target
+    if (orbitControlsRef.current) {
+      handleResize();
+    }
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Second useEffect to ensure initial setup after mount
+  useEffect(() => {
+    if (orbitControlsRef.current) {
+      const width = window.innerWidth;
+      if (width < 800) {
+        orbitControlsRef.current.object.position.set(30, 20, 35);
+      } else if (width < 1415) {
+        orbitControlsRef.current.object.position.set(30, 20, 35);
+      } else if (width < 2000) {
+        orbitControlsRef.current.object.position.set(50, 50, 50);
+      } else {
+        orbitControlsRef.current.object.position.set(40, 40, 40);
+      }
+      orbitControlsRef.current.target.set(0, -6, 0); // Ensure the target is the center
+      orbitControlsRef.current.update(); // Update the controls
+    }
+  }, [orbitControlsRef.current]);
+
+  return <OrbitControls ref={orbitControlsRef} />;
+};
+
 const distance = 25;
 const sin45 = Math.sin(Math.PI / 4);
 
@@ -383,31 +439,9 @@ const CubeGrid = () => {
   };
 
 const ArchitectureVisualization = () => {
-
-  const [cameraPosition, setCameraPosition] = useState([0, 0, 50]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-
-      if (width < 1415) {
-        setCameraPosition([30, 30, 45]);
-      } else {
-        setCameraPosition([40, 40, 40]);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial call to set the camera position
-
-    // Cleanup event listener on component unmount
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
   return (
-    <Canvas camera={{ position: cameraPosition, fov: 50 }}>
+    <Canvas camera={{ fov: 50 }}>
+      <CameraController />
       <ambientLight intensity={0.5} />
       <pointLight position={[20, 20, 20]} intensity={0.5} />
       <mesh>
@@ -428,7 +462,6 @@ const ArchitectureVisualization = () => {
       <SurroundingSpheres />
       <ConnectingTubes />
       
-      <OrbitControls />
       {/* <axesHelper args={[15]} /> */}
       {/* <gridHelper /> */}
       {/* <Stats /> */}
