@@ -11,14 +11,90 @@
 .create-dataset-main-section {
     height: 90%;
     width: 100%;
-    border: 1px solid turquoise;
+    /* border: 1px solid turquoise; */
     box-sizing: border-box;
+}
+
+.create-dataset-main-section-header {
+    width: 100%;
+    height: 10%;
+    /* border: 1px solid blue; */
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: .25rem;
+}
+
+.create-dataset-main-section-body {
+    width: 100%;
+    height: 90%;
+    /* border: 1px solid red; */
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: auto;
+    padding-top: 1rem;
+}
+
+.no-dataset-fields-container {
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.input-with-label {
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-start;
+    margin-right: 1rem;
+}
+
+.label-with-info {
+    display: flex;
+    flex-flow: row;
+
+    p {
+        margin-right: .1rem;
+    }
+}
+
+.dataset-field-container {
+    background: black;
+    width: 100%;
+    height: 100px;
+    box-sizing: border-box;
+    border: 1px solid magenta;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 1rem;
+}
+
+.MuiSelect-select {
+    color: white !important;
+    border: 1px solid turquoise !important;
+    padding: .2rem !important;
+    box-sizing: border-box !important;
+}
+
+.MuiSelect-select:hover {
+    border: 1px solid turquoise !important;
 }
 
 .create-dataset-buttons {
     height: 10%;
     width: 100%;
-    border: 1px solid magenta;
+    /* border: 1px solid magenta; */
     box-sizing: border-box;
     display: flex;
     flex-flow: row;
