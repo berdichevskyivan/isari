@@ -113,7 +113,7 @@
 .dashboard-text-jp {
   font-family: 'Noto Serif JP', sans-serif;
   font-weight: 500; /* Choose the weight based on your design needs */
-  font-size: 2rem;
+  font-size: 1.5rem;
   margin-left: 1rem;
   color: #e100ff;
   text-shadow: 
@@ -424,7 +424,9 @@
 @media (max-height: 700px){
 
   .homepage-info-container {
-    
+    justify-content: flex-start;
+    height: 50% !important;
+
     h1 {
       font-size: 20px;
     }
@@ -432,8 +434,6 @@
     p {
       font-size: 16px;
     }
-
-    justify-content: center;
   }
 
   .work-page-container {

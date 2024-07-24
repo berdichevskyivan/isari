@@ -95,6 +95,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 background: 'rgba(0, 0, 0, 0.9)',
+                flexFlow: 'row',
             }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }} className="wrap-on-small">
                 <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
@@ -145,13 +146,13 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
               </Link>
 
               <a href="https://discord.gg/5fgJkHVR4A" target="_blank" rel="noopener noreferrer">
-                <img src="/discord-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
+                <img src="/discord-logo.svg" alt="Isari AI Logo" style={{ width: 30, height: 30, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
               </a>
               <a href="mailto:isari.project@gmail.com" target="_blank" rel="noopener noreferrer">
-                <img src="/gmail-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
+                <img src="/gmail-logo.svg" alt="Isari AI Logo" style={{ width: 30, height: 30, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
               </a>
               <a href="https://github.com/isari-ai" target="_blank" rel="noopener noreferrer">
-                <img src="/github-logo.svg" alt="Isari AI Logo" style={{ width: 40, height: 40, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
+                <img src="/github-logo.svg" alt="Isari AI Logo" style={{ width: 30, height: 30, marginLeft: '.5rem', marginRight: '1rem', paddingTop: '.3rem' }} />
               </a>
             </div>
         </div>
