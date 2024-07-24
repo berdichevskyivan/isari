@@ -13,6 +13,7 @@
     width: 100%;
     /* border: 1px solid turquoise; */
     box-sizing: border-box;
+    background: black;
 }
 
 .create-dataset-main-section-header {
@@ -60,11 +61,17 @@
     fieldset {
         border: none !important;
     }
+
+    svg {
+        color: turquoise !important;
+    }
 }
 
 .label-with-info {
     display: flex;
     flex-flow: row;
+    justify-content: center;
+    align-items: center;
 
     p {
         margin-right: .1rem;

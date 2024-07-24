@@ -53,7 +53,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateDataset({ openSection, axios, user }){
+function CreateDataset({ openSection, axios, user, getDatasets }){
     const { openSnackbar } = useNotification();
 
     const [datasetName, setDatasetName] = useState('');
@@ -71,11 +71,11 @@ function CreateDataset({ openSection, axios, user }){
         }
 
         // Dataset Name Validation
-        if (datasetName.length < 3 || datasetName.length > 20) {
-            openSnackbar('The dataset name must be between 3 and 20 characters long', 'error');
+        if (datasetName.length < 3 || datasetName.length > 30) {
+            openSnackbar('The dataset name must be between 3 and 30 characters long', 'error');
             return;
-        } else if (!/^[a-z]+$/.test(datasetName)) {
-            openSnackbar('The dataset name can only contain lowercase letters (a-z)', 'error');
+        } else if (!/^[a-z_]+$/.test(datasetName)) {
+            openSnackbar('The dataset name can only contain lowercase letters (a-z) and the underscore _ character', 'error');
             return;
         }
 
@@ -131,7 +131,9 @@ function CreateDataset({ openSection, axios, user }){
                 openSnackbar(response.data.message, 'error');
             } else {
                 setIsSubmitting(false);
+                getDatasets();
                 openSnackbar('Dataset was created successfully!')
+                openSection('datasets', 'datasetsList');
             }
         } catch (error) {
           console.log(error);

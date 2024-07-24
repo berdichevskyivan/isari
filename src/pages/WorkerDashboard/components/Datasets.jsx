@@ -1,20 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../context/NotificationContext';
-import { Typography, Button } from '@mui/material';
 import axios from 'axios';
 import CreateDataset from './DatasetsComponents/CreateDataset';
 import DatasetViewer from './DatasetsComponents/DatasetViewer';
+import DatasetsList from './DatasetsComponents/DatasetsList';
 
 const isProduction = import.meta.env.MODE === 'production';
 
 function Datasets({ user, tabs, openSection }){
-
     const { openSnackbar } = useNotification();
     const navigate = useNavigate();
     const [datasets, setDatasets] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const getDatasets = async () => {
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/getDatasets`, { workerId: user.id }, { withCredentials: true });
+            console.log(response.data);
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                // We proceed to set the datasets!
+                setDatasets(response.data.result)
+                setLoading(false);
+            }
+        } catch (error) {
+          console.log(error);
+          setDatasets([]);
+          openSnackbar('Error retrieving datasets', 'error');
+        }
+    }
+
+    const deleteDataset = async (datasetId) => {
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/deleteDataset`, { workerId: user.id, datasetId: datasetId }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                openSnackbar(response.data.message, 'success');
+                setDatasets(d => d.filter(d => d.id !== datasetId));
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error deleting datasets', 'error');
+        }
+    }
 
     useEffect(()=>{
 
@@ -23,23 +54,7 @@ function Datasets({ user, tabs, openSection }){
             return;
         }
 
-        (async ()=>{
-            try {
-                const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/getDatasets`, { workerId: user.id }, { withCredentials: true });
-
-                if(response.data.success === false){
-                    openSnackbar(response.data.message, 'error');
-                } else {
-                    // We proceed to set the datasets!
-                    setDatasets(response.data.result)
-                    setLoading(false);
-                }
-            } catch (error) {
-              console.log(error);
-              setDatasets([]);
-              openSnackbar('Error retrieving datasets', 'error');
-            }
-        })();
+        getDatasets();
 
     }, [])
 
@@ -49,23 +64,7 @@ function Datasets({ user, tabs, openSection }){
             {/* Datasets List */}
             { tabs['datasets'].sections.datasetsList.open && (
                 <>
-                    {loading && (
-                        <CircularProgress size={40} />
-                    )}
-                    {!loading && datasets.length === 0 && (
-                        <div className='no-datasets-container'>
-                            <p style={{ color: 'turquoise' }}>No datasets! How about creating one?</p>
-                            <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'createDataset') }}>
-                                Create Dataset
-                            </Button>
-                        </div>
-                    )}
-                    {!loading && datasets.length > 0 && (
-                        <>
-                            <p>No datasets!</p>
-                            {/* Here we can render DatasetsList */}
-                        </>
-                    )}
+                    <DatasetsList loading={loading} datasets={datasets} openSection={openSection} deleteDataset={deleteDataset}/>
                 </>
             ) }
 
@@ -79,7 +78,7 @@ function Datasets({ user, tabs, openSection }){
             {/* Create Datasets */}
             { tabs['datasets'].sections.createDataset.open && (
                 <>
-                    <CreateDataset openSection={openSection} axios={axios} user={user}/>
+                    <CreateDataset openSection={openSection} axios={axios} user={user} getDatasets={getDatasets} />
                 </>
             ) }
 

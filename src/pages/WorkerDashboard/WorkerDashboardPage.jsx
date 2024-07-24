@@ -32,7 +32,7 @@ function WorkerDashboardPage({ workerOptions }) {
   const [anonymize, setAnonymize] = useState(false); 
   const [workerUsageKeys, setWorkerUsageKeys] = useState([]);
 
-  const [tabs, setTabs] = useState({
+  const [tabs, setTabs] = useState(localStorage.getItem('tabs') ? JSON.parse(localStorage.getItem('tabs')) : {
     profile: {
       open: true,
       sections: {},
@@ -181,6 +181,7 @@ function WorkerDashboardPage({ workerOptions }) {
       newTabs[tab].open = tab === tabName ? true : false;
     }
     setTabs(newTabs);
+    localStorage.setItem('tabs', JSON.stringify(newTabs));
   }
 
   const openSection = (tabName, sectionName) => {
@@ -195,6 +196,7 @@ function WorkerDashboardPage({ workerOptions }) {
       }
     }
     setTabs(newTabs);
+    localStorage.setItem('tabs', JSON.stringify(newTabs));
   }
 
   return (

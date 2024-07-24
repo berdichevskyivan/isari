@@ -18,6 +18,12 @@ function HomePage({ workers, workerOptions, setWorkers }) {
   //   return <Loading />;
   // }
 
+  useEffect(()=>{
+    if(localStorage.getItem('tabs')){
+      localStorage.removeItem('tabs');
+    }
+  },[]);
+
   return (
     <div style={{
         height: '100vh',

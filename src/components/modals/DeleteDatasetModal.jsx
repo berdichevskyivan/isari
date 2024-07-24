@@ -1,4 +1,3 @@
-// src/modals/DeleteConfirmModal.jsx
 import React from 'react';
 import { Modal, Box, Button, Typography } from '@mui/material';
 
@@ -22,12 +21,12 @@ const buttonStyle = {
   margin: '0 10px',
   fontFamily: 'Orbitron, sans-serif',
   fontSize: '14px',
-  padding: '10px 20px',
+  padding: '10px 18px',
   borderRadius: '4px',
   width: '80px'
 };
 
-const DeleteConfirmModal = ({ isOpen, onClose, onConfirm }) => {
+const DeleteDatasetModal = ({ isOpen, onClose, onConfirm }) => {
   return (
     <Modal
       open={isOpen}
@@ -40,7 +39,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm }) => {
           Confirm Delete
         </Typography>
         <Typography id="modal-modal-description" sx={{ mt: 2, color: '#FFFFFF', fontFamily: 'Orbitron', textAlign: 'center' }}>
-          Are you sure you want to delete your account?
+          Are you sure you want to delete this dataset?
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
           <Button variant="contained" color="error" sx={{ ...buttonStyle, backgroundColor: 'red', border: '1px solid #FF0000' }} onClick={onConfirm}>Yes</Button>
@@ -51,4 +50,4 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm }) => {
   );
 };
 
-export default DeleteConfirmModal;
+export default DeleteDatasetModal;
