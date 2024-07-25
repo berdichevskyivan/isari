@@ -104,9 +104,15 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
                 background: 'rgba(0, 0, 0, 0.9)',
                 flexFlow: 'row',
             }}>
-            <IconButton onClick={toggleCollapse} className="hide-on-big">
-              <MenuIcon sx={{ color: 'turquoise' }}/>
-            </IconButton>
+            <div style={{ display: 'flex', flexFlow: 'row' }} className="hide-on-big">
+              <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
+                  <img src="/isari-logo.png" alt="Isari AI Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
+                  <span className="dashboard-text button-text-on-small">Isari AI</span>
+              </Link>
+              <IconButton onClick={toggleCollapse}>
+                <MenuIcon sx={{ color: 'turquoise' }}/>
+              </IconButton>
+            </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }} className="wrap-on-small hide-on-small">
                 <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
                     <img src="/isari-logo.png" alt="Isari AI Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
