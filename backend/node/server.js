@@ -456,7 +456,7 @@ app.post('/login', async (req, res) => {
 
   try {
     // Query to get user details including password and salt
-    const userResult = await pool.query(sql.fragment`SELECT id, email, name, github_url, anonymize, password, salt FROM workers WHERE email = ${email}`);
+    const userResult = await pool.query(sql.fragment`SELECT id, email, name, profile_picture_url, github_url, anonymize, password, salt FROM workers WHERE email = ${email}`);
     if (userResult.rowCount === 0) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -498,7 +498,7 @@ app.post('/login', async (req, res) => {
         github_url: user.github_url,
         anonymize: user.anonymize,
         usage_keys: workerUsageKeys,
-        profile_picture_url: `${user.id}-${user.name.toLowerCase().replace(/ /g, '-')}.png`,
+        profile_picture_url: user.profile_picture_url,
         programming_languages: programmingLanguages,
         generalized_ai_branches: generalizedAiBranches,
         ai_tools: aiTools,
@@ -528,7 +528,7 @@ app.get('/verify-auth', async (req, res) => {
     const userId = decoded.id;
 
     // Query to get user details
-    const userResult = await pool.query(sql.fragment`SELECT id, email, name, github_url, anonymize FROM workers WHERE id = ${userId}`);
+    const userResult = await pool.query(sql.fragment`SELECT id, email, name, github_url, profile_picture_url, anonymize FROM workers WHERE id = ${userId}`);
     if (userResult.rowCount === 0) {
       return res.json({ isAuthenticated: false });
     }
@@ -559,7 +559,7 @@ app.get('/verify-auth', async (req, res) => {
         github_url: user.github_url,
         anonymize: user.anonymize,
         usage_keys: workerUsageKeys,
-        profile_picture_url: `${user.id}-${user.name.toLowerCase().replace(/ /g, '-')}.png`,
+        profile_picture_url: user.profile_picture_url,
         programming_languages: programmingLanguages,
         generalized_ai_branches: generalizedAiBranches,
         ai_tools: aiTools,
