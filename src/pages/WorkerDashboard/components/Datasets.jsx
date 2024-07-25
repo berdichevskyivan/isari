@@ -14,6 +14,8 @@ function Datasets({ user, tabs, openSection }){
     const [datasets, setDatasets] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [loadedDataset, setLoadedDataset] = useState(null);
+
     const getDatasets = async () => {
         try {
             const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/getDatasets`, { workerId: user.id }, { withCredentials: true });
@@ -47,6 +49,39 @@ function Datasets({ user, tabs, openSection }){
         }
     }
 
+    const openDatasetViewer = async (dataset) => {
+        const datasetId = dataset.id;
+        localStorage.setItem('currentDatasetId', datasetId);
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadDataset`, { datasetId: datasetId }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                console.log('loadDataset response')
+                console.log(response.data.result)
+                setLoadedDataset(response.data.result);
+                openSection('datasets', 'datasetViewer');
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error loading dataset', 'error');
+        }
+    }
+
+    const loadDataset = async (id) => {
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadDataset`, { datasetId: id }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                setLoadedDataset(response.data.result);
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error loading dataset', 'error');
+        }
+    }
+
     useEffect(()=>{
 
         if(!user){
@@ -64,14 +99,14 @@ function Datasets({ user, tabs, openSection }){
             {/* Datasets List */}
             { tabs['datasets'].sections.datasetsList.open && (
                 <>
-                    <DatasetsList loading={loading} datasets={datasets} openSection={openSection} deleteDataset={deleteDataset}/>
+                    <DatasetsList loading={loading} datasets={datasets} openSection={openSection} deleteDataset={deleteDataset} openDatasetViewer={openDatasetViewer}/>
                 </>
             ) }
 
             {/* Datasets Viewer */}
             { tabs['datasets'].sections.datasetViewer.open && (
                 <>
-                    <DatasetViewer />
+                    <DatasetViewer loadedDataset={loadedDataset} openSection={openSection} loadDataset={loadDataset} />
                 </>
             ) }
 

@@ -25,6 +25,42 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
         }
     });
 
+    app.post('/loadDataset', async (req, res) => {
+        try{
+            const { datasetId } = req.body;
+
+            const loadDatasetInfoQuery = sql.fragment`SELECT * FROM datasets WHERE id = ${datasetId}`;
+            const loadDatasetInfoResult = await pool.query(loadDatasetInfoQuery);
+
+            const tableName = loadDatasetInfoResult.rows[0]?.table_name;
+
+            if(!tableName){
+                res.json({ success: false, message: 'Error in Endpoint' });
+                return
+            }
+
+            console.log('table name is: ', tableName);
+
+            const sanitizedTableName = tableName.replace(/[^a-z_]/g, '');
+
+            const loadDatasetQuery = `SELECT * FROM ${sanitizedTableName}`;
+            const loadDatasetResult = await client.query(loadDatasetQuery);
+
+            const result = {
+                name: loadDatasetInfoResult.rows[0].name,
+                description: loadDatasetInfoResult.rows[0].description,
+                rows: loadDatasetResult.rows,
+                fields: loadDatasetResult.fields.map(f => ({ name: f.name }))
+            }
+        
+            res.json({ success: true, result });
+        } catch (error) {
+            const message = 'Error in Endpoint';
+            console.log(`${message} /loadDataset: `, error);
+            res.json({ success: false, message });
+        }
+    });
+
     app.post('/createDataset', async (req, res) => {
         try{
             const { workerId, name, description, fields } = req.body;
@@ -34,6 +70,8 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             console.log('description is: ', description);
             console.log('fields are: ', fields);
 
+            const sanitizedName = name.replace(/[^a-z_]/g, '');
+
             // Validation time!
             // First we validate the amount of datasets the user already has.
             // It must be less than the maximum. If its not, we send back an error.
@@ -42,10 +80,10 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
             if(getDatasetsResult.rows.length < MAXIMUM_AMOUNT_OF_DATASETS){
 
-                const tableName = `dataset_table_${name}`;
+                const tableName = `dataset_table_${sanitizedName}`;
 
                 for(const dataset of getDatasetsResult.rows){
-                    if(dataset.name === name){
+                    if(dataset.name === sanitizedName){
                         const message = 'A dataset with this name already exists';
                         console.log(message);
                         res.json({ success: false, message})
@@ -56,7 +94,7 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
                 // Insert fields in `datasets` table
                 const insertIntoDatasetsQuery = sql.fragment`
                     INSERT INTO datasets(worker_id, name, description, table_name)
-                    VALUES (${workerId}, ${name}, ${description}, ${tableName})
+                    VALUES (${workerId}, ${sanitizedName}, ${description}, ${tableName})
                     RETURNING id
                     `
                 const insertIntoDatasetsResult = await pool.query(insertIntoDatasetsQuery);

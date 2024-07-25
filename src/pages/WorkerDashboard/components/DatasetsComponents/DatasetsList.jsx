@@ -5,7 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import './DatasetsList.css';
 import DeleteDatasetModal from '../../../../components/modals/DeleteDatasetModal';
 
-function DatasetsList({ loading, datasets, openSection, deleteDataset }){
+function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatasetViewer }){
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDataset, setSelectedDataset] = useState(null);
@@ -47,7 +47,7 @@ function DatasetsList({ loading, datasets, openSection, deleteDataset }){
                             <Grid container spacing={2}>
                                 {datasets.map((dataset) => (
                                     <Grid item xs={12} sm={6} key={dataset.id} display="flex" justifyContent="center" alignItems="center" sx={{ height: '100px' }}>
-                                        <Paper className="dataset-card" >
+                                        <Paper className="dataset-card" onClick={()=>{ openDatasetViewer(dataset) }}>
                                             <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px', position: 'absolute', top: 2, right: 2 }} onClick={()=>{ handleOpenModal(dataset) }} />
                                             <Typography sx={{ fontSize: '20px' }}>
                                                 {dataset.name}
