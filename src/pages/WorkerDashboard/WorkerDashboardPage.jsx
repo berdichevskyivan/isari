@@ -53,7 +53,17 @@ function WorkerDashboardPage({ workerOptions }) {
     },
     workflows: {
       open: false,
-      sections: {},
+      sections: {
+        workflowsList: {
+          open: true,
+        },
+        workflowViewer: {
+          open: false,
+        },
+        createWorkflow: {
+          open: false,
+        }
+      },
     }
   });
 
@@ -179,6 +189,17 @@ function WorkerDashboardPage({ workerOptions }) {
     const newTabs = {...tabs};
     for(const tab in newTabs){
       newTabs[tab].open = tab === tabName ? true : false;
+      for(const section in newTabs[tab].sections){
+        if(tabName === 'datasets' && section === 'datasetsList'){
+          newTabs[tabName].sections[section].open = true
+        } else if (tabName === 'workflows' && section === 'workflowsList'){
+          newTabs[tabName].sections[section].open = true
+        } else if (tabName === 'profile' && section === 'profileList'){
+          newTabs[tabName].sections[section].open = true
+        } else {
+          newTabs[tab].sections[section].open = false;
+        }
+      }
     }
     setTabs(newTabs);
     localStorage.setItem('tabs', JSON.stringify(newTabs));

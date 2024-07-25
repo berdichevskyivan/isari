@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../context/NotificationContext';
-import { Typography, Button } from '@mui/material';
 import axios from 'axios';
+import './Workflows.css';
+import WorkflowsList from './WorkflowsComponents/WorkflowsList';
+import WorkflowViewer from './WorkflowsComponents/WorkflowViewer';
+import CreateWorkflow from './WorkflowsComponents/CreateWorkflow';
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -13,6 +15,73 @@ function Workflows({ user, tabs, openSection }){
     const navigate = useNavigate();
     const [workflows, setWorkflows] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadedWorkflow, setLoadedWorkflow] = useState(null);
+
+    const getWorkflows = async () => {
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/getWorkflows`, { workerId: user.id }, { withCredentials: true });
+            console.log(response.data);
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                // We proceed to set the workflows!
+                setWorkflows(response.data.result)
+                setLoading(false);
+            }
+        } catch (error) {
+          console.log(error);
+          setWorkflows([]);
+          openSnackbar('Error retrieving workflows', 'error');
+        }
+    }
+
+    const openWorkflowViewer = async (workflow) => {
+        const workflowId = workflow.id;
+        localStorage.setItem('currentWorkflowId', workflowId);
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadWorkflow`, { workflowId: workflowId }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                console.log('loadWorkflow response')
+                console.log(response.data.result)
+                setLoadedWorkflow(response.data.result);
+                openSection('workflows', 'workflowViewer');
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error loading workflow', 'error');
+        }
+    }
+
+    const loadWorkflow = async (id) => {
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadWorkflow`, { workflowId: id }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                setLoadedWorkflow(response.data.result);
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error loading workflow', 'error');
+        }
+    }
+
+    const deleteWorkflow = async (workflowId) => {
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/deleteWorkflow`, { workerId: user.id, workflowId: workflowId }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                openSnackbar(response.data.message, 'success');
+                setWorkflows(d => d.filter(d => d.id !== workflowId));
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error deleting workflows', 'error');
+        }
+    }
 
     useEffect(()=>{
 
@@ -21,44 +90,32 @@ function Workflows({ user, tabs, openSection }){
             return;
         }
 
-        (async ()=>{
-            try {
-                const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/getWorkflows`, { workerId: user.id }, { withCredentials: true });
-
-                if(response.data.success === false){
-                    openSnackbar(response.data.message, 'error');
-                } else {
-                    // We proceed to set the workflows!
-                    setWorkflows(response.data.result)
-                    setLoading(false);
-                }
-            } catch (error) {
-              console.log(error);
-              setWorkflows([]);
-              openSnackbar('Error retrieving workflows', 'error');
-            }
-        })();
+        getWorkflows();
 
     }, [])
 
     return (
         <div className="workflows-container">
-            {loading && (
-                <CircularProgress size={40} />
-            )}
-            {!loading && workflows.length === 0 && (
-                <div className='no-workflows-container'>
-                    <p style={{ color: 'turquoise' }}>No workflows! How about creating one?</p>
-                    <Button variant="contained" className="default-button" onClick={() => {}}>
-                        Create Workflow
-                    </Button>
-                </div>
-            )}
-            {!loading && workflows.length > 0 && (
+            {/* Workflows List */}
+            { tabs['workflows'].sections.workflowsList.open && (
                 <>
-                    <p>No workflows!</p>
+                    <WorkflowsList loading={loading} workflows={workflows} openSection={openSection} deleteWorkflow={deleteWorkflow} openWorkflowViewer={openWorkflowViewer}/>
                 </>
-            )}
+            ) }
+
+            {/* Workflow Viewer */}
+            { tabs['workflows'].sections.workflowViewer.open && (
+                <>
+                    <WorkflowViewer loadedWorkflow={loadedWorkflow} openSection={openSection} loadWorkflow={loadWorkflow} />
+                </>
+            ) }
+
+            {/* Create Workflow */}
+            { tabs['workflows'].sections.createWorkflow.open && (
+                <>
+                    <CreateWorkflow openSection={openSection} axios={axios} user={user} getWorkflows={getWorkflows} />
+                </>
+            ) }
         </div>
     )
 }

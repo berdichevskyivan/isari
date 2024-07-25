@@ -1,0 +1,9 @@
+.no-workflows-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+}

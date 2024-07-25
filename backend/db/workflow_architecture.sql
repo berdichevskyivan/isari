@@ -26,8 +26,7 @@ CREATE TABLE dataset_fields (
 CREATE TABLE workflows (
     id SERIAL PRIMARY KEY,
     worker_id INTEGER REFERENCES workers(id),
-    name VARCHAR(255) NOT NULL,
-    order INTEGER -- determines the order the workfow in the UI and it the logic
+    name VARCHAR(255) NOT NULL
 );
 
 -- Establish a maximum amount of datasets and records for the datasets
@@ -38,7 +37,7 @@ CREATE TABLE workflow_tasks (
     name VARCHAR(255), -- e.g. Generation, Subdivision, Evaluation, Analysis, Proposition
     description TEXT, -- What is the task about? Describe the name of the task. e.g. Generation: Subdivides the current input 
     workflow_id INTEGER REFERENCES workflows(id),
-    order INTEGER, -- Order number, determines the order of the tasks to be done
+    "order" INTEGER, -- Order number, determines the order of the tasks to be done
     status VARCHAR(20),
     type VARCHAR(20), -- CREATE, UPDATE, DELETE
     raw_data TEXT, -- If NULL, receiving dataset records
@@ -53,3 +52,8 @@ CREATE TABLE workflow_tasks (
     created_date TIMESTAMP DEFAULT clock_timestamp(),
     updated_date TIMESTAMP DEFAULT clock_timestamp()
 );
+
+CREATE TRIGGER update_workflow_tasks_updated_date
+BEFORE UPDATE ON workflow_tasks
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_date_column();

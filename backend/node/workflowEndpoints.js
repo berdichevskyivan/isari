@@ -25,6 +25,21 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
         }
     });
 
+    app.post('/getWorkflows', async (req, res) => {
+        try{
+            const { workerId } = req.body;
+
+            const getWorkflowsQuery = sql.fragment`SELECT * FROM workflows WHERE worker_id = ${workerId}`;
+            const getWorkflowsResult = await pool.query(getWorkflowsQuery);
+        
+            res.json({ success: true, result: getWorkflowsResult.rows });
+        } catch (error) {
+            const message = 'Error in Endpoint';
+            console.log(`${message} /getWorkflows: `, error);
+            res.json({ success: false, message });
+        }
+    });
+
     app.post('/loadDataset', async (req, res) => {
         try{
             const { datasetId } = req.body;

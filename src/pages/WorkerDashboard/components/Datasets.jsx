@@ -13,7 +13,6 @@ function Datasets({ user, tabs, openSection }){
     const navigate = useNavigate();
     const [datasets, setDatasets] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [loadedDataset, setLoadedDataset] = useState(null);
 
     const getDatasets = async () => {
