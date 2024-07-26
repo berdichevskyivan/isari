@@ -1,0 +1,125 @@
+.create-workflow-container {
+    height: 100%;
+    width: 100%;
+    color: white;
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.create-workflow-main-section {
+    height: 90%;
+    width: 100%;
+    /* border: 1px solid turquoise; */
+    box-sizing: border-box;
+    background: black;
+}
+
+.create-workflow-main-section-header {
+    width: 100%;
+    height: 10%;
+    /* border: 1px solid blue; */
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: .25rem;
+}
+
+.create-workflow-main-section-body {
+    width: 100%;
+    height: 90%;
+    /* border: 1px solid red; */
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: auto;
+    padding-top: 1rem;
+}
+
+.no-workflow-tasks-container {
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.input-with-label {
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-start;
+    margin-right: 1rem;
+}
+
+.tasks-dropdown {
+    fieldset {
+        border: none !important;
+    }
+
+    svg {
+        color: turquoise !important;
+    }
+}
+
+.task-label-with-info {
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    align-items: center;
+
+    p {
+        font-size: 14px;
+        margin-right: .1rem;
+    }
+}
+
+.workflow-task-container {
+    background: black;
+    width: 100%;
+    /* height: 100px; tasks occupy a much larger space than fields*/
+    box-sizing: border-box;
+    border: 1px solid magenta;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 1rem;
+    position: relative;
+}
+
+.MuiSelect-select {
+    color: white !important;
+    border: 1px solid turquoise !important;
+    padding: .2rem !important;
+    box-sizing: border-box !important;
+    font-family: 'Roboto' !important;
+    font-size: 14px !important;
+}
+
+.MuiSelect-select:hover {
+    border: 1px solid turquoise !important;
+}
+
+.create-workflow-buttons {
+    height: 10%;
+    width: 100%;
+    /* border: 1px solid magenta; */
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: center;
+
+    button {
+        margin-left: .5rem;
+        margin-right: .5rem;
+    }
+}
