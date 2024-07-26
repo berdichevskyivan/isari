@@ -8,6 +8,7 @@ import 'tippy.js/dist/tippy.css';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useNotification } from '../../../../context/NotificationContext';
+import { useNavigate } from 'react-router-dom';
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -15,7 +16,7 @@ const StyledTextField = styled(TextField)({
   '& input': {
     color: 'white',
     fontFamily: 'Roboto !important',
-    fontSize: '14px',
+    fontSize: '12px',
     height: '30px',
     padding: '0 8px',
     boxSizing: 'border-box',
@@ -53,12 +54,42 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateWorkflow({ openSection }){
+function CreateWorkflow({ openSection, axios, user, openTab }){
 
     const { openSnackbar } = useNotification();
+    const navigate = useNavigate();
     const [workflowName, setWorkflowName] = useState('');
     const [workflowTasks, setWorkflowTasks] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [datasets, setDatasets] = useState([]);
+    const [loadedDataset, setLoadedDataset] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const getDatasets = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/getDatasets`, { workerId: user.id }, { withCredentials: true });
+            console.log(response.data);
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                // We cant create workflows without a dataset
+                // so send the user back to datasets
+                if(response.data.result.length === 0){
+                    openSnackbar('You need to create a dataset first', 'error')
+                    openTab('datasets')
+                } else {
+                    setDatasets(response.data.result)
+                    setLoading(false);
+                }
+
+            }
+        } catch (error) {
+          console.log(error);
+          setDatasets([]);
+          openSnackbar('Error retrieving datasets', 'error');
+        }
+    }
 
     const handleSubmit = async () => {
 
@@ -74,7 +105,13 @@ function CreateWorkflow({ openSection }){
         const newTask = {
             name: '',
             description: '',
-            data_type: ''
+            role: '',
+            task_type: '',
+            input_type: '',
+            raw_data: '',
+            input_dataset: null,
+            output_dataset: null,
+            output_amount: 1,
         }
 
         let newWorkflowTasks = [...workflowTasks];
@@ -114,6 +151,17 @@ function CreateWorkflow({ openSection }){
         setWorkflowTasks(newWorkflowTasks);
     }
 
+    useEffect(()=>{
+
+        if(!user){
+            navigate('/');
+            return;
+        }
+
+        getDatasets();
+
+    }, [])
+
     return (
         <div className="create-workflow-container">
             <div className="create-workflow-main-section">
@@ -140,7 +188,7 @@ function CreateWorkflow({ openSection }){
                     { workflowTasks.length > 0 && workflowTasks.map((task, index) => (
                         <div className="workflow-task-container" key={`workflow-${index}`}>
                             <Grid container>
-                                <Grid item xs={12} sm={4} >
+                                <Grid item xs={12} sm={2} >
                                     <div className="input-with-label">
                                         <div className="task-label-with-info">
                                             <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Task Name</Typography>
@@ -154,7 +202,7 @@ function CreateWorkflow({ openSection }){
                                         autoComplete='off' autoCorrect='off' spellCheck={false} />
                                     </div>
                                 </Grid>
-                                <Grid item xs={12} sm={8} >
+                                <Grid item xs={12} sm={5} >
                                     <div className="input-with-label">
                                         <div className="task-label-with-info">
                                             <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Task Description</Typography>
@@ -169,80 +217,143 @@ function CreateWorkflow({ openSection }){
                                     <div className="input-with-label">
                                         <div className="task-label-with-info">
                                             <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Role</Typography>
-                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>What is the name of this task?</span>} >
+                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>What role should the agent take on this task?</span>} >
                                                 <InfoIcon tabIndex="-1" />
                                             </Tippy>
                                         </div>
                                         <StyledTextField 
-                                        value={ workflowTasks.find(f => f.id === task.id).name }
-                                        onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'name') }}
+                                        value={ workflowTasks.find(f => f.id === task.id).role }
+                                        onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'role') }}
                                         autoComplete='off' autoCorrect='off' spellCheck={false} />
                                     </div>
                                 </Grid>
-                                <Grid item xs={12} sm={3} >
+                                <Grid item xs={12} sm={2} >
                                     <div className="input-with-label">
                                         <div className="task-label-with-info">
                                             <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Task Type</Typography>
-                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>What is the name of this task?</span>} >
+                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>The type of operation to be carried out after completion of the task</span>} >
                                                 <InfoIcon tabIndex="-1" />
                                             </Tippy>
                                         </div>
-                                        <StyledTextField 
-                                        value={ workflowTasks.find(f => f.id === task.id).name }
-                                        onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'name') }}
-                                        autoComplete='off' autoCorrect='off' spellCheck={false} />
-                                    </div>
-                                </Grid>
-                                <Grid item xs={12} sm={3} >
-                                    <div className="input-with-label">
-                                        <div className="task-label-with-info">
-                                            <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Temperature</Typography>
-                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>What is the name of this task?</span>} >
-                                                <InfoIcon tabIndex="-1" />
-                                            </Tippy>
-                                        </div>
-                                        <StyledTextField 
-                                        value={ workflowTasks.find(f => f.id === task.id).name }
-                                        onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'name') }}
-                                        autoComplete='off' autoCorrect='off' spellCheck={false} />
+                                        <Select
+                                            value={ workflowTasks.find(f => f.id === task.id).task_type }
+                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'task_type') }}
+                                            inputProps={{ style: { color: 'blue !important' } }}
+                                            className="tasks-dropdown"
+                                        >
+                                            <MenuItem value={'create'}>Create</MenuItem>
+                                            { datasets.find(d => d.count > 0) && <MenuItem value={'update'}>Update</MenuItem> }
+                                            { datasets.find(d => d.count > 0) && <MenuItem value={'delete'}>Delete</MenuItem> }
+                                        </Select>
                                     </div>
                                 </Grid>
                                 <Grid item xs={12} sm={3} >
                                     <div className="input-with-label">
                                         <div className="task-label-with-info">
                                             <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Input Type</Typography>
-                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>What is the name of this task?</span>} >
-                                                <InfoIcon tabIndex="-1" />
-                                            </Tippy>
-                                        </div>
-                                        <StyledTextField 
-                                        value={ workflowTasks.find(f => f.id === task.id).name }
-                                        onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'name') }}
-                                        autoComplete='off' autoCorrect='off' spellCheck={false} />
-                                    </div>
-                                </Grid>
-                                <Grid item xs={12} sm={6} >
-                                    <div className="input-with-label">
-                                        <div className="task-label-with-info">
-                                            <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Data Type</Typography>
                                             <Tippy content={<span style={{ fontFamily: 'Roboto' }}>The data type of this task</span>} >
                                                 <InfoIcon tabIndex="-1" />
                                             </Tippy>
                                         </div>
                                         <Select
-                                            value={ workflowTasks.find(f => f.id === task.id).data_type }
-                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'data_type') }}
+                                            value={ workflowTasks.find(f => f.id === task.id).input_type }
+                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'input_type') }}
                                             inputProps={{ style: { color: 'blue !important' } }}
                                             className="tasks-dropdown"
                                         >
-                                            <MenuItem value={'TEXT'}>Text</MenuItem>
-                                            <MenuItem value={'INTEGER'}>Number</MenuItem>
-                                            <MenuItem value={'BOOLEAN'}>Boolean</MenuItem>
+                                            <MenuItem value={'raw'}>Raw Data</MenuItem>
+                                            { datasets.find(d => d.count > 0) && <MenuItem value={'dataset'}>Dataset</MenuItem> }
+                                            { task.id !== 0 && (<MenuItem value={'previous_output'}>Previous Output</MenuItem>)}
                                         </Select>
                                     </div>
                                 </Grid>
+                                { workflowTasks.find(f => f.id === task.id).input_type === 'dataset' && (
+                                    <Grid item xs={12} sm={3} >
+                                        <div className="input-with-label">
+                                            <div className="task-label-with-info">
+                                                <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Input Dataset</Typography>
+                                                <Tippy content={<span style={{ fontFamily: 'Roboto' }}>Dataset used for the input</span>} >
+                                                    <InfoIcon tabIndex="-1" />
+                                                </Tippy>
+                                            </div>
+                                            <Select
+                                                value={ workflowTasks.find(f => f.id === task.id).input_dataset || ''}
+                                                onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'input_dataset') }}
+                                                inputProps={{ style: { color: 'blue !important' } }}
+                                                className="tasks-dropdown"
+                                            >
+                                                { datasets.length > 0 && datasets.map(dataset => (
+                                                    <MenuItem key={dataset.id} value={dataset}>{ dataset.name }</MenuItem>
+                                                ))}
+                                            </Select>
+                                        </div>
+                                    </Grid>
+                                ) }
+
+                                <Grid item xs={12} sm={3} >
+                                    <div className="input-with-label">
+                                        <div className="task-label-with-info">
+                                            <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Output Dataset</Typography>
+                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>Dataset where the output will be stored or used</span>} >
+                                                <InfoIcon tabIndex="-1" />
+                                            </Tippy>
+                                        </div>
+                                        <Select
+                                            value={ workflowTasks.find(f => f.id === task.id).output_dataset || ''}
+                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'output_dataset') }}
+                                            inputProps={{ style: { color: 'blue !important' } }}
+                                            className="tasks-dropdown"
+                                        >
+                                            { datasets.length > 0 && datasets.map(dataset => (
+                                                <MenuItem key={dataset.id} value={dataset}>{ dataset.name }</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </div>
+                                </Grid>
+                                <Grid item xs={12} sm={3} >
+                                    <div className="input-with-label">
+                                        <div className="task-label-with-info">
+                                            <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Output Amount</Typography>
+                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>Amount of objects produced by the output</span>} >
+                                                <InfoIcon tabIndex="-1" />
+                                            </Tippy>
+                                        </div>
+                                        <StyledTextField 
+                                            type="number"
+                                            value={ workflowTasks.find(f => f.id === task.id).output_amount }
+                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'output_amount') }}
+                                            min="1"
+                                            max="4"
+                                            onInput={(e) => {
+                                                const value = parseInt(e.target.value, 10);
+                                                if (value < 1) e.target.value = 1;
+                                                if (value > 4) e.target.value = 4;
+                                            }}
+                                            autoComplete='off'
+                                            autoCorrect='off'
+                                            spellCheck={false}
+                                        />
+                                    </div>
+                                </Grid>
+                                { workflowTasks.find(f => f.id === task.id).input_type === 'raw' && (
+                                    <Grid item xs={12} sm={12} >
+                                        <div className="input-with-label">
+                                            <div className="task-label-with-info">
+                                                <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Raw Data</Typography>
+                                                <Tippy content={<span style={{ fontFamily: 'Roboto' }}>The raw data to be sent to the model</span>} >
+                                                    <InfoIcon tabIndex="-1" />
+                                                </Tippy>
+                                            </div>
+                                            <StyledTextField 
+                                            value={ workflowTasks.find(f => f.id === task.id).raw_data }
+                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'raw_data') }}
+                                            autoComplete='off' autoCorrect='off' spellCheck={false} />
+                                        </div>
+                                    </Grid>
+                                ) }
                             </Grid>
-                            <DeleteIcon sx={{ color: 'turquoise', cursor: 'pointer', position: 'absolute', top: 0, right: 0, height: '30px', width: '30px' }} onClick={()=>{ deleteTask(task.id) }} />
+                            <DeleteIcon sx={{ color: 'turquoise', cursor: 'pointer', position: 'absolute', top: 0, right: 0, height: '20px', width: '20px' }} onClick={()=>{ deleteTask(task.id) }} />
+                            <Typography sx={{ fontSize: '14px', position: 'absolute', top: 0, left: 4 }}>{task.id+1}</Typography>
                         </div>
                     )) }
                 </div>

@@ -296,7 +296,7 @@ function WorkerDashboardPage({ workerOptions }) {
         ) }
 
         { tabs.workflows.open && (
-          <Workflows user={loggedInUser} tabs={tabs} openSection={openSection}/>
+          <Workflows user={loggedInUser} tabs={tabs} openSection={openSection} openTab={openTab} />
         ) }
 
 

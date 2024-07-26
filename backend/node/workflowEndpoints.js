@@ -16,8 +16,22 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
             const getDatasetsQuery = sql.fragment`SELECT * FROM datasets WHERE worker_id = ${workerId}`;
             const getDatasetsResult = await pool.query(getDatasetsQuery);
+
+            let data = [...getDatasetsResult.rows];
+
+            // For everydataset we need a count() query
+            for(const row of getDatasetsResult.rows){
+                const getCountQuery = `SELECT count(*) FROM ${row.table_name}`;
+                const getCountResult = await client.query(getCountQuery);
+                data = data.map(o => {
+                    return {
+                        ...o,
+                        count: Number(getCountResult.rows[0].count),
+                    }
+                })
+            }
         
-            res.json({ success: true, result: getDatasetsResult.rows });
+            res.json({ success: true, result: data });
         } catch (error) {
             const message = 'Error in Endpoint';
             console.log(`${message} /getDatasets: `, error);

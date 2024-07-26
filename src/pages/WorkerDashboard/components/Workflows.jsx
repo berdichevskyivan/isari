@@ -9,7 +9,7 @@ import CreateWorkflow from './WorkflowsComponents/CreateWorkflow';
 
 const isProduction = import.meta.env.MODE === 'production';
 
-function Workflows({ user, tabs, openSection }){
+function Workflows({ user, tabs, openSection, openTab }){
 
     const { openSnackbar } = useNotification();
     const navigate = useNavigate();
@@ -113,7 +113,7 @@ function Workflows({ user, tabs, openSection }){
             {/* Create Workflow */}
             { tabs['workflows'].sections.createWorkflow.open && (
                 <>
-                    <CreateWorkflow openSection={openSection} axios={axios} user={user} getWorkflows={getWorkflows} />
+                    <CreateWorkflow openSection={openSection} axios={axios} user={user} getWorkflows={getWorkflows} openTab={openTab} />
                 </>
             ) }
         </div>

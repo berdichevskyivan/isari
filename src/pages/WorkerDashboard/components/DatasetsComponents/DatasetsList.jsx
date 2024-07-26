@@ -48,7 +48,7 @@ function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatas
                                 {datasets.map((dataset) => (
                                     <Grid item xs={12} sm={6} key={dataset.id} display="flex" justifyContent="center" alignItems="center" sx={{ height: '100px' }}>
                                         <Paper className="dataset-card" onClick={()=>{ openDatasetViewer(dataset) }}>
-                                            <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px', position: 'absolute', top: 2, right: 2 }} onClick={()=>{ handleOpenModal(dataset) }} />
+                                            <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px', position: 'absolute', top: 2, right: 2 }} onClick={(e)=>{ e.stopPropagation(); handleOpenModal(dataset) }} />
                                             <Typography sx={{ fontSize: '20px' }}>
                                                 {dataset.name}
                                             </Typography>

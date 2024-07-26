@@ -25,7 +25,7 @@
     flex-flow: row;
     justify-content: flex-start;
     align-items: center;
-    padding-left: .25rem;
+    padding-left: .5rem;
 }
 
 .create-workflow-main-section-body {
@@ -74,7 +74,7 @@
     align-items: center;
 
     p {
-        font-size: 14px;
+        font-size: 10px;
         margin-right: .1rem;
     }
 }
@@ -93,6 +93,8 @@
     align-items: center;
     padding-left: 1rem;
     position: relative;
+    padding-bottom: .5rem;
+    padding-top: .5rem;
 }
 
 .MuiSelect-select {
