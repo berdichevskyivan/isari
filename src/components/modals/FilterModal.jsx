@@ -54,7 +54,7 @@ function FilterModal({ open, onClose, workerOptions, setWorkers, workers }) {
         <Modal open={open} onClose={onClose}>
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'fit-content', maxWidth: 'fit-content', bgcolor: 'black', boxShadow: 24, p: 4, border: '2px solid #00CCAA', borderRadius: '8px', overflow: 'hidden' }}>
                 {/* Programming Languages */}
-                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', mt: 2, ml: '.5rem' }}>
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', ml: '.5rem' }}>
                     <DataArrayIcon sx={{ height: 30, width: 30, color: '#00CC00' }} />
                     {workerOptions.programming_languages && workerOptions.programming_languages.map(pl => (
                         <Tippy key={`programming_language_${pl.id}`} content={<span style={{ fontFamily: 'Orbitron' }}>{pl.name}</span>}>

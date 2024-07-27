@@ -1,0 +1,40 @@
+.workflows-list-container {
+    height: 100%;
+    width: 100%;
+    color: white;
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workflows-list-main-section {
+    height: 90%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    /* border: 1px solid turquoise; */
+}
+
+.workflows-list-buttons {
+    height: 10%;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: center;
+    /* border: 1px solid magenta; */
+}
+
+.workflow-card {
+    height: 100%;
+    width: 100%;
+    padding-left: .5rem;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}

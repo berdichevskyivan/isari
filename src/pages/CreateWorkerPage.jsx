@@ -276,35 +276,37 @@ function CreateWorkerPage({ workerOptions }) {
         formData.append('profilePic', profilePicFile);
       }
   
-      // Send data to Python backend for analysis
-      const analysisResponse = await axios.post(`${isProduction ? 'https://isari.ai:3001' : 'http://localhost:3001'}/analyzeWorkerData`, formData, {
+      // // Send data to Python backend for analysis
+      // const analysisResponse = await axios.post(`${isProduction ? 'https://isari.ai:3001' : 'http://localhost:3001'}/analyzeWorkerData`, formData, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data'
+      //   }
+      // });
+  
+      // console.log('analysisResponse', analysisResponse);
+  
+      // // Evaluate the response from the Python backend
+      // if (analysisResponse.data.success) {
+
+      // } else {
+      //   // Handle failure in analysis
+      //   openSnackbar('Worker analysis failed. Please check your data.', 'error');
+      // }
+
+      const createWorkerResponse = await axios.post(`${isProduction ? '' : 'http://localhost'}/createWorker`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        withCredentials: true
       });
-  
-      console.log('analysisResponse', analysisResponse);
-  
-      // Evaluate the response from the Python backend
-      if (analysisResponse.data.success) {
-        const createWorkerResponse = await axios.post(`${isProduction ? '' : 'http://localhost'}/createWorker`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          withCredentials: true
-        });
-  
-        if (createWorkerResponse.data.success) {
-          setIsLoggedIn(true);
-          setLoggedInUser(createWorkerResponse.data.user); // Set logged in user
-          openSnackbar('Worker created successfully!', 'success');
-          setTimeout(()=>{ navigate('/') }, 1500)
-        } else {
-          openSnackbar('Worker creation failed. Please check your data.', 'error');
-        }
+
+      if (createWorkerResponse.data.success) {
+        setIsLoggedIn(true);
+        setLoggedInUser(createWorkerResponse.data.user); // Set logged in user
+        openSnackbar('Worker created successfully!', 'success');
+        setTimeout(()=>{ navigate('/') }, 1500)
       } else {
-        // Handle failure in analysis
-        openSnackbar('Worker analysis failed. Please check your data.', 'error');
+        openSnackbar('Worker creation failed. Please check your data.', 'error');
       }
     } catch (error) {
       console.error('Error processing worker data:', error);

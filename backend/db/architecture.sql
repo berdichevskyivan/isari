@@ -308,9 +308,9 @@ EXECUTE FUNCTION update_updated_date_column();
 
 -- Use this to generate a worker_key for a specific worker
 -- The worker must exist in the workers table
--- Worker keys have 32 characters
+-- Worker keys have 20 characters
 INSERT INTO worker_keys (worker_id, key, type)
-VALUES (1, generate_random_string(32), 'default');
+VALUES (1, generate_random_string(20), 'default');
 
 -- Hash storage
 CREATE TABLE client_script_hash (

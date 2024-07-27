@@ -317,6 +317,10 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
         await insertRelationalData('worker_specialized_ai_applications', workerId, JSON.parse(specializedAiApplicationsIds), 'ai_application_id');
         await insertRelationalData('worker_ai_tools', workerId, JSON.parse(aiToolsIds), 'ai_tool_id');
 
+        // Now we need to create a key for the worker
+        const createWorkerKeyQuery = sql.fragment`INSERT INTO worker_keys (worker_id, key, type) VALUES (${workerId}, generate_random_string(20), 'default')`;
+        await pool.query(createWorkerKeyQuery);
+
         console.log('Worker created successfully');
         // Emitting the information to the whole network
         fetchAndEmitWorkerInfo();
@@ -410,6 +414,10 @@ app.post('/updateWorker', upload.none(), async (req, res) => {
         const workerUsageKeysResult = await pool.query(sql.fragment`SELECT key FROM usage_keys WHERE worker_id = ${workerId} AND used = false`);
         const workerUsageKeys = workerUsageKeysResult.rows;
 
+        // Get the worker worker keys
+        const workerWorkerKeyResult = await pool.query(sql.fragment`SELECT key FROM worker_keys WHERE worker_id = ${workerId}`);
+        const workerWorkerKey = workerWorkerKeyResult.rows[0].key;
+
         // Fetch the updated worker data
         const updatedWorkerQuery = sql.fragment`
             SELECT * FROM workers WHERE id = ${workerId}
@@ -426,6 +434,7 @@ app.post('/updateWorker', upload.none(), async (req, res) => {
             updatedUser: {
                 ...updatedWorker,
                 usage_keys: workerUsageKeys,
+                worker_key: workerWorkerKey,
                 programming_languages: JSON.parse(programmingLanguagesIds),
                 generalized_ai_branches: JSON.parse(generalizedAiBranches),
                 specialized_ai_applications: JSON.parse(specializedAiApplicationsIds),
@@ -484,6 +493,10 @@ app.post('/login', async (req, res) => {
     const workerUsageKeysResult = await pool.query(sql.fragment`SELECT key FROM usage_keys WHERE worker_id = ${user.id} AND used = false`);
     const workerUsageKeys = workerUsageKeysResult.rows;
 
+    // Get the worker worker keys
+    const workerWorkerKeyResult = await pool.query(sql.fragment`SELECT key FROM worker_keys WHERE worker_id = ${user.id}`);
+    const workerWorkerKey = workerWorkerKeyResult.rows[0].key;
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
     res.cookie('token', token, { httpOnly: true, secure: isProduction === true, sameSite: isProduction === true ? 'none' : 'lax' });
@@ -498,6 +511,7 @@ app.post('/login', async (req, res) => {
         github_url: user.github_url,
         anonymize: user.anonymize,
         usage_keys: workerUsageKeys,
+        worker_key: workerWorkerKey,
         profile_picture_url: user.profile_picture_url,
         programming_languages: programmingLanguages,
         generalized_ai_branches: generalizedAiBranches,
@@ -550,6 +564,10 @@ app.get('/verify-auth', async (req, res) => {
     const workerUsageKeysResult = await pool.query(sql.fragment`SELECT key FROM usage_keys WHERE worker_id = ${user.id} AND used = false`);
     const workerUsageKeys = workerUsageKeysResult.rows;
 
+    // Get the worker worker keys
+    const workerWorkerKeyResult = await pool.query(sql.fragment`SELECT key FROM worker_keys WHERE worker_id = ${user.id}`);
+    const workerWorkerKey = workerWorkerKeyResult.rows[0].key;
+
     res.json({
       isAuthenticated: true,
       user: {
@@ -559,6 +577,7 @@ app.get('/verify-auth', async (req, res) => {
         github_url: user.github_url,
         anonymize: user.anonymize,
         usage_keys: workerUsageKeys,
+        worker_key: workerWorkerKey,
         profile_picture_url: user.profile_picture_url,
         programming_languages: programmingLanguages,
         generalized_ai_branches: generalizedAiBranches,
@@ -590,6 +609,10 @@ app.delete('/deleteWorker/:id', authenticateToken, async (req, res) => {
         await deleteRelatedData('worker_generalized_ai_branches', 'worker_id');
         await deleteRelatedData('worker_specialized_ai_applications', 'worker_id');
         await deleteRelatedData('worker_ai_tools', 'worker_id');
+
+        // Delete the worker key
+        const deleteWorkerKeyQuery = sql.fragment`DELETE FROM worker_keys WHERE worker_id = ${workerId}`;
+        await pool.query(deleteWorkerKeyQuery);
 
         // Delete the worker record
         const deleteWorkerQuery = sql.fragment`

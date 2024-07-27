@@ -38,13 +38,13 @@ CREATE TABLE workflow_tasks (
     description TEXT,
     role VARCHAR(255),
     status VARCHAR(20),
-    type VARCHAR(20), -- CREATE, UPDATE, DELETE
+    task_type VARCHAR(20), -- CREATE, UPDATE, DELETE
+    input_type VARCHAR(20),
     raw_data TEXT,
     input_dataset_id INTEGER REFERENCES datasets(id),
     output_dataset_id INTEGER REFERENCES datasets(id),
     output_dataset_record_ids INTEGER[], -- Record the output ids here.
     output_amount INTEGER,
-    temperature INTEGER,
     created_date TIMESTAMP DEFAULT clock_timestamp(),
     updated_date TIMESTAMP DEFAULT clock_timestamp()
 );
@@ -53,3 +53,6 @@ CREATE TRIGGER update_workflow_tasks_updated_date
 BEFORE UPDATE ON workflow_tasks
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_date_column();
+
+ALTER TABLE workflow_tasks
+ADD COLUMN input_type VARCHAR(20);

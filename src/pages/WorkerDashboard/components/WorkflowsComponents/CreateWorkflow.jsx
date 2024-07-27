@@ -54,7 +54,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateWorkflow({ openSection, axios, user, openTab }){
+function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows }){
 
     const { openSnackbar } = useNotification();
     const navigate = useNavigate();
@@ -62,7 +62,6 @@ function CreateWorkflow({ openSection, axios, user, openTab }){
     const [workflowTasks, setWorkflowTasks] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [datasets, setDatasets] = useState([]);
-    const [loadedDataset, setLoadedDataset] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const getDatasets = async () => {
@@ -92,6 +91,93 @@ function CreateWorkflow({ openSection, axios, user, openTab }){
     }
 
     const handleSubmit = async () => {
+        // Start validating!
+        // First you need some fields!
+        if (workflowTasks.length < 1){
+            openSnackbar('You need at least one task.', 'error');
+            return;
+        }
+
+        // Dataset Name Validation
+        if (workflowName.length < 3 || workflowName.length > 30) {
+            openSnackbar('The dataset name must be between 3 and 30 characters long', 'error');
+            return;
+        } else if (!/^[a-z_]+$/.test(workflowName)) {
+            openSnackbar('The dataset name can only contain lowercase letters (a-z) and the underscore _ character', 'error');
+            return;
+        }
+
+        for(const task of workflowTasks){
+            if(task.name.length < 4){
+                openSnackbar('Each task name at least 4 characters long', 'error');
+                return;
+            }
+
+            if(task.description.length < 10){
+                openSnackbar('Each task description must be at least 10 characters long', 'error');
+                return;
+            }
+
+            if(task.role.length < 5){
+                openSnackbar('Each task role must be at least 5 characters long', 'error');
+                return;
+            }
+
+            if(task.task_type === ''){
+                openSnackbar('Each task role must have a task type selected', 'error');
+                return;
+            }
+
+            if(task.input_type === ''){
+                openSnackbar('Each task role have a task type selected', 'error');
+                return;
+            }
+
+            if(task.input_type === 'raw' && task.raw_data === ''){
+                openSnackbar('You must fill in the Raw Data field', 'error');
+                return;
+            }
+
+            if(task.input_type === 'dataset' && task.input_dataset === null){
+                openSnackbar('You must select an input dataset', 'error');
+                return;
+            }
+
+            if(task.output_dataset === null){
+                openSnackbar('You must select an input dataset', 'error');
+                return;
+            }
+
+            if(task.output_amount < 1 || task.output_amount > 4){
+                openSnackbar('The output amount must be between 1 and 4', 'error');
+                return;
+            }
+        }
+
+        const data = {
+            workerId: user.id,
+            name: workflowName,
+            tasks: workflowTasks,
+        }
+
+        try {
+            setIsSubmitting(true);
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/createWorkflow`, data, { withCredentials: true });
+
+            if(response.data.success === false){
+                setIsSubmitting(false);
+                openSnackbar(response.data.message, 'error');
+            } else {
+                setIsSubmitting(false);
+                getWorkflows();
+                openSnackbar(response.data.message)
+                openSection('workflows', 'workflowsList');
+            }
+        } catch (error) {
+          console.log(error);
+          setIsSubmitting(false);
+          openSnackbar('Error retrieving workflows', 'error');
+        }
 
     }
 

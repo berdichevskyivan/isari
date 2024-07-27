@@ -31,6 +31,7 @@ function WorkerDashboardPage({ workerOptions }) {
   const [workerGithubUrl, setWorkerGithubUrl] = useState('');
   const [anonymize, setAnonymize] = useState(false); 
   const [workerUsageKeys, setWorkerUsageKeys] = useState([]);
+  const [workerWorkerKey, setWorkerWorkerKey] = useState('');
 
   const [tabs, setTabs] = useState(localStorage.getItem('tabs') ? JSON.parse(localStorage.getItem('tabs')) : {
     profile: {
@@ -77,6 +78,7 @@ function WorkerDashboardPage({ workerOptions }) {
       setWorkerGithubUrl(loggedInUser.github_url || '');
       setAnonymize(loggedInUser.anonymize || false)
       setWorkerUsageKeys(loggedInUser.usage_keys || []);
+      setWorkerWorkerKey(loggedInUser.worker_key || '');
 
       setTimeout(()=>{
         if(!loggedInUser){
@@ -251,6 +253,7 @@ function WorkerDashboardPage({ workerOptions }) {
                   setWorkerEmail={setWorkerEmail}
                   setWorkerGithubUrl={setWorkerGithubUrl}
                   setAnonymize={setAnonymize}
+                  workerKey={workerWorkerKey}
                 />
               )}
               <WorkerFeed

@@ -1,10 +1,12 @@
-import React from 'react';
-import { Card, CardContent, Typography, Avatar, Box, FormControlLabel, Checkbox, TextField } from '@mui/material';
+import React, { useState } from 'react';
+import { Card, CardContent, Typography, Avatar, Box, FormControlLabel, Checkbox, TextField, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import HubIcon from '@mui/icons-material/Hub';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import KeyIcon from '@mui/icons-material/Key';
 import EmailIcon from '@mui/icons-material/Email';
 import InfoIcon from '@mui/icons-material/Info';
 import Tippy from '@tippyjs/react';
@@ -61,7 +63,12 @@ function getInitials(input) {
 
 const isProduction = import.meta.env.MODE === 'production';
 
-function CustomCard({ worker, workerOptions, workerEmail, workerGithubUrl, anonymize, setWorkerEmail, setWorkerGithubUrl, setAnonymize }) {
+function CustomCard({ worker, workerOptions, workerEmail, workerGithubUrl, anonymize, setWorkerEmail, setWorkerGithubUrl, setAnonymize, workerKey }) {
+
+    const [showWorkerKey, setShowWorkerKey] = useState(false);
+
+    const handleClickShowWorkerKey = () => setShowWorkerKey(!showWorkerKey);
+    const handleMouseDownWorkerKey = (event) => event.preventDefault();
 
     return (
       <>
@@ -138,6 +145,46 @@ function CustomCard({ worker, workerOptions, workerEmail, workerGithubUrl, anony
                 value={workerGithubUrl}
                 autoComplete='off'
                 onChange={(e) => setWorkerGithubUrl(e.target.value)}
+              />
+            </Box>
+
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, ml: '.5rem', alignItems: 'center' }}>
+              <Tippy content={
+                <span style={{ fontFamily: 'Roboto', textAlign: 'left' }}>
+                  <p style={{ margin: 0, textAlign: 'center' }}>Your worker key</p>
+                </span>}
+              >
+                <KeyIcon sx={{ height: 30, width: 30, color: 'white' }} />
+              </Tippy>
+              <StyledTextField
+                variant="outlined"
+                fullWidth
+                type={showWorkerKey ? "text" : "password"}
+                sx={{ backgroundColor: 'black', maxWidth: '50%', marginBottom: '.1rem !important', marginLeft: '.2rem' }}
+                inputProps={{ maxLength: 40 }}
+                value={workerKey}
+                autoComplete='off'
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleClickShowWorkerKey}
+                        onMouseDown={handleMouseDownWorkerKey}
+                        edge="end"
+                        sx={{ color: '#00e6da', paddingLeft: 0 }}
+                        tabIndex={-1}
+                      >
+                        {showWorkerKey ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  inputProps: {
+                    style: {
+                      fontFamily: showWorkerKey || workerKey === '' ? 'Roboto' : 'monospace',
+                      WebkitTextSecurity: showWorkerKey ? 'none' : 'disc !important',
+                    },
+                  },
+                }}
               />
             </Box>
   
