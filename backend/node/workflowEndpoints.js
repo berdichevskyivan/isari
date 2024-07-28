@@ -1,5 +1,6 @@
 import pkg from 'pg';
 const { Client } = pkg;
+import { validateScriptHash } from './taskManager.js'
 
 const MAXIMUM_AMOUNT_OF_DATASETS = 4;
 
@@ -23,10 +24,19 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             for(const row of getDatasetsResult.rows){
                 const getCountQuery = `SELECT count(*) FROM ${row.table_name}`;
                 const getCountResult = await client.query(getCountQuery);
+
+                const countValue = Number(getCountResult.rows[0].count);
+
                 data = data.map(o => {
-                    return {
-                        ...o,
-                        count: Number(getCountResult.rows[0].count),
+                    if(o.id === row.id){
+                        return {
+                            ...o,
+                            count: countValue,
+                        }
+                    } else {
+                        return {
+                            ...o,
+                        }
                     }
                 })
             }
@@ -261,6 +271,9 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             // First we need to delete the fields
             const deleteDatasetFieldsQuery = sql.fragment`DELETE FROM dataset_fields WHERE dataset_id = ${datasetId}`
             const deleteDatasetQuery = sql.fragment`DELETE FROM datasets WHERE id = ${datasetId} AND worker_id = ${workerId} RETURNING table_name`
+            const deleteWorkflowTasksQuery = sql.fragment`DELETE FROM workflow_tasks WHERE output_dataset_id = ${datasetId} OR input_dataset_id = ${datasetId}`
+
+            await pool.query(deleteWorkflowTasksQuery);
 
             await pool.query(deleteDatasetFieldsQuery);
             const deleteDatasetResult = await pool.query(deleteDatasetQuery);
@@ -285,5 +298,210 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             res.json({ success: false, message });
         }
     });
+
+    app.post('/checkForWorkflowTask', async (req, res) => {
+
+        const scriptHash = req.body.scriptHash;
+
+        const hashValidationResult = await validateScriptHash(sql, pool, scriptHash);
+
+        if(!hashValidationResult){
+            console.log('Script Hash is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Script Hash is not valid.' });
+            return;
+        }
+
+        const workerKey = req.body.workerKey;
+        const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;
+        const checkWorkerKeyResult = await pool.query(checkWorkerKeyQuery);
+
+        let workerId = null
+
+        if(checkWorkerKeyResult.rows.length === 0){
+            // We did not find a key, thus, we send an error message to the user.
+            console.log('Worker key is not valid. Sending back error message...')
+            res.json({ success: false, message: 'Worker Key is not valid.' });
+            return;
+        }else{
+            workerId = checkWorkerKeyResult.rows[0].id
+            // We also asynchronously update the worker_keys table to reflect last time of usage
+            const updateWorkerKeyQuery = sql.fragment`UPDATE worker_keys SET used = true WHERE key = ${workerKey}`;
+            pool.query(updateWorkerKeyQuery);
+        }
+
+        const worker = checkWorkerKeyResult.rows[0]
+        console.log(`Worker checking for workflow tasks: ${worker.id} | ${worker.name}`)
+
+        // We check for 'pending' tasks.
+        // If a task is found, we immediatly update the status (to active) and the worker_id
+        const nextWorkflowTaskQuery = sql.fragment`
+            WITH next_workflow_task AS (
+                SELECT id
+                FROM workflow_tasks
+                WHERE status = 'pending'
+                AND workflow_id in (SELECT id FROM workflows WHERE worker_id = ${worker.id} ORDER BY id asc)
+                ORDER BY id ASC
+                LIMIT 1
+            )
+            UPDATE workflow_tasks
+            SET status = 'active'
+            WHERE id = (SELECT id FROM next_workflow_task)
+            RETURNING *;
+        `;
+
+        let nextTask = null;
+
+        try {
+            const nextWorkflowTaskResult = await pool.query(nextWorkflowTaskQuery);
+            nextTask = nextWorkflowTaskResult.rows[0];
+    
+            if(!nextTask){
+                res.json({ success: false, error_code: 'NO_MORE_TASKS' }) // There are no more tasks
+                return;
+            }
+        } catch (error) {
+            console.error('Error executing query:', error);
+            res.json({ success: false, message: `Error getting the task` });
+            return;
+        }
+
+        console.log('nextTask: ', nextTask);
+
+        const outputDatasetQuery = sql.fragment`SELECT * FROM datasets WHERE id = ${nextTask.output_dataset_id}`;
+        const outputDatasetFieldsQuery = sql.fragment`SELECT * FROM dataset_fields WHERE dataset_id = ${nextTask.output_dataset_id}`;
+
+        const outputDatasetResult = await pool.query(outputDatasetQuery);
+        const outputDatasetFieldsResult = await pool.query(outputDatasetFieldsQuery)
+
+        let input_text = `Assume this role: ${nextTask.role}\n`
+            + `You must perform this task: ${nextTask.name}\n`
+            + `This task consists of: ${nextTask.description}\n`
+            + `This is the subject for this task: ${outputDatasetResult.rows[0].name}\n`
+            + `This is a brief description of the subject: ${outputDatasetResult.rows[0].description}\n`
+            + 'These are the names and descriptions of the fields that conform the subject: \n'
+            for(const field of outputDatasetFieldsResult.rows){
+                input_text += `Field name: ${field.name} \n`;
+                input_text += `Field description: ${field.description} \n`;
+            }
+            input_text += `This is raw data provided by the user: ${nextTask.raw_data} \n`
+            input_text += `The output must be formatted as a ${nextTask.output_amount === 1 ? 'JSON Object' : `JSON Array containing exactly ${nextTask.output_amount} objects`} with the following fields: ${outputDatasetFieldsResult.rows.map(r => r.name).join(', ')} \n`
+            input_text += `The output must consist only of the ${nextTask.output_amount === 1 ? 'JSON Object' : 'JSON array'} and nothing else.`
+
+        console.log('input_text: ', input_text)
+
+        const response = {
+            task_id: nextTask.id,
+            temperature: 0.7,
+            input_text: input_text
+        };
+
+        res.json({ success: true, response: response });
+
+    });
+
+    app.post('/storeCompletedWorkflowTask', async (req, res) => {
+        console.log('this is the body received -> ', req.body)
+
+        try{
+            const scriptHash = req.body.scriptHash;
+
+            const hashValidationResult = await validateScriptHash(sql, pool, scriptHash);
+    
+            if(!hashValidationResult){
+                console.log('Script Hash is not valid. Sending back error message...')
+                res.json({ success: false, message: 'Script Hash is not valid.' });
+                return;
+            }
+    
+            const workerKey = req.body.workerKey;
+            const checkWorkerKeyQuery = sql.fragment`SELECT id, name FROM workers WHERE id IN (select worker_id from worker_keys where key = ${workerKey})`;
+            const checkWorkerKeyResult = await pool.query(checkWorkerKeyQuery);
+    
+            let workerId = null
+    
+            if(checkWorkerKeyResult.rows.length === 0){
+                // We did not find a key, thus, we send an error message to the user.
+                console.log('Worker key is not valid. Sending back error message...')
+                res.json({ success: false, message: 'Worker Key is not valid. CANNOT insert a completed task.' });
+                return;
+            }else{
+                workerId = checkWorkerKeyResult.rows[0].id
+                // We also asynchronously update the worker_keys table to reflect last time of usage
+                const updateWorkerKeyQuery = sql.fragment`UPDATE worker_keys SET used = true WHERE key = ${workerKey}`;
+                pool.query(updateWorkerKeyQuery);
+            }
+    
+            const worker = checkWorkerKeyResult.rows[0]
+            console.log(`Worker storing a completed workflow task: ${worker.id} | ${worker.name}`)
+    
+            const workflowTaskId = req.body.task_id;
+            const output = req.body.output;
+            const outputJson = JSON.parse(output);
+    
+            const getWorkflowTaskInfoQuery = sql.fragment`SELECT * FROM workflow_tasks WHERE id = ${workflowTaskId}`;
+            const taskInfoResult = await pool.query(getWorkflowTaskInfoQuery);
+            const taskInfo = taskInfoResult.rows[0];
+    
+            console.log('this is taskInfo: ', taskInfo);
+            console.log('this is outputJson: ', outputJson);
+    
+            // Now i need to get info on the output dataset
+            // I need to know in which table to INSERT (in this case), the data
+            const getOutputDatasetInfoQuery = sql.fragment`SELECT * FROM datasets WHERE id = ${taskInfo.output_dataset_id}`;
+            const getOutputDatasetInfoResult = await pool.query(getOutputDatasetInfoQuery);
+    
+            const outputDatasetInfo = getOutputDatasetInfoResult.rows[0];
+            console.log('outputDatasetInfo: ', outputDatasetInfo);
+    
+            if(outputJson.length){
+                // we loop over the output array
+                const outputIds = [];
+                for(const object of outputJson){
+                    const fields = Object.keys(object).map(key => {
+                        const value = object[key];
+                        return typeof value === 'number' ? value : `'${value.replace(/'/g, "''")}'`;
+                    }).join(', ');
+    
+                    const insertDataQuery = `INSERT INTO ${outputDatasetInfo.table_name}(${Object.keys(object).join(', ')}) VALUES(${fields}) RETURNING id`
+    
+                    console.log(insertDataQuery);
+    
+                    const insertDataQueryResult = await client.query(insertDataQuery);
+                    const outputId = insertDataQueryResult.rows[0].id;
+                    outputIds.push(outputId);
+                }
+                // Now that I'm done, I insert these outputIds into the task output_dataset_record_ids column
+                console.log('this is outputIds, ', outputIds);
+                console.log('this is outputIds.join: ', outputIds.join(', '))
+                const updateTaskMetaDataQuery = sql.fragment`UPDATE workflow_tasks SET output_dataset_record_ids = ${outputIds.join(', ')} WHERE id = ${workflowTaskId}`;
+                await pool.query(updateTaskMetaDataQuery);
+            } else {
+                // We execute one query because we got just one object
+                const fields = Object.keys(outputJson).map(key => {
+                    const value = outputJson[key];
+                    return typeof value === 'number' ? value : `'${value.replace(/'/g, "''")}'`;
+                }).join(', ');
+    
+                const insertDataQuery = `INSERT INTO ${outputDatasetInfo.table_name}(${Object.keys(outputJson).join(', ')}) VALUES(${fields}) RETURNING id`
+                console.log(insertDataQuery);
+    
+                const insertDataQueryResult = await client.query(insertDataQuery);
+                const outputId = insertDataQueryResult.rows[0].id;
+
+                const updateTaskMetaDataQuery = sql.fragment`UPDATE workflow_tasks SET output_dataset_record_ids = ${outputId} WHERE id = ${workflowTaskId}`;
+                await pool.query(updateTaskMetaDataQuery);
+            }
+
+            // Update Workflow Task status
+            await pool.query(sql.fragment`UPDATE workflow_tasks SET status = 'completed' WHERE id = ${workflowTaskId}`)
+    
+            res.json({ success: true });
+        }catch(error){
+            console.log(error);
+            await pool.query(sql.fragment`UPDATE workflow_tasks SET status = 'pending' WHERE id = ${req.body.task_id}`)
+            res.json({ success: false, message: 'Error in Endpoint' });
+        }
+
+    })
 
 }

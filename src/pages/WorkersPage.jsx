@@ -184,7 +184,7 @@ function WorkersPage({ workers, workerOptions, setWorkers }) {
           <h1>There are no workers</h1>
         }
         {workers.length > 0 && workers.map((worker) => (
-          <Grid item key={worker.id} sx={{ justifySelf: 'center' }}>
+          <Grid item xs={12} key={worker.id} sx={{ justifySelf: 'center' }}>
             <CustomCard
               worker={worker}
               workerOptions={workerOptions}

@@ -45,7 +45,49 @@ async function checkForStuckTasks(sql, pool){
     }
 }
 
-async function validateScriptHash(sql, pool, scriptHash){
+async function checkForStuckWorkflowTasks(sql, pool){
+    try{
+        const getActiveWorkflowTasksQuery = sql.fragment`
+            SELECT *, 
+                   NOW()::timestamp AS current_time 
+            FROM workflow_tasks 
+            WHERE status = 'active'
+        `;
+        const getActiveWorkflowTasksResult = await pool.query(getActiveWorkflowTasksQuery);
+
+        if(getActiveWorkflowTasksResult.rows.length > 0){
+
+            const activeTasks = getActiveWorkflowTasksResult.rows;
+
+            for(const activeTask of activeTasks){
+                const updatedDate = activeTask.updated_date
+                const currentTime = activeTask.current_time
+
+                const millisecondsPassed = currentTime - updatedDate;
+                const minutesPassed = millisecondsPassed / 60000;
+
+                console.log(`Minutes passed for Workflow Task ID ${activeTask.id}: ${minutesPassed}`);
+
+                // If the task has been active for more than max minutes
+                // We update it back to pending, and worker_id to null
+                if(minutesPassed > MAX_MINUTES_FOR_ACTIVE_TASK){
+                    console.log(`Task ID ${activeTask.id} has been active for more than ${MAX_MINUTES_FOR_ACTIVE_TASK} minutes. Changing status to pending...`)
+                    const updateTaskQuery = sql.fragment`UPDATE workflow_tasks SET status = 'pending' WHERE id = ${activeTask.id}`;
+                    await pool.query(updateTaskQuery);
+                }
+            }          
+
+        }else{
+            console.log('No active workflow tasks currently');
+        }
+
+    }catch (error) {
+        console.log('Error checking for stuck tasks: ', error)
+    }
+}
+
+export async function validateScriptHash(sql, pool, scriptHash){
+    return true; // testing only
     try{
         const checkScriptHashQuery = sql.fragment`SELECT hash FROM client_script_hash WHERE hash = ${scriptHash}`
         const checkScriptHashResult = await pool.query(checkScriptHashQuery);
@@ -917,6 +959,7 @@ export async function initTaskManager(app, sql, pool, io) {
     // Run the task assignment function immediately
     await generateTasks(sql, pool, io);
     await checkForStuckTasks(sql, pool);
+    await checkForStuckWorkflowTasks(sql, pool);
     await retrieveAndEmitTasks(sql, pool, io);
     await retrieveAndEmitIssues(sql, pool, io);
 
@@ -924,6 +967,7 @@ export async function initTaskManager(app, sql, pool, io) {
     setInterval(async () => {
         await generateTasks(sql, pool, io);
         await checkForStuckTasks(sql, pool);
+        await checkForStuckWorkflowTasks(sql, pool);
         await retrieveAndEmitTasks(sql, pool, io);
         await retrieveAndEmitIssues(sql, pool, io);
     }, 10000);

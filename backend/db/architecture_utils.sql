@@ -123,3 +123,11 @@ delete from extrapolations;
 delete from tasks;
 delete from user_inputs;
 delete from issues;
+
+-- delete all the workers but one 
+delete from worker_programming_languages where worker_id != 20;
+delete from worker_specialized_ai_applications where worker_id != 20;
+delete from worker_generalized_ai_branches where worker_id != 20;
+delete from worker_ai_tools where worker_id != 20;
+delete from worker_keys where worker_id != 20;
+delete from workers where id != 20;

@@ -43,7 +43,7 @@ CREATE TABLE workflow_tasks (
     raw_data TEXT,
     input_dataset_id INTEGER REFERENCES datasets(id),
     output_dataset_id INTEGER REFERENCES datasets(id),
-    output_dataset_record_ids INTEGER[], -- Record the output ids here.
+    output_dataset_record_ids TEXT,
     output_amount INTEGER,
     created_date TIMESTAMP DEFAULT clock_timestamp(),
     updated_date TIMESTAMP DEFAULT clock_timestamp()

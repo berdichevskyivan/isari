@@ -29,7 +29,7 @@ function DatasetViewer({ loadedDataset, openSection, loadDataset }){
                         paddingBottom: '.5rem'
                     }}>{loadedDataset.name}</Typography>
                 ) }
-                <TableContainer component={Paper} sx={{ zIndex: 2, borderTopRightRadius: 0, borderTopLeftRadius: 0 }} className='no-scrollbar'>
+                <TableContainer component={Paper} sx={{ zIndex: 2, borderTopRightRadius: 0, borderTopLeftRadius: 0, height: '93%' }} className='no-scrollbar'>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
@@ -51,7 +51,9 @@ function DatasetViewer({ loadedDataset, openSection, loadDataset }){
                                 <>
                                     { loadedDataset.rows.map(row => (
                                         <TableRow>
-                                            <TableCell>There are records yay!!</TableCell>
+                                            { Object.keys(row).map(key => (
+                                                <TableCell>{row[key]}</TableCell>
+                                            )) }
                                         </TableRow>
                                     )) }
                                 </>

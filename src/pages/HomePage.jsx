@@ -4,10 +4,7 @@ import ControlsDashboard from '../components/ControlsDashboard';
 import StarrySky from '../components/StarrySky';
 import ArchitectureVisualization from '../components/ArchitectureVisualization';
 import { Typography, Box, Button } from '@mui/material';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import CycloneIcon from '@mui/icons-material/Cyclone';
-import BackupIcon from '@mui/icons-material/Backup';
-import Loading from '../components/Loading';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -38,35 +35,19 @@ function HomePage({ workers, workerOptions, setWorkers }) {
       <ControlsDashboard workerOptions={workerOptions} setWorkers={setWorkers} workers={workers}/>
       <div className="homepage-main-container">
         <div className="homepage-info-container">
-          <h1 style={{ margin: 0 }}>Centralized Task Management and Distributed Processing</h1>
+          <h1 style={{ margin: 0 }}>Create your own agentic workflows and run them locally</h1>
           <p style={{ fontFamily: 'Roboto' }}>
-            In the architecture we propose, tasks are generated and managed by the central gateway node. Client nodes running open-source AI models connect to the gateway and request a task. 
-            They then process it and produce an output based on the specific instructions and context attached to the task, and return the output to the central gateway for validation, storage
-            and other important data operations. This output is also used to provide further context to the client nodes.
+            After <a href="https://isari.ai/create-worker" target="_blank" style={{color:'magenta', textDecoration: 'none'}}>creating an account</a>, you can create
+            Datasets and Workflows. Workflows are collections of tasks, to be executed sequentially by your client. Each task carries specific information and instructions that you will
+            be able to see logged out as you run them.
           </p>
           <p style={{ fontFamily: 'Roboto' }}>
-            The architecture is scalable and modular, allowing for the addition of more client nodes as needed, and the upgrade of their capabilities with each new model version,
-            as well as allowing for multimodality.
-            The centralized approach ensures that all tasks are uniformly managed and validated and by distributing the processing load across multiple 
-            client nodes, the system can handle a large volume of tasks in parallel, improving overall efficiency and fostering collaboration.
-          </p>
-          <p style={{ fontFamily: 'Roboto' }}>
-            In this current iteration, we use the architecture to generate proposals based on issues. An issue is generated from the users inputs, which consist of two parts: The issue's title, and the issue's context. 
-            Once this has been submitted to the system, it will start generating tasks of various types that you can watch live in the Task Viewer. You can submit your issue and watch the generated data in the Issue Viewer.
-          </p>
-          <p style={{ fontFamily: 'Roboto' }}>
-            To submit an issue, you will need to request a single-use key through our communication channels. In order to collaborate with the project, you can run the <a href="https://github.com/berdichevskyivan/isari-client" target="_blank" style={{color:'magenta', textDecoration: 'none'}}>client script</a>, 
-            provided you have the appropiate credentials in a local .env file.
+            To start retrieving tasks from your workflows, you can run the <a href="https://github.com/berdichevskyivan/isari-client" target="_blank" style={{color:'magenta', textDecoration: 'none'}}>client script</a>. 
+            You have to add the variable WORKER_KEY in an .env file. This WORKER_KEY is automatically generated when you create an account, you can retrieve it from your Dashboard.
           </p>
           <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem', width: '100%' }}>
-            <Button variant="contained" href="/task-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <PendingActionsIcon sx={{ marginRight: '0.5rem' }} /><span className="button-text-small-on-small">Task Viewer</span>
-            </Button>
-            <Button variant="contained" href="/issue-viewer" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <CycloneIcon sx={{ marginRight: '0.5rem' }} /><span className="button-text-small-on-small">Issue Viewer</span>
-            </Button>
-            <Button variant="contained" href="/submit-issue" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue', marginRight: '0.5rem' }}>
-              <BackupIcon sx={{ marginRight: '0.5rem' }} /><span className="button-text-small-on-small">Submit Issue</span>
+            <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
+              <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span className="button-text-on-small">Create Account</span>
             </Button>
           </div>
         </div>

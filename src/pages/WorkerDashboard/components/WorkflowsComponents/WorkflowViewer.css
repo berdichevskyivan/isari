@@ -1,0 +1,34 @@
+.workflow-viewer-container {
+    height: 100%;
+    width: 100%;
+    color: white;
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workflow-viewer-main-section {
+    height: 90%;
+    width: 100%;
+    box-sizing: border-box;
+    /* border: 1px solid turquoise; */
+}
+
+.workflow-viewer-buttons {
+    height: 10%;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: center;
+    /* border: 1px solid magenta; */
+}
+
+.workflow-title {
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
