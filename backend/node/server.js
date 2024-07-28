@@ -19,7 +19,6 @@ import morgan from 'morgan';
 import { attachWorkflowEndpoints } from './workflowEndpoints.js';
 import { initTaskManager, retrieveAndEmitTasks, generateTasks } from './taskManager.js'
 import sharp from 'sharp';
-import fsExtra from 'fs-extra';
 
 dotenv.config();
 
@@ -95,14 +94,7 @@ async function testQuery() {
 
 testQuery();
 
-// Configure Multer for handling file uploads and other fields
-const storage = multer.diskStorage({
-  destination: './uploads/', // Directory to store uploaded images
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-
+const storage = multer.memoryStorage(); // Store the uploaded file in memory
 const upload = multer({ storage: storage });
 
 function authenticateToken(req, res, next) {
@@ -284,28 +276,18 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
         if (profilePic) {
             const sanitizedFullName = fullName.replace(/\s+/g, '-').toLowerCase();
             profilePicUrl = `${workerId}-${sanitizedFullName}${extname(profilePic.originalname)}`;
-            const oldPath = profilePic.path;
             const newPath = join(__dirname, 'uploads', profilePicUrl);
         
-            console.log('oldPath:', oldPath);
             console.log('newPath:', newPath);
         
             // Compress the image using sharp
-            await sharp(oldPath)
-                .resize(500, 500, {
-                    fit: sharp.fit.inside,
-                    withoutEnlargement: true
-                })
-                .toFormat('jpeg', { quality: 80 })  // Adjust the quality and format as needed
-                .toFile(newPath);
-        
-            // Ensure the file is not being held open and can be deleted
-            try {
-                await fsExtra.remove(oldPath);
-                console.log(`Deleted old file: ${oldPath}`);
-            } catch (err) {
-                console.error(`Error deleting old file: ${err}`);
-            }
+            await sharp(profilePic.buffer)
+            .resize(500, 500, {
+              fit: sharp.fit.inside,
+              withoutEnlargement: true
+            })
+            .toFormat('jpeg', { quality: 80 })  // Adjust the quality and format as needed
+            .toFile(newPath);
         
             // Update worker with the profile picture URL
             const updateWorkerQuery = sql.fragment`
