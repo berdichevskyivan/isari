@@ -18,6 +18,8 @@ import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import { attachWorkflowEndpoints } from './workflowEndpoints.js';
 import { initTaskManager, retrieveAndEmitTasks, generateTasks } from './taskManager.js'
+import sharp from 'sharp';
+import fsExtra from 'fs-extra';
 
 dotenv.config();
 
@@ -284,12 +286,27 @@ app.post('/createWorker', upload.single('profilePic'), async (req, res) => {
             profilePicUrl = `${workerId}-${sanitizedFullName}${extname(profilePic.originalname)}`;
             const oldPath = profilePic.path;
             const newPath = join(__dirname, 'uploads', profilePicUrl);
-
+        
             console.log('oldPath:', oldPath);
             console.log('newPath:', newPath);
-
-            fs.renameSync(oldPath, newPath);
-
+        
+            // Compress the image using sharp
+            await sharp(oldPath)
+                .resize(500, 500, {
+                    fit: sharp.fit.inside,
+                    withoutEnlargement: true
+                })
+                .toFormat('jpeg', { quality: 80 })  // Adjust the quality and format as needed
+                .toFile(newPath);
+        
+            // Ensure the file is not being held open and can be deleted
+            try {
+                await fsExtra.remove(oldPath);
+                console.log(`Deleted old file: ${oldPath}`);
+            } catch (err) {
+                console.error(`Error deleting old file: ${err}`);
+            }
+        
             // Update worker with the profile picture URL
             const updateWorkerQuery = sql.fragment`
                 UPDATE workers
