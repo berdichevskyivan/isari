@@ -45,9 +45,21 @@ function HomePage({ workers, workerOptions, setWorkers }) {
             To start retrieving tasks from your workflows, you can run the <a href="https://github.com/berdichevskyivan/isari-client" target="_blank" style={{color:'magenta', textDecoration: 'none'}}>client script</a>. 
             You have to add the variable WORKER_KEY in an .env file. This WORKER_KEY is automatically generated when you create an account, you can retrieve it from your Dashboard.
           </p>
+          <p style={{ fontFamily: 'Roboto', marginBottom: '1rem' }}>
+            Here's a video demonstration of how it works:
+          </p>
+          <iframe
+            width="560"
+            height="315" 
+            src="https://www.youtube.com/embed/Tclg76UU9VU?si=53LpU9mpaemujvRZ"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen></iframe>
           <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem', width: '100%' }}>
             <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
-              <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span className="button-text-on-small">Create Account</span>
+              <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span>Create Account</span>
             </Button>
           </div>
         </div>

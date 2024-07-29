@@ -338,8 +338,11 @@
   }
 
   .worker-card {
-    width: 100% !important;
     margin-right: 0 !important;
+  }
+
+  iframe {
+    width: 100%;
   }
 }
 
@@ -384,6 +387,7 @@
     flex-flow: column nowrap;
     word-wrap: break-word; 
     justify-content: flex-start;
+    align-items: center;
     overflow: auto;
     
     h1 {
