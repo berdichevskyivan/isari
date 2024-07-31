@@ -40,7 +40,6 @@ function getInitials(input) {
 }
 
 function CustomCard({ worker, workerOptions }) {
-  console.log(worker)
   return (
     <Card sx={{ width: 250, height: 'fit-content', m: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.5)', overflow: 'hidden' }} className="worker-card">
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', pt: 2, pl: 2 }}>

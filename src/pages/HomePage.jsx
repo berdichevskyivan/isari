@@ -25,10 +25,10 @@ function HomePage({ workers, workerOptions, setWorkers }) {
     <div style={{
         height: '100vh',
         width: '100%',
-        overflow: 'auto',  // Allow overflow while hiding scrollbars
+        overflow: 'auto',
         '::WebkitScrollbar': { display: 'none' },
-        msOverflowStyle: 'none',  // for Internet Explorer and Edge
-        scrollbarWidth: 'none',  // for Firefox
+        msOverflowStyle: 'none',
+        scrollbarWidth: 'none',
         background: 'black'
     }}>
       <StarrySky />
