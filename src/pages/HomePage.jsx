@@ -53,10 +53,10 @@ function HomePage({ workers, workerOptions, setWorkers }) {
             height="315" 
             src="https://www.youtube.com/embed/Tclg76UU9VU?si=53LpU9mpaemujvRZ"
             title="YouTube video player"
-            frameborder="0"
+            style={{border: '0px'}}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allowfullscreen></iframe>
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen></iframe>
           <div style={{ display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: '1.5rem', width: '100%' }}>
             <Button variant="contained" href="/create-worker" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue' }}>
               <AccountCircleIcon sx={{ marginRight: '0.5rem' }} /> <span>Create Account</span>
