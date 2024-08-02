@@ -47,14 +47,14 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
         timing: {
           duration: 3000
         },
-        glitchMode: 'always' // or 'hover' or 'click'
+        glitchMode: 'always'
       });
   
   const [showFilters, setShowFilters] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);  // Add state for the login modal
+  const [showLogin, setShowLogin] = useState(false);
 
   const toggleFilters = () => setShowFilters(!showFilters);
-  const toggleLoginModal = () => setShowLogin(!showLogin);  // Handler to toggle the modal
+  const toggleLoginModal = () => setShowLogin(!showLogin);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1412);
 
@@ -64,7 +64,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  let propertiesRegistered = false; // Global flag to check if properties are registered
+  let propertiesRegistered = false;
 
   useEffect(() => {
     if (!propertiesRegistered && typeof CSS !== 'undefined' && CSS.registerProperty) {
@@ -87,7 +87,7 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
           inherits: false,
           initialValue: 'hsl(240deg, 100%, 50%)'
         });
-        propertiesRegistered = true; // Set the flag to true after registering properties
+        propertiesRegistered = true;
       } catch (e) {
         console.warn('CSS property already registered:', e.message);
       }
@@ -121,10 +121,6 @@ function ControlsDashboard({ workerOptions, setWorkers, workers }) {
 
                 {isLoggedIn && (
                   <>
-                    {/* <Link to="/lorenz" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
-                      <img src="/lorenz-logo.png" alt="Lorenz Logo" style={{ width: 40, height: 40, marginRight: '.5rem' }} />
-                      <span className="dashboard-text button-text-on-small" >Lorenz</span>
-                    </Link> */}
                     <Button variant="contained" href="/worker-dashboard" sx={{ fontFamily: 'Orbitron', background: 'black', border: '1px solid blue'}}>
                       <DashboardIcon sx={{ marginRight: '0.5rem' }} /> <span className="button-text-on-small">Dashboard</span>
                     </Button>
