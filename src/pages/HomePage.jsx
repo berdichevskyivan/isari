@@ -9,12 +9,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 const isProduction = import.meta.env.MODE === 'production';
 
 function HomePage({ workers, workerOptions, setWorkers }) {
-
-  // Add later but on another condition
-  // if (!workerOptions) {
-  //   return <Loading />;
-  // }
-
+  
   useEffect(()=>{
     if(localStorage.getItem('tabs')){
       localStorage.removeItem('tabs');
