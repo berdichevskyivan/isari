@@ -83,15 +83,15 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
         if (datasetDescription.length < 15 || datasetDescription.length > 200) {
             openSnackbar('The dataset description must be between 15 and 200 characters long', 'error');
             return;
-        } else if (!/^[a-zA-Z\s]+$/.test(datasetDescription)) {
-            openSnackbar('The dataset description can only contain letters (a-z, A-Z) and spaces', 'error');
+        } else if (!/^[a-zA-Z\s-_.,()]+$/.test(datasetDescription)) {
+            openSnackbar('The dataset description can only contain letters (a-z, A-Z), spaces, underscores, dashes, periods, commas and parentheses', 'error');
             return;
         }
 
         for(const field of datasetFields){
             // Field name validation
-            if (field.name.length < 3 || field.name.length > 20) {
-                openSnackbar('Every field name must be between 3 and 20 characters long', 'error');
+            if (field.name.length < 3 || field.name.length > 30) {
+                openSnackbar('Every field name must be between 3 and 30 characters long', 'error');
                 return;
             } else if (!/^[a-zA-Z_]+$/.test(field.name)) {
                 openSnackbar('Every field name can only contain letters (a-z, A-Z) and the underscore _ character', 'error');
@@ -102,8 +102,8 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
             if (field.description.length < 15 || field.description.length > 200) {
                 openSnackbar('Every field description must be between 15 and 200 characters long', 'error');
                 return;
-            } else if (!/^[a-zA-Z\s]+$/.test(field.description)) {
-                openSnackbar('Every field description can only contain letters (a-z, A-Z) and spaces', 'error');
+            } else if (!/^[a-zA-Z\s-_.,()]+$/.test(field.description)) {
+                openSnackbar('Every field description can only contain letters (a-z, A-Z), spaces, underscores, dashes, periods, commas and parentheses', 'error');
                 return;
             }
 
@@ -145,8 +145,8 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
 
     const addField = () => {
 
-        if(datasetFields.length >= 4){
-            openSnackbar('You can\'t add more than 4 fields', 'error');
+        if(datasetFields.length >= 8){
+            openSnackbar('You can\'t add more than 8 fields', 'error');
             return;
         }
 

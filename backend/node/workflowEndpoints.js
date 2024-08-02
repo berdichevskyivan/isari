@@ -185,7 +185,7 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
                 // Create table for the dataset
                 // now we can finally proceed with creating the table
                 let fieldsQueryPart = fields
-                    .map(field => `${field.name} ${field.data_type}`)
+                    .map(field => `${field.name} ${field.data_type === 'INTEGER' ? 'NUMERIC' : field.data_type}`)
                     .join(', ');
             
                 const createTableQuery = `
@@ -271,9 +271,22 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             // First we need to delete the fields
             const deleteDatasetFieldsQuery = sql.fragment`DELETE FROM dataset_fields WHERE dataset_id = ${datasetId}`
             const deleteDatasetQuery = sql.fragment`DELETE FROM datasets WHERE id = ${datasetId} AND worker_id = ${workerId} RETURNING table_name`
-            const deleteWorkflowTasksQuery = sql.fragment`DELETE FROM workflow_tasks WHERE output_dataset_id = ${datasetId} OR input_dataset_id = ${datasetId}`
+            const deleteWorkflowTasksQuery = sql.fragment`DELETE FROM workflow_tasks WHERE output_dataset_id = ${datasetId} OR input_dataset_id = ${datasetId} RETURNING workflow_id`
 
-            await pool.query(deleteWorkflowTasksQuery);
+            const deleteWorkflowTasksResult = await pool.query(deleteWorkflowTasksQuery);
+
+            // Now you can use `result.rows` to delete the corresponding workflows
+            const workflowIds = deleteWorkflowTasksResult.rows.map(row => row.workflow_id);
+
+            if(workflowIds.length > 0){
+                console.log('workflowIds: ', workflowIds)
+                // Construct and execute the query to delete the workflows
+                const deleteWorkflowsQuery = sql.fragment`
+                    DELETE FROM workflows WHERE id in (${workflowIds.join(', ')})
+                `;
+
+                await pool.query(deleteWorkflowsQuery);
+            }
 
             await pool.query(deleteDatasetFieldsQuery);
             const deleteDatasetResult = await pool.query(deleteDatasetQuery);
@@ -294,7 +307,7 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             res.json({ success: true, message: 'Dataset successfully deleted' });
         } catch (error) {
             const message = 'Error in Endpoint';
-            console.log(`${message} /createDataset: `, error);
+            console.log(`${message} /deleteDataset: `, error);
             res.json({ success: false, message });
         }
     });
