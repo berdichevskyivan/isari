@@ -66,7 +66,9 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
     app.post('/loadDataset', async (req, res) => {
         try{
-            const { datasetId } = req.body;
+            const { datasetId, includeRows } = req.body;
+
+            console.log('includeRows: ', includeRows);
 
             const loadDatasetInfoQuery = sql.fragment`SELECT * FROM datasets WHERE id = ${datasetId}`;
             const loadDatasetInfoResult = await pool.query(loadDatasetInfoQuery);
@@ -82,17 +84,30 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
             const sanitizedTableName = tableName.replace(/[^a-z_]/g, '');
 
-            const loadDatasetQuery = `SELECT * FROM ${sanitizedTableName}`;
-            const loadDatasetResult = await client.query(loadDatasetQuery);
-
-            const result = {
-                name: loadDatasetInfoResult.rows[0].name,
-                description: loadDatasetInfoResult.rows[0].description,
-                rows: loadDatasetResult.rows,
-                fields: loadDatasetResult.fields.map(f => ({ name: f.name }))
+            if(includeRows !== false){
+                const loadDatasetQuery = `SELECT * FROM ${sanitizedTableName}`;
+                const loadDatasetResult = await client.query(loadDatasetQuery);
+                const result = {
+                    name: loadDatasetInfoResult.rows[0].name,
+                    description: loadDatasetInfoResult.rows[0].description,
+                    rows: loadDatasetResult.rows,
+                    fields: loadDatasetResult.fields.map(f => ({ name: f.name }))
+                }
+            
+                res.json({ success: true, result });
+            } else {
+                const loadDatasetFieldsQuery = sql.fragment`SELECT * FROM dataset_fields WHERE dataset_id = ${datasetId}`;
+                const loadDatasetFieldsResult = await pool.query(loadDatasetFieldsQuery);
+                const result = {
+                    name: loadDatasetInfoResult.rows[0].name,
+                    description: loadDatasetInfoResult.rows[0].description,
+                    fields: loadDatasetFieldsResult.rows,
+                }
+            
+                res.json({ success: true, result });
             }
-        
-            res.json({ success: true, result });
+
+
         } catch (error) {
             const message = 'Error in Endpoint';
             console.log(`${message} /loadDataset: `, error);

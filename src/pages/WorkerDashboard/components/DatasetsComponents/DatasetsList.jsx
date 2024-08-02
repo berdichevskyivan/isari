@@ -4,8 +4,9 @@ import { Typography, Button, Grid, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import './DatasetsList.css';
 import DeleteDatasetModal from '../../../../components/modals/DeleteDatasetModal';
+import EditIcon from '@mui/icons-material/Edit';
 
-function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatasetViewer }){
+function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatasetViewer, openEditDataset, setLoadedDataset }){
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDataset, setSelectedDataset] = useState(null);
@@ -34,7 +35,7 @@ function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatas
             {!loading && datasets.length === 0 && (
                 <div className='no-datasets-container'>
                     <p style={{ color: 'turquoise' }}>No datasets! How about creating one?</p>
-                    <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'createDataset') }}>
+                    <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'createDataset'); setLoadedDataset(null) }}>
                         Create Dataset
                     </Button>
                 </div>
@@ -48,7 +49,11 @@ function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatas
                                 {datasets.map((dataset) => (
                                     <Grid item xs={12} sm={6} key={dataset.id} display="flex" justifyContent="center" alignItems="center" sx={{ height: '100px' }}>
                                         <Paper className="dataset-card" onClick={()=>{ openDatasetViewer(dataset) }}>
-                                            <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px', position: 'absolute', top: 2, right: 2 }} onClick={(e)=>{ e.stopPropagation(); handleOpenModal(dataset) }} />
+                                            <div style={{ position: 'absolute', top: 2, right: 2, display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center' }}>
+                                                <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px' }} onClick={(e)=>{ e.stopPropagation(); handleOpenModal(dataset) }} />
+                                                <EditIcon sx={{ color: 'black', height: '25px', width: '25px' }} onClick={(e)=>{ e.stopPropagation(); openEditDataset(dataset) }} />
+                                            </div>
+                                            
                                             <Typography sx={{ fontSize: '20px' }}>
                                                 {dataset.name}
                                             </Typography>
@@ -62,7 +67,7 @@ function DatasetsList({ loading, datasets, openSection, deleteDataset, openDatas
                         </div>
                         <div className="datasets-list-buttons">
                             { datasets.length < 4 && (
-                                <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'createDataset') }}>
+                                <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'createDataset'); setLoadedDataset(null) }}>
                                     Create Dataset
                                 </Button>
                             ) }

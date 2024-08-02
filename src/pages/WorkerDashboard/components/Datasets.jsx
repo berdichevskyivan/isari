@@ -67,6 +67,25 @@ function Datasets({ user, tabs, openSection }){
         }
     }
 
+    const openEditDataset = async (dataset) => {
+        const datasetId = dataset.id;
+        localStorage.setItem('currentDatasetId', datasetId);
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadDataset`, { datasetId: datasetId, includeRows: false }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                console.log('loadDataset response')
+                console.log(response.data.result)
+                setLoadedDataset(response.data.result);
+                openSection('datasets', 'createDataset');
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error loading dataset', 'error');
+        }
+    }
+
     const loadDataset = async (id) => {
         try {
             const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadDataset`, { datasetId: id }, { withCredentials: true });
@@ -98,7 +117,14 @@ function Datasets({ user, tabs, openSection }){
             {/* Datasets List */}
             { tabs['datasets'].sections.datasetsList.open && (
                 <>
-                    <DatasetsList loading={loading} datasets={datasets} openSection={openSection} deleteDataset={deleteDataset} openDatasetViewer={openDatasetViewer}/>
+                    <DatasetsList
+                    loading={loading}
+                    datasets={datasets}
+                    openSection={openSection}
+                    deleteDataset={deleteDataset}
+                    openDatasetViewer={openDatasetViewer}
+                    openEditDataset={openEditDataset}
+                    setLoadedDataset={setLoadedDataset} />
                 </>
             ) }
 
@@ -112,7 +138,7 @@ function Datasets({ user, tabs, openSection }){
             {/* Create Datasets */}
             { tabs['datasets'].sections.createDataset.open && (
                 <>
-                    <CreateDataset openSection={openSection} axios={axios} user={user} getDatasets={getDatasets} />
+                    <CreateDataset openSection={openSection} axios={axios} user={user} getDatasets={getDatasets} loadedDataset={loadedDataset} loadDataset={loadDataset} />
                 </>
             ) }
 

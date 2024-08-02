@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Button, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { styled } from '@mui/system';
 import './CreateDataset.css';
@@ -53,7 +53,12 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateDataset({ openSection, axios, user, getDatasets }){
+function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset }){
+
+    const [editMode, setEditMode] = useState(loadedDataset ? true : false);
+
+    console.log('editMode is: ', editMode);
+
     const { openSnackbar } = useNotification();
 
     const [datasetName, setDatasetName] = useState('');
@@ -61,6 +66,14 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
     const [datasetFields, setDatasetFields] = useState([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // EDIT MODE
+    const [fieldsToDelete, setFieldsToDelete] = useState([]);
+
+    // Logic goes like this
+    // Any field in fieldsToDelete will be deleted
+    // If the datasetFields received, it has a databaseId, then it gets updated
+    // if the datasetFields received, it DOES NOT have a databaseId, then it gets CREATED
 
     const handleSubmit = async () => {
         // Start validating!
@@ -124,16 +137,21 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
         // Its time to submit
         try {
             setIsSubmitting(true);
-            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/createDataset`, data, { withCredentials: true });
+            const endpointUrl = editMode ? 'updateDataset' : 'createDataset';
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/${endpointUrl}`, data, { withCredentials: true });
 
             if(response.data.success === false){
                 setIsSubmitting(false);
                 openSnackbar(response.data.message, 'error');
             } else {
                 setIsSubmitting(false);
-                getDatasets();
-                openSnackbar('Dataset was created successfully!')
-                openSection('datasets', 'datasetsList');
+                if(editMode){
+                    openSnackbar('Dataset was updated successfully!')
+                } else {
+                    getDatasets();
+                    openSnackbar('Dataset was created successfully!')
+                    openSection('datasets', 'datasetsList');
+                }
             }
         } catch (error) {
           console.log(error);
@@ -174,6 +192,7 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
             return newField;
         })
         setDatasetFields(newDatasetFields)
+        // if the field to be deleted has a databaseId, then add it to fieldsToBeDeleted
     }
 
     const handleDatasetNameChange = (e) => {
@@ -196,6 +215,25 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
         })
         setDatasetFields(newDatasetFields);
     }
+
+    useEffect(()=>{
+        if(loadedDataset){
+            setDatasetName(loadedDataset.name);
+            setDatasetDescription(loadedDataset.description);
+
+            const loadedFields = loadedDataset.fields.map((field, index) => {
+                return {
+                    id: index,
+                    name: field.name,
+                    description: field.description,
+                    data_type: field.data_type,
+                    databaseId: field.id, // The ones retrieved from DB
+                }
+            })
+
+            setDatasetFields(loadedFields);
+        }
+    }, [])
 
     return (
         <div className="create-dataset-container">
@@ -284,7 +322,7 @@ function CreateDataset({ openSection, axios, user, getDatasets }){
                         <><CircularProgress size={24}/></>
                     ) }
                     { !isSubmitting && (
-                        <>Submit</>
+                        <>{editMode ? 'Update' : 'Submit'}</>
                     ) }
                 </Button>
                 <Button variant="contained" className="default-button" onClick={() => { openSection('datasets', 'datasetsList'); }}>
