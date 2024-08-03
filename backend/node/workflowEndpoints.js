@@ -97,7 +97,9 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
                 const loadDatasetFieldsQuery = sql.fragment`SELECT * FROM dataset_fields WHERE dataset_id = ${datasetId}`;
                 const loadDatasetFieldsResult = await pool.query(loadDatasetFieldsQuery);
                 const result = {
+                    id: loadDatasetInfoResult.rows[0].id,
                     name: loadDatasetInfoResult.rows[0].name,
+                    table_name: loadDatasetInfoResult.rows[0].table_name,
                     description: loadDatasetInfoResult.rows[0].description,
                     fields: loadDatasetFieldsResult.rows,
                 }
@@ -231,20 +233,104 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
     app.post('/updateDataset', async (req, res) => {
         try{
-            const { workerId, name, description, fields, fieldsToDelete } = req.body;
+            const { workerId, datasetId, datasetTableName, name, description, fields, fieldsToDelete } = req.body;
 
             console.log('workerId: ', workerId)
+            console.log('datasetId: ', datasetId)
             console.log('name is: ', name);
             console.log('description is: ', description);
-            console.log('fields are: ', fields);
             console.log('fieldsToDelete are: ', fieldsToDelete);
 
-            // Check ALL datasets and validate that NONE have the SAME name as the one you're providing
-            // Description is alright
-            // Users should be able to have a dataset that is called issues for each worker. The same user cannot have 
-            // a dataset called in the same way
+            const getDatasetQuery = sql.fragment`SELECT * FROM datasets WHERE name = ${name} and id != ${datasetId}`;
+            const getDatasetResult = await pool.query(getDatasetQuery);
 
-            res.json({ success: false, message: 'Endpoint still not implemented' })
+            if(getDatasetResult.rows.length > 0){
+                res.json({ success: false, message: 'A dataset with the same already exists'})
+                return;
+            }
+
+            const tableName = `dataset_table_${workerId}_${name}`;
+
+            // Update the dataset
+            const updateDatasetResult = await pool.query(sql.fragment`UPDATE datasets SET name = ${name}, description = ${description}, table_name = ${tableName} WHERE id = ${datasetId}`);
+
+            // Alter the table name as well, IF we changed the name
+            // Remember to eventually sanitize these variables
+            console.log('datasetTableName: ', datasetTableName);
+            console.log('tableName: ', tableName);
+            if(datasetTableName !== tableName){
+                const alterTableNameQuery = await client.query(`ALTER TABLE ${datasetTableName} RENAME TO ${tableName}`);
+            }
+
+            // get the fields in order to validate some things
+            const getDatasetFieldsResult = await pool.query(sql.fragment`SELECT * FROM dataset_fields where dataset_id = ${datasetId}`);
+
+            const loadedFieldsFromDB = getDatasetFieldsResult.rows;
+
+            // Now i proceed to perform the changes
+            // first I perform the CREATES and the UPDATES
+            console.log('Performing updates and creates...');
+            for(const field of fields){
+                console.log(field);
+                // Lets start with the updates, lol, we dont "Start" anywhere dude, this is a loop
+                if(field.databaseId){
+                    // We update
+                    const updateFieldQuery = sql.fragment`
+                    UPDATE dataset_fields 
+                    SET name = ${field.name}, description = ${field.description}, data_type = ${field.data_type} 
+                    WHERE id = ${field.databaseId}
+                    AND (
+                        name != ${field.name}
+                        OR description != ${field.description}
+                        OR data_type != ${field.data_type}
+                    )`
+                    await pool.query(updateFieldQuery);
+
+                    const matchLoadedField = loadedFieldsFromDB.find(f => f.id === field.databaseId);
+
+                    if(matchLoadedField){
+                        if(matchLoadedField.data_type !== field.data_type){
+                            // THEN WE DO THE ALTER TABLE
+                            const alterTableModifyColumnQuery = `ALTER TABLE ${tableName} ALTER COLUMN ${field.name} TYPE ${field.data_type === 'INTEGER' ? 'NUMERIC' : field.data_type}`;
+                            await client.query(alterTableModifyColumnQuery);
+                        }
+                    } else {
+                        res.json({ success: false, message: 'Error in Endpoint' });
+                        return;
+                    }
+
+                } else {
+                    // Insert new field into dataset_fields
+                    const insertFieldQuery = sql.fragment`
+                    INSERT INTO dataset_fields (name, description, data_type, dataset_id)
+                    VALUES (${field.name}, ${field.description}, ${field.data_type}, ${datasetId})
+                    RETURNING id`;
+                    const result = await pool.query(insertFieldQuery);
+            
+                    const newFieldId = result.rows[0].id;
+            
+                    // Alter the table to add the new column
+                    const alterTableAddColumnQuery = `ALTER TABLE ${tableName} ADD COLUMN ${field.name} ${field.data_type === 'INTEGER' ? 'NUMERIC' : field.data_type}`;
+                    await client.query(alterTableAddColumnQuery);
+                }
+            }
+
+            // Now I iterate over the fields to delete
+            // I need to delete the fields in the dataset_fields table
+            // And I need to remove the columns from the tableName table
+            for (const fieldToBeDeleted of fieldsToDelete) {
+                // Delete the field from dataset_fields table
+                const deleteFieldQuery = sql.fragment`
+                DELETE FROM dataset_fields 
+                WHERE id = ${fieldToBeDeleted.databaseId}`;
+                await pool.query(deleteFieldQuery);
+            
+                // Remove the column from the main table
+                const dropColumnQuery = `ALTER TABLE ${tableName} DROP COLUMN IF EXISTS ${fieldToBeDeleted.name}`;
+                await client.query(dropColumnQuery);
+            }
+
+            res.json({ success: true, message: 'Dataset was updated successfully' })
         
         } catch (error) {
             const message = 'Error in Endpoint';

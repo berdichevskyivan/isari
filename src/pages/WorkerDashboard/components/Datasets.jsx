@@ -86,9 +86,9 @@ function Datasets({ user, tabs, openSection }){
         }
     }
 
-    const loadDataset = async (id) => {
+    const loadDataset = async (id, includeRows = null) => {
         try {
-            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadDataset`, { datasetId: id }, { withCredentials: true });
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadDataset`, { datasetId: id, includeRows }, { withCredentials: true });
             if(response.data.success === false){
                 openSnackbar(response.data.message, 'error');
             } else {

@@ -53,7 +53,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset }){
+function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset, loadDataset }){
 
     const [editMode, setEditMode] = useState(loadedDataset ? true : false);
 
@@ -93,8 +93,8 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
         }
 
         // Dataset Description Validation
-        if (datasetDescription.length < 15 || datasetDescription.length > 200) {
-            openSnackbar('The dataset description must be between 15 and 200 characters long', 'error');
+        if (datasetDescription.length < 15 || datasetDescription.length > 300) {
+            openSnackbar('The dataset description must be between 15 and 300 characters long', 'error');
             return;
         } else if (!/^[a-zA-Z\s-_.,()]+$/.test(datasetDescription)) {
             openSnackbar('The dataset description can only contain letters (a-z, A-Z), spaces, underscores, dashes, periods, commas and parentheses', 'error');
@@ -112,8 +112,8 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
             }
     
             // Field description validation
-            if (field.description.length < 15 || field.description.length > 200) {
-                openSnackbar('Every field description must be between 15 and 200 characters long', 'error');
+            if (field.description.length < 15 || field.description.length > 300) {
+                openSnackbar('Every field description must be between 15 and 300 characters long', 'error');
                 return;
             } else if (!/^[a-zA-Z\s-_.,()]+$/.test(field.description)) {
                 openSnackbar('Every field description can only contain letters (a-z, A-Z), spaces, underscores, dashes, periods, commas and parentheses', 'error');
@@ -129,6 +129,8 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
 
         const data = {
             workerId: user.id,
+            datasetId: loadedDataset?.id || null,
+            datasetTableName: loadedDataset?.table_name || null,
             name: datasetName,
             description: datasetDescription,
             fields: datasetFields,
@@ -149,6 +151,9 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
                 if(editMode){
                     openSnackbar('Dataset was updated successfully!')
                     setFieldsToDelete([]);
+                    // We now need to load back the dataset, as some fields will now NEED TO HAVE databaseId field
+                    loadDataset(loadedDataset.id, false);
+                    getDatasets();
                 } else {
                     getDatasets();
                     openSnackbar('Dataset was created successfully!')
@@ -186,8 +191,15 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
         setDatasetFields(newDatasetFields);
     }
 
-    const deleteField = (id) => {
-        let newDatasetFields = [...datasetFields].filter(field => field.id !== id);
+    const deleteField = (fieldToBeDeleted) => {
+
+        if(fieldToBeDeleted.hasOwnProperty('databaseId')){
+            const newFieldsToDelete = [...fieldsToDelete].filter(f => f.id !== fieldToBeDeleted.id);
+            newFieldsToDelete.push(fieldToBeDeleted);
+            setFieldsToDelete(newFieldsToDelete)
+        }
+
+        let newDatasetFields = [...datasetFields].filter(field => field.id !== fieldToBeDeleted.id);
         newDatasetFields = newDatasetFields.map((field, index) => {
             const newField = {...field};
             newField['id'] = index;
@@ -219,6 +231,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
     }
 
     useEffect(()=>{
+        setFieldsToDelete([]);
         if(loadedDataset){
             setDatasetName(loadedDataset.name);
             setDatasetDescription(loadedDataset.description);
@@ -235,7 +248,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
 
             setDatasetFields(loadedFields);
         }
-    }, [])
+    }, [loadedDataset])
 
     return (
         <div className="create-dataset-container">
@@ -310,7 +323,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
                                     <MenuItem value={'BOOLEAN'}>Boolean</MenuItem>
                                 </Select>
                             </div>
-                            <DeleteIcon sx={{ color: 'turquoise', cursor: 'pointer', height: '35px', width: '35px' }} onClick={()=>{ deleteField(field.id) }} />
+                            <DeleteIcon sx={{ color: 'turquoise', cursor: 'pointer', height: '35px', width: '35px' }} onClick={()=>{ deleteField(field) }} />
                         </div>
                     )) }
                 </div>
