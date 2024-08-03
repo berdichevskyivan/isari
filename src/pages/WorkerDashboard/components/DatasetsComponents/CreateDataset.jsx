@@ -132,6 +132,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
             name: datasetName,
             description: datasetDescription,
             fields: datasetFields,
+            fieldsToDelete: fieldsToDelete,
         }
 
         // Its time to submit
@@ -147,6 +148,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset })
                 setIsSubmitting(false);
                 if(editMode){
                     openSnackbar('Dataset was updated successfully!')
+                    setFieldsToDelete([]);
                 } else {
                     getDatasets();
                     openSnackbar('Dataset was created successfully!')

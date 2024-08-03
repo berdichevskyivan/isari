@@ -82,10 +82,8 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
             console.log('table name is: ', tableName);
 
-            const sanitizedTableName = tableName.replace(/[^a-z_]/g, '');
-
             if(includeRows !== false){
-                const loadDatasetQuery = `SELECT * FROM ${sanitizedTableName}`;
+                const loadDatasetQuery = `SELECT * FROM ${tableName}`;
                 const loadDatasetResult = await client.query(loadDatasetQuery);
                 const result = {
                     name: loadDatasetInfoResult.rows[0].name,
@@ -158,8 +156,10 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
             if(getDatasetsResult.rows.length < MAXIMUM_AMOUNT_OF_DATASETS){
 
-                const tableName = `dataset_table_${sanitizedName}`;
+                const tableName = `dataset_table_${workerId}_${sanitizedName}`;
 
+                // This validation is still OK because a user should not have more than one dataset with the same name
+                // This restriction may change in the future. But for now, it holds.
                 for(const dataset of getDatasetsResult.rows){
                     if(dataset.name === sanitizedName){
                         const message = 'A dataset with this name already exists';
@@ -225,6 +225,30 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
         } catch (error) {
             const message = 'Error in Endpoint';
             console.log(`${message} /createDataset: `, error);
+            res.json({ success: false, message });
+        }
+    });
+
+    app.post('/updateDataset', async (req, res) => {
+        try{
+            const { workerId, name, description, fields, fieldsToDelete } = req.body;
+
+            console.log('workerId: ', workerId)
+            console.log('name is: ', name);
+            console.log('description is: ', description);
+            console.log('fields are: ', fields);
+            console.log('fieldsToDelete are: ', fieldsToDelete);
+
+            // Check ALL datasets and validate that NONE have the SAME name as the one you're providing
+            // Description is alright
+            // Users should be able to have a dataset that is called issues for each worker. The same user cannot have 
+            // a dataset called in the same way
+
+            res.json({ success: false, message: 'Endpoint still not implemented' })
+        
+        } catch (error) {
+            const message = 'Error in Endpoint';
+            console.log(`${message} /updateDataset: `, error);
             res.json({ success: false, message });
         }
     });
