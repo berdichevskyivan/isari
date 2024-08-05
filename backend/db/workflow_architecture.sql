@@ -38,6 +38,8 @@ CREATE TABLE workflow_tasks (
     description TEXT,
     role VARCHAR(255),
     status VARCHAR(20),
+    total_iterations INTEGER DEFAULT 1,
+    current_iterations INTEGER DEFAULT 0,
     task_type VARCHAR(20), -- CREATE, UPDATE, DELETE
     input_type VARCHAR(20),
     raw_data TEXT,

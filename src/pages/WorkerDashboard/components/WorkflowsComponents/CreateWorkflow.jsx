@@ -68,6 +68,9 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
     const [datasets, setDatasets] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // EDIT MODE
+    const [tasksToDelete, setTasksToDelete] = useState([]);
+
     const getDatasets = async () => {
         try {
             setLoading(true);
@@ -95,12 +98,6 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
     }
 
     const handleSubmit = async () => {
-        // Temporary block for edit mode
-        if(editMode){
-            console.log('We are in Edit Mode. Not submitting yet.');
-            return;
-        }
-
         // Start validating!
         // First you need some fields!
         if (workflowTasks.length < 1){
@@ -162,26 +159,44 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
                 openSnackbar('The output amount must be between 1 and 4', 'error');
                 return;
             }
+
+            if(task.total_iterations < 1 || task.total_iterations > 5){
+                openSnackbar('The output amount must be between 1 and 5', 'error');
+                return;
+            }
         }
 
         const data = {
             workerId: user.id,
+            workflowId: loadedWorkflow ? loadedWorkflow.id : null,
             name: workflowName,
             tasks: workflowTasks,
+            tasksToDelete: tasksToDelete,
         }
+
+        console.log('this is data: ', data);
 
         try {
             setIsSubmitting(true);
-            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/createWorkflow`, data, { withCredentials: true });
+            const endpointUrl = editMode ? 'updateWorkflow' : 'createWorkflow'
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/${endpointUrl}`, data, { withCredentials: true });
 
             if(response.data.success === false){
                 setIsSubmitting(false);
                 openSnackbar(response.data.message, 'error');
             } else {
-                setIsSubmitting(false);
-                getWorkflows();
-                openSnackbar(response.data.message)
-                openSection('workflows', 'workflowsList');
+                if(editMode){
+                    setIsSubmitting(false);
+                    openSnackbar('Workflow was updated successfully!')
+                    setTasksToDelete([]);
+                    loadWorkflow(loadedWorkflow.id);
+                    getWorkflows();
+                } else {
+                    setIsSubmitting(false);
+                    getWorkflows();
+                    openSnackbar(response.data.message)
+                    openSection('workflows', 'workflowsList');
+                }
             }
         } catch (error) {
           console.log(error);
@@ -208,6 +223,7 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
             input_dataset: null,
             output_dataset: null,
             output_amount: 1,
+            total_iterations: 1,
         }
 
         let newWorkflowTasks = [...workflowTasks];
@@ -221,8 +237,15 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
         setWorkflowTasks(newWorkflowTasks);
     }
 
-    const deleteTask = (id) => {
-        let newWorkflowTasks = [...workflowTasks].filter(task => task.id !== id);
+    const deleteTask = (taskToBeDeleted) => {
+
+        if(taskToBeDeleted.hasOwnProperty('databaseId')){
+            const newTasksToDelete = [...tasksToDelete].filter(t => t.id !== taskToBeDeleted.id);
+            newTasksToDelete.push(taskToBeDeleted);
+            setTasksToDelete(newTasksToDelete)
+        }
+
+        let newWorkflowTasks = [...workflowTasks].filter(task => task.id !== taskToBeDeleted.id);
         newWorkflowTasks = newWorkflowTasks.map((task, index) => {
             const newTask = {...task};
             newTask['id'] = index;
@@ -256,7 +279,31 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
 
         getDatasets();
 
-    }, [])
+        setTasksToDelete([]);
+        if(loadedWorkflow){
+            setWorkflowName(loadedWorkflow.name)
+
+            const loadedTasks = loadedWorkflow.tasks.map((task, index)=>{
+                return {
+                    id: index,
+                    name: task.name,
+                    description: task.description,
+                    role: task.role,
+                    task_type: task.task_type,
+                    input_type: task.input_type,
+                    raw_data: task.raw_data || '',
+                    input_dataset: task.input_dataset_id || null,
+                    output_dataset: task.output_dataset_id || null,
+                    output_amount: task.output_amount,
+                    total_iterations: task.total_iterations,
+                    databaseId: task.id, // If it comes from the DB
+                }
+            })
+
+            setWorkflowTasks(loadedTasks);
+        }
+
+    }, [loadedWorkflow])
 
     return (
         <div className="create-workflow-container">
@@ -379,7 +426,7 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
                                                 className="tasks-dropdown"
                                             >
                                                 { datasets.length > 0 && datasets.map(dataset => (
-                                                    <MenuItem key={dataset.id} value={dataset}>{ dataset.name }</MenuItem>
+                                                    <MenuItem key={dataset.id} value={dataset.id}>{ dataset.name }</MenuItem>
                                                 ))}
                                             </Select>
                                         </div>
@@ -401,7 +448,7 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
                                             className="tasks-dropdown"
                                         >
                                             { datasets.length > 0 && datasets.map(dataset => (
-                                                <MenuItem key={dataset.id} value={dataset}>{ dataset.name }</MenuItem>
+                                                <MenuItem key={dataset.id} value={dataset.id}>{ dataset.name }</MenuItem>
                                             ))}
                                         </Select>
                                     </div>
@@ -431,6 +478,31 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
                                         />
                                     </div>
                                 </Grid>
+                                <Grid item xs={12} sm={3} >
+                                    <div className="input-with-label">
+                                        <div className="task-label-with-info">
+                                            <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Iterations</Typography>
+                                            <Tippy content={<span style={{ fontFamily: 'Roboto' }}>The number of times this task should run. Maximum is 5.</span>} >
+                                                <InfoIcon tabIndex="-1" />
+                                            </Tippy>
+                                        </div>
+                                        <StyledTextField 
+                                            type="number"
+                                            value={ workflowTasks.find(f => f.id === task.id).total_iterations }
+                                            onChange={(e)=>{ handleWorkflowTaskChange(e, task.id, 'total_iterations') }}
+                                            min="1"
+                                            max="4"
+                                            onInput={(e) => {
+                                                const value = parseInt(e.target.value, 10);
+                                                if (value < 1) e.target.value = 1;
+                                                if (value > 4) e.target.value = 5;
+                                            }}
+                                            autoComplete='off'
+                                            autoCorrect='off'
+                                            spellCheck={false}
+                                        />
+                                    </div>
+                                </Grid>
                                 { workflowTasks.find(f => f.id === task.id).input_type === 'raw' && (
                                     <Grid item xs={12} sm={12} >
                                         <div className="input-with-label">
@@ -448,7 +520,7 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loade
                                     </Grid>
                                 ) }
                             </Grid>
-                            <DeleteIcon sx={{ color: 'turquoise', cursor: 'pointer', position: 'absolute', top: 0, right: 0, height: '20px', width: '20px' }} onClick={()=>{ deleteTask(task.id) }} />
+                            <DeleteIcon sx={{ color: 'turquoise', cursor: 'pointer', position: 'absolute', top: 0, right: 0, height: '20px', width: '20px' }} onClick={()=>{ deleteTask(task) }} />
                             <Typography sx={{ fontSize: '14px', position: 'absolute', top: 0, left: 4 }}>{task.id+1}</Typography>
                         </div>
                     )) }

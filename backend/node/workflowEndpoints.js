@@ -354,8 +354,8 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
 
             for(const task of tasks){
                 const insertTaskQuery = sql.fragment`
-                INSERT INTO workflow_tasks(workflow_id, name, description, role, status, task_type, input_type, raw_data, input_dataset_id, output_amount, output_dataset_id)
-                VALUES (${workflowId}, ${task.name}, ${task.description}, ${task.role}, 'pending', ${task.task_type}, ${task.input_type}, ${task.raw_data || null}, ${task.input_dataset?.id || null}, ${task.output_amount}, ${task.output_dataset?.id || null})
+                INSERT INTO workflow_tasks(workflow_id, name, description, role, status, task_type, input_type, raw_data, input_dataset_id, output_amount, output_dataset_id, total_iterations)
+                VALUES (${workflowId}, ${task.name}, ${task.description}, ${task.role}, 'pending', ${task.task_type}, ${task.input_type}, ${task.raw_data || null}, ${task.input_dataset || null}, ${task.output_amount}, ${task.output_dataset || null}, ${task.total_iterations})
                 `
                 await pool.query(insertTaskQuery);
             }
@@ -365,6 +365,61 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
         } catch (error) {
             const message = 'Error in Endpoint';
             console.log(`${message} /createWorkflow: `, error);
+            res.json({ success: false, message });
+        }
+    });
+
+    app.post('/updateWorkflow', async (req, res) => {
+        try{
+            const { workerId, workflowId, name, tasks, tasksToDelete } = req.body;
+
+            console.log('workerId: ', workerId)
+            console.log('workflowId: ', workflowId)
+            console.log('name is: ', name);
+            console.log('tasks are: ', tasks);
+            console.log('tasksToDelete are: ', tasksToDelete);
+
+            const updateWorkflowQuery = sql.fragment`UPDATE workflows SET name = ${name} WHERE id = ${workflowId}`
+            await pool.query(updateWorkflowQuery);
+
+            for(const task of tasks){
+                if(task.databaseId){
+                    const updateTaskQuery = sql.fragment`
+                    UPDATE workflow_tasks
+                    SET name = ${task.name},
+                    description = ${task.description},
+                    role = ${task.role},
+                    task_type = ${task.task_type},
+                    input_type = ${task.input_type},
+                    raw_data = ${task.raw_data || null},
+                    input_dataset_id = ${task.input_dataset || null},
+                    output_amount = ${task.output_amount},
+                    output_dataset_id = ${task.output_dataset || null},
+                    total_iterations = ${task.total_iterations}
+                    WHERE workflow_id = ${workflowId}
+                    AND id = ${task.databaseId}
+                    `
+                    await pool.query(updateTaskQuery);
+                } else {
+                    const insertTaskQuery = sql.fragment`    
+                    INSERT INTO workflow_tasks(workflow_id, name, description, role, status, task_type, input_type, raw_data, input_dataset_id, output_amount, output_dataset_id, total_iterations)
+                    VALUES (${workflowId}, ${task.name}, ${task.description}, ${task.role}, 'pending', ${task.task_type}, ${task.input_type}, ${task.raw_data || null}, ${task.input_dataset || null}, ${task.output_amount}, ${task.output_dataset || null}, ${task.total_iterations})
+                    `
+                    await pool.query(insertTaskQuery);
+                }
+            }
+
+            // Now I need to delete
+            for(const taskToDelete of tasksToDelete){
+                const deleteTaskQuery = sql.fragment`DELETE FROM workflow_tasks WHERE id = ${taskToDelete.databaseId} AND workflow_id = ${workflowId}`;
+                await pool.query(deleteTaskQuery);
+            }
+
+            res.json({ success: true, message: 'Workflow was updated successfully!' })
+        
+        } catch (error) {
+            const message = 'Error in Endpoint';
+            console.log(`${message} /updateWorkflow: `, error);
             res.json({ success: false, message });
         }
     });
@@ -471,12 +526,15 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
         console.log(`Worker checking for workflow tasks: ${worker.id} | ${worker.name}`)
 
         // We check for 'pending' tasks.
+        // UPDATE: We dont check for just pending anymore, as tasks can be executed more than one time
+        // We check instead for current_iterations < total_iterations
         // If a task is found, we immediatly update the status (to active) and the worker_id
         const nextWorkflowTaskQuery = sql.fragment`
             WITH next_workflow_task AS (
                 SELECT id
                 FROM workflow_tasks
-                WHERE status = 'pending'
+                WHERE current_iterations < total_iterations
+                AND status != 'completed'
                 AND workflow_id in (SELECT id FROM workflows WHERE worker_id = ${worker.id} ORDER BY id asc)
                 ORDER BY id ASC
                 LIMIT 1
@@ -516,14 +574,16 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             + `This task consists of: ${nextTask.description}\n`
             + `This is the subject for this task: ${outputDatasetResult.rows[0].name}\n`
             + `This is a brief description of the subject: ${outputDatasetResult.rows[0].description}\n`
+            + `Each field in the output has a name and description. Please ONLY provide the fields requested and avoid including their descriptions. \n`
+            + `The field descriptions provided here only serve as context for what the fields represent. \n`
             + 'These are the names and descriptions of the fields that conform the subject: \n'
             for(const field of outputDatasetFieldsResult.rows){
                 input_text += `Field name: ${field.name} \n`;
                 input_text += `Field description: ${field.description} \n`;
             }
             input_text += `This is raw data provided by the user: ${nextTask.raw_data} \n`
-            input_text += `The output must be formatted as a ${nextTask.output_amount === 1 ? 'JSON Object' : `JSON Array containing exactly ${nextTask.output_amount} objects`} with the following fields: ${outputDatasetFieldsResult.rows.map(r => r.name).join(', ')} \n`
-            input_text += `The output must consist only of the ${nextTask.output_amount === 1 ? 'JSON Object' : 'JSON array'} and nothing else.`
+            input_text += `The output must be formatted as a JSON Array containing exactly ${nextTask.output_amount} ${nextTask.output_amount > 1 ? 'objects' : 'object'} with the following fields: ${outputDatasetFieldsResult.rows.map(r => r.name).join(', ')} \n`
+            input_text += `The output must consist only of the JSON array and nothing else.`
 
         console.log('input_text: ', input_text)
 
@@ -590,49 +650,39 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
     
             const outputDatasetInfo = getOutputDatasetInfoResult.rows[0];
             console.log('outputDatasetInfo: ', outputDatasetInfo);
-    
-            if(outputJson.length){
-                // we loop over the output array
-                const outputIds = [];
-                for(const object of outputJson){
-                    const fields = Object.keys(object).map(key => {
-                        const value = object[key];
-                        return typeof value === 'number' ? value : `'${value.replace(/'/g, "''")}'`;
-                    }).join(', ');
-    
-                    const insertDataQuery = `INSERT INTO ${outputDatasetInfo.table_name}(${Object.keys(object).join(', ')}) VALUES(${fields}) RETURNING id`
-    
-                    console.log(insertDataQuery);
-    
-                    const insertDataQueryResult = await client.query(insertDataQuery);
-                    const outputId = insertDataQueryResult.rows[0].id;
-                    outputIds.push(outputId);
-                }
-                // Now that I'm done, I insert these outputIds into the task output_dataset_record_ids column
-                console.log('this is outputIds, ', outputIds);
-                console.log('this is outputIds.join: ', outputIds.join(', '))
-                const updateTaskMetaDataQuery = sql.fragment`UPDATE workflow_tasks SET output_dataset_record_ids = ${outputIds.join(', ')} WHERE id = ${workflowTaskId}`;
-                await pool.query(updateTaskMetaDataQuery);
-            } else {
-                // We execute one query because we got just one object
-                const fields = Object.keys(outputJson).map(key => {
-                    const value = outputJson[key];
+
+            const outputIds = [];
+            for(const object of outputJson){
+                const fields = Object.keys(object).map(key => {
+                    const value = object[key];
                     return typeof value === 'number' ? value : `'${value.replace(/'/g, "''")}'`;
                 }).join(', ');
-    
-                const insertDataQuery = `INSERT INTO ${outputDatasetInfo.table_name}(${Object.keys(outputJson).join(', ')}) VALUES(${fields}) RETURNING id`
+
+                const insertDataQuery = `INSERT INTO ${outputDatasetInfo.table_name}(${Object.keys(object).join(', ')}) VALUES(${fields}) RETURNING id`
+
                 console.log(insertDataQuery);
-    
+
                 const insertDataQueryResult = await client.query(insertDataQuery);
                 const outputId = insertDataQueryResult.rows[0].id;
+                outputIds.push(outputId);
+            }
+            // Now that I'm done, I insert these outputIds into the task output_dataset_record_ids column
+            console.log('this is outputIds, ', outputIds);
+            console.log('this is outputIds.join: ', outputIds.join(', '))
+            const updateTaskMetaDataQuery = sql.fragment`UPDATE workflow_tasks SET output_dataset_record_ids = ${outputIds.join(', ')} WHERE id = ${workflowTaskId}`;
+            await pool.query(updateTaskMetaDataQuery);
 
-                const updateTaskMetaDataQuery = sql.fragment`UPDATE workflow_tasks SET output_dataset_record_ids = ${outputId} WHERE id = ${workflowTaskId}`;
-                await pool.query(updateTaskMetaDataQuery);
+            // Update Workflow Task current_iterations and then check if current_iterations === total_iterations
+            // if it is, update task to `completed`
+            const increaseCurrentIterationsResult = await pool.query(sql.fragment`UPDATE workflow_tasks SET current_iterations = current_iterations + 1 WHERE id = ${workflowTaskId} RETURNING current_iterations, total_iterations`);
+
+            const currentIterations = increaseCurrentIterationsResult.rows[0].current_iterations;
+            const totalIterations = increaseCurrentIterationsResult.rows[0].total_iterations;
+
+            if(currentIterations === totalIterations){
+                await pool.query(sql.fragment`UPDATE workflow_tasks SET status = 'completed' WHERE id = ${workflowTaskId}`)
             }
 
-            // Update Workflow Task status
-            await pool.query(sql.fragment`UPDATE workflow_tasks SET status = 'completed' WHERE id = ${workflowTaskId}`)
-    
             res.json({ success: true });
         }catch(error){
             console.log(error);

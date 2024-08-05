@@ -33,10 +33,12 @@ function WorkflowViewer({ loadedWorkflow, openSection, loadWorkflow }){
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Description</TableCell>
-                                <TableCell>Role</TableCell>
-                                <TableCell>Status</TableCell>
+                                <TableCell align="center">Name</TableCell>
+                                <TableCell align="center">Description</TableCell>
+                                <TableCell align="center">Role</TableCell>
+                                <TableCell align="center">Status</TableCell>
+                                <TableCell align="center">Total Iterations</TableCell>
+                                <TableCell align="center">Current Iterations</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -52,10 +54,12 @@ function WorkflowViewer({ loadedWorkflow, openSection, loadWorkflow }){
                                 <>
                                     { loadedWorkflow.tasks.map(row => (
                                         <TableRow>
-                                            <TableCell>{ row.name }</TableCell>
-                                            <TableCell>{ row.description }</TableCell>
-                                            <TableCell>{ row.role }</TableCell>
-                                            <TableCell>{ row.status }</TableCell>
+                                            <TableCell align="center">{ row.name }</TableCell>
+                                            <TableCell align="center">{ row.description }</TableCell>
+                                            <TableCell align="center">{ row.role }</TableCell>
+                                            <TableCell align="center">{ row.status }</TableCell>
+                                            <TableCell align="center">{ row.total_iterations }</TableCell>
+                                            <TableCell align="center">{ row.current_iterations }</TableCell>
                                         </TableRow>
                                     )) }
                                 </>

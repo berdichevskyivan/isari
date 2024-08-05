@@ -131,3 +131,8 @@ delete from worker_generalized_ai_branches where worker_id != 20;
 delete from worker_ai_tools where worker_id != 20;
 delete from worker_keys where worker_id != 20;
 delete from workers where id != 20;
+
+-- Add iteration columns to workflow_tasks table
+ALTER TABLE workflow_tasks
+ADD COLUMN total_iterations INTEGER DEFAULT 1,
+ADD COLUMN current_iterations INTEGER DEFAULT 0;
