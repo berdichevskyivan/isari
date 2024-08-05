@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Typography, Button, Grid, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import './WorkflowsList.css';
 import DeleteWorkflowModal from '../../../../components/modals/DeleteWorkflowModal';
 
-function WorkflowsList({loading, workflows, openSection, deleteWorkflow, openWorkflowViewer}){
+function WorkflowsList({loading, workflows, openSection, deleteWorkflow, openWorkflowViewer, openEditWorkflow, setLoadedWorkflow}){
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedWorkflow, setSelectedWorkflow] = useState(null);
@@ -33,7 +34,7 @@ function WorkflowsList({loading, workflows, openSection, deleteWorkflow, openWor
             {!loading && workflows.length === 0 && (
                 <div className='no-workflows-container'>
                     <p style={{ color: 'turquoise' }}>No workflows! How about creating one?</p>
-                    <Button variant="contained" className="default-button" onClick={() => { openSection('workflows', 'createWorkflow') }}>
+                    <Button variant="contained" className="default-button" onClick={() => { openSection('workflows', 'createWorkflow'); setLoadedWorkflow(null); }}>
                         Create Workflow
                     </Button>
                 </div>
@@ -47,7 +48,11 @@ function WorkflowsList({loading, workflows, openSection, deleteWorkflow, openWor
                                 {workflows.map((workflow) => (
                                     <Grid item xs={12} sm={6} key={workflow.id} display="flex" justifyContent="center" alignItems="center" sx={{ height: '100px' }}>
                                         <Paper className="workflow-card" onClick={()=>{ openWorkflowViewer(workflow) }}>
-                                            <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px', position: 'absolute', top: 2, right: 2 }} onClick={(e)=>{ e.stopPropagation(); handleOpenModal(workflow) }} />
+                                            <div style={{ position: 'absolute', top: 2, right: 2, display: 'flex', flexFlow: 'row', justifyContent: 'center', alignContent: 'center' }}>
+                                                <DeleteIcon sx={{ color: 'black', height: '25px', width: '25px' }} onClick={(e)=>{ e.stopPropagation(); handleOpenModal(workflow) }} />
+                                                <EditIcon sx={{ color: 'black', height: '25px', width: '25px' }} onClick={(e)=>{ e.stopPropagation(); openEditWorkflow(workflow) }} />
+                                            </div>
+
                                             <Typography sx={{ fontSize: '20px' }}>
                                                 {workflow.name}
                                             </Typography>
@@ -61,7 +66,7 @@ function WorkflowsList({loading, workflows, openSection, deleteWorkflow, openWor
                         </div>
                         <div className="workflows-list-buttons">
                             { workflows.length < 4 && (
-                                <Button variant="contained" className="default-button" onClick={() => { openSection('workflows', 'createWorkflow') }}>
+                                <Button variant="contained" className="default-button" onClick={() => { openSection('workflows', 'createWorkflow'); setLoadedWorkflow(null); }}>
                                     Create Workflow
                                 </Button>
                             ) }

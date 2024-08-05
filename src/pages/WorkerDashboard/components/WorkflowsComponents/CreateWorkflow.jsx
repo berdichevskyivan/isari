@@ -54,7 +54,11 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows }){
+function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows, loadedWorkflow, loadWorkflow }){
+
+    const [editMode, setEditMode] = useState(loadedWorkflow ? true : false);
+
+    console.log('CreateWorkflow editMode is: ', editMode);
 
     const { openSnackbar } = useNotification();
     const navigate = useNavigate();
@@ -91,6 +95,12 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows }){
     }
 
     const handleSubmit = async () => {
+        // Temporary block for edit mode
+        if(editMode){
+            console.log('We are in Edit Mode. Not submitting yet.');
+            return;
+        }
+
         // Start validating!
         // First you need some fields!
         if (workflowTasks.length < 1){
@@ -453,7 +463,7 @@ function CreateWorkflow({ openSection, axios, user, openTab, getWorkflows }){
                         <><CircularProgress size={24}/></>
                     ) }
                     { !isSubmitting && (
-                        <>Submit</>
+                        <>{editMode ? 'Update' : 'Submit'}</>
                     ) }
                 </Button>
                 <Button variant="contained" className="default-button" onClick={() => { openSection('workflows', 'workflowsList'); }}>

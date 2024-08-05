@@ -54,6 +54,25 @@ function Workflows({ user, tabs, openSection, openTab }){
         }
     }
 
+    const openEditWorkflow = async (workflow) => {
+        const workflowId = workflow.id;
+        localStorage.setItem('currentWorkflowId', workflowId);
+        try {
+            const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadWorkflow`, { workflowId: workflowId }, { withCredentials: true });
+            if(response.data.success === false){
+                openSnackbar(response.data.message, 'error');
+            } else {
+                console.log('loadWorkflow response')
+                console.log(response.data.result)
+                setLoadedWorkflow(response.data.result);
+                openSection('workflows', 'createWorkflow');
+            }
+        } catch (error) {
+          console.log(error);
+          openSnackbar('Error loading workflow', 'error');
+        }
+    }
+
     const loadWorkflow = async (id) => {
         try {
             const response = await axios.post(`${isProduction ? '' : 'http://localhost'}/loadWorkflow`, { workflowId: id }, { withCredentials: true });
@@ -99,7 +118,7 @@ function Workflows({ user, tabs, openSection, openTab }){
             {/* Workflows List */}
             { tabs['workflows'].sections.workflowsList.open && (
                 <>
-                    <WorkflowsList loading={loading} workflows={workflows} openSection={openSection} deleteWorkflow={deleteWorkflow} openWorkflowViewer={openWorkflowViewer}/>
+                    <WorkflowsList loading={loading} workflows={workflows} openSection={openSection} deleteWorkflow={deleteWorkflow} openWorkflowViewer={openWorkflowViewer} openEditWorkflow={openEditWorkflow} setLoadedWorkflow={setLoadedWorkflow}/>
                 </>
             ) }
 
@@ -113,7 +132,7 @@ function Workflows({ user, tabs, openSection, openTab }){
             {/* Create Workflow */}
             { tabs['workflows'].sections.createWorkflow.open && (
                 <>
-                    <CreateWorkflow openSection={openSection} axios={axios} user={user} getWorkflows={getWorkflows} openTab={openTab} />
+                    <CreateWorkflow openSection={openSection} axios={axios} user={user} getWorkflows={getWorkflows} openTab={openTab} loadedWorkflow={loadedWorkflow} loadWorkflow={loadWorkflow} />
                 </>
             ) }
         </div>

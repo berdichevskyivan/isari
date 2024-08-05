@@ -57,7 +57,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset, l
 
     const [editMode, setEditMode] = useState(loadedDataset ? true : false);
 
-    console.log('editMode is: ', editMode);
+    console.log('CreateDataset editMode is: ', editMode);
 
     const { openSnackbar } = useNotification();
 
