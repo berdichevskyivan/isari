@@ -29,12 +29,12 @@ function DatasetViewer({ loadedDataset, openSection, loadDataset }){
                         paddingBottom: '.5rem'
                     }}>{loadedDataset.name}</Typography>
                 ) }
-                <TableContainer component={Paper} sx={{ zIndex: 2, borderTopRightRadius: 0, borderTopLeftRadius: 0, height: '93%' }} className='no-scrollbar'>
+                <TableContainer component={Paper} sx={{ zIndex: 2, borderTopRightRadius: 0, borderTopLeftRadius: 0, height: '93%' }}>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
                                 {loadedDataset && loadedDataset.fields?.length > 0 && loadedDataset.fields?.map(field => (
-                                    <TableCell>{field.name}</TableCell>
+                                    <TableCell sx={{ whiteSpace: 'nowrap', width: 'auto' }}>{field.name}</TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
@@ -42,7 +42,7 @@ function DatasetViewer({ loadedDataset, openSection, loadDataset }){
                             { loadedDataset && loadedDataset.rows?.length === 0 && (
                                 <>
                                     <TableRow>
-                                        <TableCell>There are no records</TableCell>
+                                        <TableCell colSpan={100} align="center">There are no records</TableCell>
                                     </TableRow>
                                 </>
                             )}
@@ -52,7 +52,7 @@ function DatasetViewer({ loadedDataset, openSection, loadDataset }){
                                     { loadedDataset.rows.map(row => (
                                         <TableRow>
                                             { Object.keys(row).map(key => (
-                                                <TableCell>{row[key]}</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap', width: 'auto' }}>{row[key]}</TableCell>
                                             )) }
                                         </TableRow>
                                     )) }

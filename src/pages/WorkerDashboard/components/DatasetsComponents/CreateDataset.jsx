@@ -8,6 +8,7 @@ import 'tippy.js/dist/tippy.css';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useNotification } from '../../../../context/NotificationContext';
+import getTemplates from './templates';
 
 const isProduction = import.meta.env.MODE === 'production';
 
@@ -61,6 +62,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset, l
 
     const { openSnackbar } = useNotification();
 
+    const [selectedTemplate, setSelectedTemplate] = useState('');
     const [datasetName, setDatasetName] = useState('');
     const [datasetDescription, setDatasetDescription] = useState('');
     const [datasetFields, setDatasetFields] = useState([]);
@@ -115,7 +117,7 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset, l
             if (field.description.length < 15 || field.description.length > 300) {
                 openSnackbar('Every field description must be between 15 and 300 characters long', 'error');
                 return;
-            } else if (!/^[a-zA-Z\s-_.,()]+$/.test(field.description)) {
+            } else if (!/^[a-zA-Z0-9\s-_.,()]+$/.test(field.description)) {
                 openSnackbar('Every field description can only contain letters (a-z, A-Z), spaces, underscores, dashes, periods, commas and parentheses', 'error');
                 return;
             }
@@ -230,6 +232,24 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset, l
         setDatasetFields(newDatasetFields);
     }
 
+    const handleTemplateChange = (e) => {
+        const value = e.target.value;
+        setSelectedTemplate(value);
+        const templateDatasetName = getTemplates().find(t => t.id === value).name;
+        const templateDatasetDescription = getTemplates().find(t => t.id === value).description;
+        const templateDatasetFields = getTemplates().find(t => t.id === value).fields;
+        setDatasetName(templateDatasetName);
+        setDatasetDescription(templateDatasetDescription);
+        setDatasetFields(templateDatasetFields);
+    }
+
+    const clearTemplate = () => {
+        setSelectedTemplate('');
+        setDatasetName('');
+        setDatasetDescription('');
+        setDatasetFields([]);
+    }
+
     useEffect(()=>{
         setFieldsToDelete([]);
         if(loadedDataset){
@@ -252,7 +272,30 @@ function CreateDataset({ openSection, axios, user, getDatasets, loadedDataset, l
 
     return (
         <div className="create-dataset-container">
-            <div className="create-dataset-main-section">
+            <div className="create-dataset-main-section no-scrollbar">
+                { !editMode && (
+                    <div className="create-dataset-template-section">
+                        <div className="input-with-label template-input">
+                            <div className="label-with-info">
+                                <Typography sx={{ fontFamily: 'Orbitron', marginBottom: '.1rem' }}>Templates: </Typography>
+                            </div>
+                            <Select
+                                value={selectedTemplate}
+                                onChange={(e)=>{ handleTemplateChange(e) }}
+                                inputProps={{ style: { color: 'blue !important' } }}
+                                className="templates-dropdown"
+                                sx={{ width: '200px !important' }}
+                            >
+                                { getTemplates().map(t => (
+                                    <MenuItem value={t.id}>{t.name}</MenuItem>
+                                ))}
+                            </Select>
+                        </div>
+                        <Button variant="contained" className="default-button" onClick={() => { clearTemplate(); }}>
+                            Clear Template
+                        </Button>
+                    </div>
+                )}
                 <div className="create-dataset-main-section-header">
                     <div className="input-with-label">
                         <div className="label-with-info">

@@ -8,12 +8,23 @@
     align-items: center;
 }
 
+.create-dataset-template-section {
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    align-items: center;
+    padding-left: .25rem;
+}
+
 .create-dataset-main-section {
     height: 90%;
     width: 100%;
     /* border: 1px solid turquoise; */
     box-sizing: border-box;
     background: black;
+    overflow: auto;
 }
 
 .create-dataset-main-section-header {
@@ -57,7 +68,11 @@
     margin-right: 1rem;
 }
 
-.fields-dropdown {
+.template-input {
+    flex-flow: row !important;
+}
+
+.fields-dropdown, .templates-dropdown {
     fieldset {
         border: none !important;
     }
@@ -81,7 +96,7 @@
 .dataset-field-container {
     background: black;
     width: 100%;
-    height: 100px;
+    height: 90px;
     box-sizing: border-box;
     border: 1px solid magenta;
     border-radius: 5px;
