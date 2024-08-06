@@ -215,6 +215,42 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
                 console.log('Table Creation Query: ', createTableQuery);
                 await client.query(createTableQuery);
 
+                // We now proceed with creating the workflow and one workflow task associated with it
+                const createWorkflowResult = await pool.query(sql.fragment`INSERT INTO workflows(worker_id, name) VALUES (${workerId}, ${name}) RETURNING id`);
+                const workflowId = createWorkflowResult.rows[0].id;
+
+                const taskDescription = `Generates ${name}`;
+
+                // With this workflowId, now I insert a record in the workflow_tasks table
+                await pool.query(sql.fragment`
+                    INSERT INTO workflow_tasks(
+                    workflow_id,
+                    name,
+                    description,
+                    role,
+                    status,
+                    task_type,
+                    input_type,
+                    raw_data,
+                    input_dataset_id,
+                    output_amount,
+                    output_dataset_id,
+                    total_iterations)
+                    VALUES (
+                    ${workflowId},
+                    'generation',
+                    ${taskDescription},
+                    'generator',
+                    'pending',
+                    'create',
+                    'raw',
+                    'Be as descriptive and informative as possible',
+                    null,
+                    4,
+                    ${datasetId},
+                    4)   
+                `);
+
                 // If all went well, that is it :) 
                 res.json({ success: true, message: 'Dataset created successfully' })
                 return;
@@ -567,7 +603,23 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
         const outputDatasetFieldsQuery = sql.fragment`SELECT * FROM dataset_fields WHERE dataset_id = ${nextTask.output_dataset_id}`;
 
         const outputDatasetResult = await pool.query(outputDatasetQuery);
-        const outputDatasetFieldsResult = await pool.query(outputDatasetFieldsQuery)
+        const outputDatasetFieldsResult = await pool.query(outputDatasetFieldsQuery);
+
+        const outputDatasetTableName = outputDatasetResult.rows[0].table_name;
+
+        const outputDatasetTableResult = await client.query(`SELECT * FROM ${outputDatasetTableName}`);
+
+        let existingData = '';
+
+        if(outputDatasetTableResult.rows.length > 0){
+            existingData = outputDatasetTableResult.rows.map(row => {
+                // Assuming the second column is the one you want (index 1)
+                const values = Object.values(row);
+                return values[1]; // Get the second value (index 1) from each row
+            }).join(', ');
+        }
+        
+        console.log(existingData);
 
         let input_text = `Assume this role: ${nextTask.role}\n`
             + `You must perform this task: ${nextTask.name}\n`
@@ -580,10 +632,15 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             for(const field of outputDatasetFieldsResult.rows){
                 input_text += `Field name: ${field.name} \n`;
                 input_text += `Field description: ${field.description} \n`;
+                input_text += `Field data type: ${field.data_type === 'INTEGER' ? 'NUMERIC' : field.data_type} \n`;
             }
             input_text += `This is raw data provided by the user: ${nextTask.raw_data} \n`
             input_text += `The output must be formatted as a JSON Array containing exactly ${nextTask.output_amount} ${nextTask.output_amount > 1 ? 'objects' : 'object'} with the following fields: ${outputDatasetFieldsResult.rows.map(r => r.name).join(', ')} \n`
-            input_text += `The output must consist only of the JSON array and nothing else.`
+            input_text += `The output must consist only of the JSON array and nothing else. \n\n`
+
+            if(existingData){
+                input_text += `Exclude the following subjects from your output: ${existingData}. `
+            }
 
         console.log('input_text: ', input_text)
 
@@ -655,7 +712,13 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
             for(const object of outputJson){
                 const fields = Object.keys(object).map(key => {
                     const value = object[key];
-                    return typeof value === 'number' ? value : `'${value.replace(/'/g, "''")}'`;
+                    if (typeof value === 'number') {
+                        return value;
+                    } else if (typeof value === 'boolean') {
+                        return value ? 'true' : 'false';
+                    } else {
+                        return `'${value.replace(/'/g, "''")}'`;
+                    }
                 }).join(', ');
 
                 const insertDataQuery = `INSERT INTO ${outputDatasetInfo.table_name}(${Object.keys(object).join(', ')}) VALUES(${fields}) RETURNING id`
