@@ -46,7 +46,7 @@ function HomePage({ workers, workerOptions, setWorkers }) {
           <iframe
             width="560"
             height="315" 
-            src="https://www.youtube.com/embed/Tclg76UU9VU?si=53LpU9mpaemujvRZ"
+            src="https://www.youtube.com/embed/fSlieID9sfM?si=ixmMKHMTw-L8HK4X"
             title="YouTube video player"
             style={{border: '0px'}}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
