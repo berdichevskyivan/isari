@@ -325,6 +325,11 @@ export async function attachWorkflowEndpoints(app, sql, pool, io, connectionStri
                     const matchLoadedField = loadedFieldsFromDB.find(f => f.id === field.databaseId);
 
                     if(matchLoadedField){
+                        if (matchLoadedField.name !== field.name) {
+                            const alterTableRenameColumnQuery = `ALTER TABLE ${tableName} RENAME COLUMN ${matchLoadedField.name} TO ${field.name}`;
+                            await client.query(alterTableRenameColumnQuery);
+                        }
+
                         if(matchLoadedField.data_type !== field.data_type){
                             // THEN WE DO THE ALTER TABLE
                             const alterTableModifyColumnQuery = `ALTER TABLE ${tableName} ALTER COLUMN ${field.name} TYPE ${field.data_type === 'INTEGER' ? 'NUMERIC' : field.data_type}`;
