@@ -52,7 +52,7 @@ function DatasetViewer({ loadedDataset, openSection, loadDataset }){
                                     { loadedDataset.rows.map(row => (
                                         <TableRow>
                                             { Object.keys(row).map(key => (
-                                                <TableCell sx={{ whiteSpace: 'nowrap', width: 'auto' }}>
+                                                <TableCell sx={{ whiteSpace: 'normal', width: 'auto' }}>
                                                     {typeof row[key] === 'boolean' ? (row[key] ? 'Yes' : 'No') : row[key]}
                                                 </TableCell>
                                             )) }
